@@ -409,7 +409,7 @@ acapy:
     ## @param acapy.persistence.accessModes PVC Access Mode. ReadWriteMany is required for each Acapy pod to access the same volume.
     ##
     accessModes:
-      - ReadWriteMany
+      - ReadWriteOnce
     ## @param acapy.persistence.size PVC Storage Request for tails volume
     ##
     size: 1Gi
