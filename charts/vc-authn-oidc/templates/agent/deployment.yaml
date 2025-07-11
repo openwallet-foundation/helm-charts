@@ -46,7 +46,7 @@ spec:
            --inbound-transport http '0.0.0.0' {{ .Values.acapy.service.httpPort }} \
            --outbound-transport http \
            --admin '0.0.0.0' {{ .Values.acapy.service.adminPort }} \
-           --arg-file 'argfile.yml'        
+           --arg-file 'argfile.yml'
            "
           ]
           ports:
@@ -99,13 +99,20 @@ spec:
               path: /status/ready
               port: {{ .Values.acapy.service.adminPort }}
             initialDelaySeconds: 60
-            periodSeconds: 10    
+            periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /status/live
               port: {{ .Values.acapy.service.adminPort }}
             initialDelaySeconds: 90
-            periodSeconds: 10 
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /status/ready
+              port: {{ .Values.acapy.service.adminPort }}
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
           volumeMounts:
           - name: config
             mountPath: "/home/aries/argfile.yml"
