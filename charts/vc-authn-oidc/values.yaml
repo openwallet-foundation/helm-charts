@@ -600,7 +600,7 @@ mongodb:
     ## If undefined (the default) or set to null, no storageClassName spec is
     ## set, choosing the default provisioner.
     ##
-    storageClass: default
+    # storageClass: default
   ## ServiceAccount
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   ##
