@@ -50,7 +50,7 @@ controller:
       - abandoned
   templateDirectory: /app/controller-config/templates
   userVariableSubsitution: |-
-    # This is a default placeholder Python file 
+    # This is a default placeholder Python file
     # Add any extensions to user variables here. Example below:
 
     # def sub_days_plus_one(days: str) -> int:
@@ -572,7 +572,7 @@ mongodb:
   commonLabels:
     app: vc-authn-oidc
     role: database
-  
+
   ## @param mongodb.architecture MongoDB(&reg;) architecture (`standalone` or `replicaset`)
   ##
   architecture: replicaset
