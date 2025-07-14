@@ -648,7 +648,7 @@ postgresql:
     enablePostgresUser: true
     ## @param postgresql.auth.database Name for a custom database to create
     ##
-    database: askar-wallet
+    # database: askar-wallet
     ## @param postgresql.auth.username Name for a custom user to create
     ##
     username: acapy
