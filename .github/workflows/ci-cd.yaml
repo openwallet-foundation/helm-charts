@@ -99,11 +99,11 @@ jobs:
             # Generate README
             npx @bitnami/readme-generator-for-helm --readme $chart/README.md --values $chart/values.yaml
             # Check for uncommitted changes in README.md
-            if git diff --exit-code -- $chart/README.md > /dev/null; then
-              echo "✅ README.md for $chart is up to date."
-            else
+            if ! git diff --exit-code -- $chart/README.md > /dev/null; then
               echo "❌ README.md for $chart is out of date. Please re-run the generator."
               need_update="yes"
+            else
+              echo "✅ README.md for $chart is up to date."
             fi
 
             # Check that CHANGELOG.md was updated
@@ -158,7 +158,7 @@ jobs:
 
           # Clone existing gh-pages to get current index.yaml
           git fetch origin gh-pages
-          git show origin/gh-pages:index.yaml > .cr-existing-index/index.yaml || echo "existing index not found"
+          git show origin/gh-pages:index.yaml > .cr-existing-index/index.yaml || echo "{}" > .cr-existing-index/index.yaml
 
           # Find all charts in /charts
           charts=$(find charts -mindepth 1 -maxdepth 1 -type d)
@@ -169,7 +169,7 @@ jobs:
             name=$(yq '.name' $chart/Chart.yaml)
             version=$(yq '.version' $chart/Chart.yaml)
 
-            existing_versions=$(yq ".\"$name\"[].version" .cr-existing-index/index.yaml 2>/dev/null || true)
+            existing_versions=$(yq ".entries.\"$name\"[].version" .cr-existing-index/index.yaml 2>/dev/null || true)
 
             if ! echo "$existing_versions" | grep -q "^$version$"; then
               echo "📦 New chart or version detected: $name-$version"
