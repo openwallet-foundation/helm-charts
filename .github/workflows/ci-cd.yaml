@@ -169,11 +169,14 @@ jobs:
             name=$(yq '.name' $chart/Chart.yaml)
             version=$(yq '.version' $chart/Chart.yaml)
 
-            if ! grep -q "$name" .cr-existing-index/index.yaml 2>/dev/null || \
-              ! grep -q "$version" .cr-existing-index/index.yaml 2>/dev/null; then
-              echo "New chart or version: $name-$version"
-              helm package $chart --destination .cr-release-packages
+            existing_versions=$(yq ".\"$name\"[].version" .cr-existing-index/index.yaml 2>/dev/null || true)
+
+            if ! echo "$existing_versions" | grep -q "^$version$"; then
+              echo "📦 New chart or version detected: $name-$version"
+              helm package "$chart" --destination .cr-release-packages
               to_package+="$chart,"
+            else
+              echo "✔️ Chart $name version $version already exists in index"
             fi
           done
 
