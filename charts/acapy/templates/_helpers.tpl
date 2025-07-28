@@ -39,6 +39,13 @@ generate hosts if not overriden
 {{- end -}}
 
 {{/*
+Return the proper AcaPy image name
+*/}}
+{{- define "acapy.image" -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
+{{- end -}}
+
+{{/*
 Returns a secret if it already in Kubernetes, otherwise it creates
 it randomly.
 
