@@ -59,17 +59,6 @@ Usage:
 {{- end }}
 
 {{/*
-Create a default fully qualified postgresql name.
-*/}}
-{{- define "acapy.database.secretName" -}}
-{{- if .Values.walletStorageCredentials.existingSecret -}}
-{{- .Values.walletStorageCredentials.existingSecret -}}
-{{- else -}}
-{{ printf "%s-postgresql" (include "common.names.fullname" .) }}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Create a default fully qualified app name for the postgres requirement.
 */}}
 {{- define "global.postgresql.fullname" -}}
@@ -78,6 +67,23 @@ Create a default fully qualified app name for the postgres requirement.
 {{- else }}
 {{- $postgresContext := dict "Values" .Values.postgresql "Release" .Release "Chart" (dict "Name" "postgresql") -}}
 {{ template "postgresql.v1.primary.fullname" $postgresContext }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the Secret that holds the Postgres credentials.
+
+* If the user overrides it with `walletStorageCredentials.existingSecret`,
+  evaluate that value with `tpl` so they can embed template expressions.
+* Otherwise fall back to whatever **the Postgres sub‑chart** says
+  its fullname is – that helper already honours `nameOverride`
+  or `fullnameOverride`, so we inherit the correct string automatically.
+*/}}
+{{- define "acapy.database.secretName" -}}
+{{- if .Values.walletStorageCredentials.existingSecret -}}
+{{ tpl .Values.walletStorageCredentials.existingSecret . }}
+{{- else -}}
+{{ include "global.postgresql.fullname" . }}
 {{- end -}}
 {{- end -}}
 
