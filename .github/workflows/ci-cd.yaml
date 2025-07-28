@@ -58,24 +58,27 @@ jobs:
           ct list-changed --config .github/ct.yaml > changed.txt
           echo "charts=$(cat changed.txt | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
 
-      - name: Ensure README and CHANGELOG updated
+      - name: Check version and appVersion bump
         if: steps.changed.outputs.charts != ''
         run: |
-          missing=""
           for chart in $(cat changed.txt); do
-            if ! git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -q "^$chart/README.md$"; then
-              echo "README.md not updated for $chart"
-              missing="yes"
+            echo "Checking $chart..."
+
+            old_version=$(git show origin/main:$chart/Chart.yaml | yq '.version')
+            new_version=$(yq '.version' $chart/Chart.yaml)
+
+            old_app=$(git show origin/main:$chart/Chart.yaml | yq '.appVersion')
+            new_app=$(yq '.appVersion' $chart/Chart.yaml)
+
+            if [[ "$old_version" == "$new_version" ]]; then
+              echo "❌ Chart version was not bumped in $chart (still $new_version)"
+              exit 1
             fi
-            if ! git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -q "^$chart/CHANGELOG.md$"; then
-              echo "CHANGELOG.md not updated for $chart"
-              missing="yes"
+
+            if [[ "$old_app" == "$new_app" ]]; then
+              echo "⚠️ Warning: appVersion for $chart is unchanged ($new_app). Not failing, but consider bumping."
             fi
           done
-          if [ "$missing" = "yes" ]; then
-            echo "Please update README.md and CHANGELOG.md for all changed charts."
-            exit 1
-          fi
 
       - name: Set up Node.js for generators
         if: steps.changed.outputs.charts != ''
@@ -86,7 +89,7 @@ jobs:
       - name: Install readme and changelog generators
         if: steps.changed.outputs.charts != ''
         run: |
-          npm install -g @bitnami/readme-generator-for-helm conventional-changelog-cli
+          npm install -g @bitnami/readme-generator-for-helm conventional-changelog-cli conventional-changelog-conventionalcommits
 
       - name: Generate and check README and CHANGELOG
         if: steps.changed.outputs.charts != ''
@@ -96,14 +99,16 @@ jobs:
             # Generate README
             npx @bitnami/readme-generator-for-helm --readme $chart/README.md --values $chart/values.yaml
             # Check for uncommitted changes in README.md
-            if git status -s | grep $chart/README.md; then
-              echo "README.md for $chart is not up to date. Please run @bitnami/readme-generator-for-helm."
+            if git diff --exit-code -- $chart/README.md > /dev/null; then
+              echo "✅ README.md for $chart is up to date."
+            else
+              echo "❌ README.md for $chart is out of date. Please re-run the generator."
               need_update="yes"
             fi
 
             # Check that CHANGELOG.md was updated
             if ! git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -q "^$chart/CHANGELOG.md$"; then
-              echo "CHANGELOG.md not updated for $chart. Please run conventional-changelog-cli."
+              echo "❌ CHANGELOG.md not updated for $chart. Please run conventional-changelog-cli."
               need_update="yes"
             fi
           done
