@@ -169,7 +169,7 @@ jobs:
             name=$(yq '.name' $chart/Chart.yaml)
             version=$(yq '.version' $chart/Chart.yaml)
 
-            existing_versions=$(yq ".entries.\"$name\"[].version" .cr-existing-index/index.yaml 2>/dev/null || true)
+            existing_versions=$(yq eval ".entries[\"$name\"][].version" .cr-existing-index/index.yaml 2>/dev/null || true)
 
             if ! echo "$existing_versions" | grep -q "^$version$"; then
               echo "📦 New chart or version detected: $name-$version"
