@@ -179,11 +179,7 @@ jobs:
               helm package "$chart" --destination .cr-release-packages
               to_package+="$chart,"
             else
-              existing_versions=$(yq eval ".entries[\"$name\"][].version // []" .cr-existing-index/index.yaml)
-              if [ $? -ne 0 ]; then
-                echo "❌ Error: Failed to evaluate existing versions for $name using yq" >&2
-                exit 1
-              fi
+              existing_versions=$(yq eval ".entries[\"$name\"][].version // []" .cr-existing-index/index.yaml 2>/dev/null || echo "[]")
               if ! echo "$existing_versions" | grep -q "^$version$"; then
                 echo "📦 New version detected for chart $name: $version"
                 helm package "$chart" --destination .cr-release-packages
