@@ -18,6 +18,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/yq
+            ~/.cache/helm
+            ~/.npm
+          key: ${{ runner.os }}-deps-${{ hashFiles('package-lock.json') }}-${{ hashFiles('charts/*/Chart.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+
       - name: Set up Helm
         uses: azure/setup-helm@v4.2.0
         with:
