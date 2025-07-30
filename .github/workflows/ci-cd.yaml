@@ -2,6 +2,9 @@ name: Helm Chart CI/CD
 
 on:
   pull_request:
+    types: [opened, synchronize]
+    branches:
+      - main
     paths:
       - 'charts/**'
   push:
