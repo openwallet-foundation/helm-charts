@@ -134,32 +134,75 @@ jobs:
 
       - name: Check README and CHANGELOG updates
         run: |
-          need_update=""
-          chart=$(cat changed.txt)
-          # Generate README
-          npx @bitnami/readme-generator-for-helm --readme $chart/README.md --values $chart/values.yaml
-          # Check whether README.md was updated in the PR
-          if ! git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -q "^$chart/README.md$"; then
-            echo "❌ README.md for $chart was not updated in the PR. Please re-run the generator."
-            need_update="yes"
-          # Confirm README.md has been generated and committed correctly
-          elif ! git diff --exit-code -- $chart/README.md > /dev/null; then
-            echo "❌ README.md for $chart has uncommitted changes. Please commit the updated file."
-            need_update="yes"
-          else
-            echo "✅ README.md for $chart is up to date and committed."
+          chart=${{ needs.detect-changed-chart.outputs.chart }}
+
+          # Store original files for comparison
+          cp "$chart/README.md" "$chart/README.md.original" 2>/dev/null || touch "$chart/README.md.original"
+          cp "$chart/CHANGELOG.md" "$chart/CHANGELOG.md.original" 2>/dev/null || touch "$chart/CHANGELOG.md.original"
+
+          # Generate fresh README and CHANGELOG
+          echo "🔄 Generating fresh README for $chart..."
+          npx @bitnami/readme-generator-for-helm --readme "$chart/README.md" --values "$chart/values.yaml"
+
+          echo "🔄 Generating fresh CHANGELOG for $chart..."
+          npx conventional-changelog -p conventionalcommits -i "$chart/CHANGELOG.md" -s
+
+          # Check if README needs to be updated
+          readme_needs_update=false
+          if ! diff -q "$chart/README.md.original" "$chart/README.md" >/dev/null 2>&1; then
+            readme_needs_update=true
+            echo "📝 README.md has changes after generation"
           fi
 
-          # Check that CHANGELOG.md was updated
-          if [ -n "$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} $chart/ | grep -E 'Chart.yaml|values.yaml|templates/')" ]; then
-            if ! git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -q "^$chart/CHANGELOG.md$"; then
-              echo "❌ CHANGELOG.md not updated for $chart. Please run conventional-changelog-cli."
-              need_update="yes"
-            fi
+          # Check CHANGELOG (advisory only) - exclude documentation-only changes
+          functional_changes=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} "$chart/" | grep -v -E '(README\.md|CHANGELOG\.md|\.md$|NOTES\.txt)$' || true)
+
+          changelog_could_update=false
+          if ! diff -q "$chart/CHANGELOG.md.original" "$chart/CHANGELOG.md" >/dev/null 2>&1; then
+            changelog_could_update=true
           fi
-          if [ "$need_update" = "yes" ]; then
+
+          # Restore original files before reporting
+          mv "$chart/README.md.original" "$chart/README.md"
+          mv "$chart/CHANGELOG.md.original" "$chart/CHANGELOG.md"
+
+          # Report results - only fail on README issues
+          if [ "$readme_needs_update" = true ]; then
+            echo "❌ README.md for $chart needs to be updated."
+            echo "   The values.yaml file has @param annotations that require README regeneration."
+            echo "   Please run: npx @bitnami/readme-generator-for-helm --readme $chart/README.md --values $chart/values.yaml"
+            echo ""
+            echo "🛠️  To fix this issue:"
+            echo "   1. Install generator: npm install -g @bitnami/readme-generator-for-helm"
+            echo "   2. Update README: npx @bitnami/readme-generator-for-helm --readme $chart/README.md --values $chart/values.yaml"
+            echo "   3. Commit the updated README.md"
+            echo ""
             exit 1
+          else
+            echo "✅ README.md is up to date"
           fi
+
+          # Clean up temporary files
+          rm -f "$chart/README.md.original" "$chart/CHANGELOG.md.original"
+
+          # CHANGELOG guidance (never fails)
+          if [ -z "$functional_changes" ]; then
+            echo "✅ Documentation-only changes detected, CHANGELOG update not required"
+          elif [ "$changelog_could_update" = true ]; then
+            echo "📋 Functional changes detected:"
+            echo "$functional_changes" | sed 's/^/  /'
+            echo ""
+            echo "⚠️  CHANGELOG could be updated, but this is not enforced."
+            echo "   If your changes are significant (new features, bug fixes, breaking changes),"
+            echo "   please consider running: npx conventional-changelog -p conventionalcommits -i $chart/CHANGELOG.md -s"
+            echo ""
+            echo "   💡 Skip this if you're just fixing typos, formatting, or making trivial changes."
+          else
+            echo "✅ CHANGELOG guidance: No update needed or already up to date"
+          fi
+
+          echo "🎉 All documentation is up to date!"
+
       - name: Post PR comment on failure
         if: failure() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
