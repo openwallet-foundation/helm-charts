@@ -51,6 +51,17 @@ jobs:
             fi
           done
 
+      - name: Update Helm dependencies
+        run: |
+          for chart in $(cat changed.txt); do
+            if [ -f "$chart/Chart.yaml" ]; then
+              helm dependency update "$chart" || {
+                echo "❌ Failed to update dependencies for $chart"
+                exit 1
+              }
+            fi
+          done
+
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
