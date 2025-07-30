@@ -94,29 +94,34 @@ jobs:
         uses: helm/kind-action@v1
 
       - name: Test install changed chart
-        run: ct install --charts "$(cat changed.txt)" --config .github/ct.yaml
+        run: ct install --charts "${{ needs.detect-changed-chart.outputs.chart }}" --config .github/ct.yaml
 
       - name: Check version and appVersion bump
-        if: steps.changed.outputs.charts != ''
         run: |
-          for chart in $(cat changed.txt); do
-            echo "Checking $chart..."
+          chart="${{ needs.detect-changed-chart.outputs.chart }}"
+          echo "Checking $chart..."
 
-            old_version=$(git show ${{ github.event.pull_request.base.sha }}:$chart/Chart.yaml 2>/dev/null | yq '.version' || echo "0.0.0")
-            new_version=$(yq '.version' $chart/Chart.yaml)
-
-            old_app=$(git show ${{ github.event.pull_request.base.sha }}:$chart/Chart.yaml 2>/dev/null | yq '.appVersion' || echo "0.0.0")
-            new_app=$(yq '.appVersion' $chart/Chart.yaml)
-
-            if [[ "$old_version" == "$new_version" ]]; then
-              echo "❌ Chart version was not bumped in $chart (still $new_version)"
+          # Check chart version bump
+          compare_versions() {
+            local old_version=$1 new_version=$2
+            # If old_version sorts first, then new_version is greater (correct)
+            if [ "$(printf '%s\n' "$old_version" "$new_version" | sort -V | head -n1)" = "$old_version" ] && [ "$old_version" != "$new_version" ]; then
+              echo "✅ Version bump: $old_version → $new_version"
+            else
+              echo "❌ New version ($new_version) is not greater than old version ($old_version)"
               exit 1
             fi
+          }
+          old_version=$(git show ${{ github.event.pull_request.base.sha }}:$chart/Chart.yaml 2>/dev/null | yq '.version // "0.0.0"' || echo "0.0.0")
+          new_version=$(yq '.version // "0.0.0"' $chart/Chart.yaml)
+          compare_versions "$old_version" "$new_version"
 
-            if [[ "$old_app" == "$new_app" ]]; then
-              echo "⚠️ Warning: appVersion for $chart is unchanged ($new_app). Not failing, but consider bumping."
-            fi
-          done
+          # Check appVersion bump
+          old_app=$(git show ${{ github.event.pull_request.base.sha }}:$chart/Chart.yaml 2>/dev/null | yq '.appVersion // "0.0.0"' || echo "0.0.0")
+          new_app=$(yq '.appVersion // "0.0.0"' $chart/Chart.yaml)
+          if [[ "$old_app" == "$new_app" ]]; then
+            echo "⚠️ Warning: appVersion for $chart is unchanged ($new_app). Not failing, but consider bumping."
+          fi
 
       - name: Set up Node.js for generators
         uses: actions/setup-node@v4
