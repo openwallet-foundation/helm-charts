@@ -54,50 +54,29 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      - name: Add Helm repos from chart dependencies
+      - name: Add Helm repos and update dependencies
         run: |
-          sudo apt-get update && sudo apt-get install -y jq
-          npm install -g yq
-          charts=$(cat changed.txt 2>/dev/null || find charts -mindepth 1 -maxdepth 1 -type d)
-          repos=""
-          for chart in $charts; do
-            if [ -f "$chart/Chart.yaml" ]; then
-              yq '.dependencies // [] | .[] | .repository' "$chart/Chart.yaml"
-            fi
-          done | sort | uniq | while read repo; do
-            if [ -n "$repo" ]; then
-              name=$(echo "$repo" | sed 's|https\?://||;s|/|_|g')
-              helm repo add "$name" "$repo" || true
-            fi
-          done
-
-      - name: Update Helm dependencies
-        run: |
-          for chart in $(cat changed.txt); do
-            if [ -f "$chart/Chart.yaml" ]; then
-              helm dependency update "$chart" || {
-                echo "❌ Failed to update dependencies for $chart"
-                exit 1
-              }
-            fi
-          done
-
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.7.0
-
-      - name: Find changed or new charts
-        id: changed
-        run: |
-          changed=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '^charts/' | cut -d'/' -f2 | uniq)
-          if [ -z "$changed" ]; then
-            changed=$(git ls-files --others --exclude-standard charts/ | cut -d'/' -f2 | uniq)
+          chart=${{ needs.detect-changed-chart.outputs.chart }}
+          if [ ! -f "$chart/Chart.yaml" ]; then
+            echo "❌ Chart.yaml not found in $chart"
+            exit 1
           fi
-          if [ -n "$changed" ]; then
-            echo "$changed" > changed.txt
-            echo "charts=$changed" >> $GITHUB_OUTPUT
-          else
-            echo "No charts changed or added" > changed.txt
-            echo "charts=" >> $GITHUB_OUTPUT
+
+          # Add Helm repos from chart dependencies
+          yq '.dependencies // [] | .[] | .repository' "$chart/Chart.yaml" | sort | uniq | while read repo; do
+            if [ -n "$repo" ] && [ "$repo" != "null" ]; then
+              name=$(echo "$repo" | sed 's|https\?://||;s|/|_|g;s|[^a-zA-Z0-9_-]||g')
+              echo "Adding repo: $name -> $repo"
+              helm repo add "$name" "$repo" || echo "⚠️ Warning: Failed to add repo $repo"
+            fi
+          done
+
+          # Update Helm dependencies
+          if [ -f "$chart/Chart.yaml" ]; then
+            helm dependency update "$chart" || {
+              echo "❌ Failed to update dependencies for $chart"
+              exit 1
+            }
           fi
 
       - name: Lint changed chart
