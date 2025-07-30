@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changed-chart
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -47,9 +47,12 @@ jobs:
             ${{ runner.os }}-deps-
 
       - name: Set up Helm
-        uses: azure/setup-helm@v4.2.0
+        uses: azure/setup-helm@v4.3.0
         with:
-          version: v3.18.2
+          version: v3.18.4
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.7.0
 
       - name: Add Helm repos from chart dependencies
         run: |
@@ -129,8 +132,7 @@ jobs:
           done
 
       - name: Set up Node.js for generators
-        if: steps.changed.outputs.charts != ''
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
 
@@ -170,7 +172,7 @@ jobs:
           fi
       - name: Post PR comment on failure
         if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.issues.createComment({
@@ -185,14 +187,14 @@ jobs:
     needs: lint-test
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Helm
-        uses: azure/setup-helm@v4.2.0
+        uses: azure/setup-helm@v4.3.0
         with:
-          version: v3.18.2
+          version: v3.18.4
 
       - name: Add Helm repos from chart dependencies
         run: |
