@@ -13,6 +13,12 @@ on:
     paths:
       - 'charts/**'
 
+permissions:
+  contents: read
+  pull-requests: write
+  pages: write
+  id-token: write
+
 jobs:
   detect-changed-chart:
     runs-on: ubuntu-latest
