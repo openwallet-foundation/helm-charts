@@ -80,7 +80,15 @@ jobs:
           fi
 
       - name: Lint changed chart
-        run: ct lint --charts "$(cat changed.txt)" --config .github/ct.yaml
+        run: ct lint --charts "${{ needs.detect-changed-chart.outputs.chart }}" --config .github/ct.yaml
+
+      - name: Validate chart templates
+        run: |
+          chart=${{ needs.detect-changed-chart.outputs.chart }}
+          helm template "$chart" > /dev/null || {
+            echo "❌ Failed to render templates for $chart"
+            exit 1
+          }
 
       - name: Create kind cluster
         uses: helm/kind-action@v1
