@@ -64,10 +64,10 @@ jobs:
           for chart in $(cat changed.txt); do
             echo "Checking $chart..."
 
-            old_version=$(git show ${{ github.event.pull_request.base.sha }}:$chart/Chart.yaml | yq '.version')
+            old_version=$(git show ${{ github.event.pull_request.base.sha }}:$chart/Chart.yaml 2>/dev/null | yq '.version' || echo "0.0.0")
             new_version=$(yq '.version' $chart/Chart.yaml)
 
-            old_app=$(git show ${{ github.event.pull_request.base.sha }}:$chart/Chart.yaml | yq '.appVersion')
+            old_app=$(git show ${{ github.event.pull_request.base.sha }}:$chart/Chart.yaml 2>/dev/null | yq '.appVersion' || echo "0.0.0")
             new_app=$(yq '.appVersion' $chart/Chart.yaml)
 
             if [[ "$old_version" == "$new_version" ]]; then
