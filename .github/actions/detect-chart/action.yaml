@@ -10,30 +10,46 @@ runs:
     - id: detect
       shell: bash
       run: |
-        # Determine changed files based on event type
+        # Determine the correct base and head SHAs for comparison
         if [ "${{ github.event_name }}" = "pull_request" ]; then
-          changed=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '^charts/[^/]*/Chart.yaml$' | sed 's|^charts/\([^/]*\)/Chart.yaml$|\1|' | sort -u)
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
         else
-          # For push events, compare against the previous commit
-          changed=$(git diff --name-only HEAD^ HEAD | grep '^charts/[^/]*/Chart.yaml$' | sed 's|^charts/\([^/]*\)/Chart.yaml$|\1|' | sort -u)
+          # For push events
+          base_sha="${{ github.event.before }}"
+          head_sha="${{ github.sha }}"
         fi
 
-        # If no existing chart files changed, check for new chart in the PR
-        if [ -z "$changed" ]; then
-          changed=$(git ls-files --others --exclude-standard charts/ | cut -d'/' -f2 | sort -u)
+        echo "Comparing $base_sha...$head_sha"
+
+        # Look for any changes in charts/ directory to detect affected charts
+        changed_charts=$(git diff --name-only $base_sha $head_sha | grep '^charts/' | cut -d'/' -f2 | sort -u || true)
+
+        if [ -z "$changed_charts" ]; then
+          echo "❌ No changes detected in charts/ directory"
+          exit 1
         fi
 
         # Enforce single chart scope per PR
-        count=$(echo "$changed" | wc -w)
-        if [ "$count" -eq 0 ]; then
-          echo "❌ No Helm chart changes detected in charts/. PR should contain a new chart or updates to an existing chart."
-          exit 1
-        fi
+        count=$(echo "$changed_charts" | wc -w)
         if [ "$count" -gt 1 ]; then
-          echo "❌ Only one chart may be changed per PR. Found: $changed"
+          echo "❌ Only one chart may be changed per PR. Found: $changed_charts"
           exit 1
         fi
 
-        chart=$(echo "$changed")
-        echo "Detected chart: charts/$chart"
+        chart=$(echo "$changed_charts" | tr -d ' \n')
+
+        # Validate chart directory and Chart.yaml exist
+        if [ ! -d "charts/$chart" ] || [ ! -f "charts/$chart/Chart.yaml" ]; then
+          echo "❌ Invalid chart: charts/$chart/Chart.yaml not found"
+          exit 1
+        fi
+
+        # Check if this is a new chart or existing chart modification
+        if git cat-file -e $base_sha:charts/$chart/Chart.yaml 2>/dev/null; then
+          echo "✅ Detected changes to existing chart: $chart"
+        else
+          echo "✅ Detected new chart: $chart"
+        fi
+
         echo "chart=$chart" >> $GITHUB_OUTPUT

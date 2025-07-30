@@ -57,10 +57,6 @@ jobs:
       - name: Add Helm repos and update dependencies
         run: |
           chart=${{ needs.detect-changed-chart.outputs.chart }}
-          if [ ! -f "$chart/Chart.yaml" ]; then
-            echo "❌ Chart.yaml not found in $chart"
-            exit 1
-          fi
 
           # Add Helm repos from chart dependencies
           yq '.dependencies // [] | .[] | .repository' "$chart/Chart.yaml" | sort | uniq | while read repo; do
