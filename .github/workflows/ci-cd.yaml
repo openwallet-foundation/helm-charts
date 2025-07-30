@@ -263,44 +263,32 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      - name: Detect and package changed charts
-        id: detect
+      - name: Prepare release directories and index
         run: |
           mkdir -p .cr-release-packages
           mkdir -p .cr-existing-index
 
-          # Clone existing gh-pages to get current index.yaml
+          # Clone existing index.yaml from gh-pages (if any)
           git fetch origin gh-pages
           git show origin/gh-pages:index.yaml > .cr-existing-index/index.yaml || echo "apiVersion: v1\nentries: {}\ngenerated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" > .cr-existing-index/index.yaml
 
-          # Find all charts in /charts
-          charts=$(find charts -mindepth 1 -maxdepth 1 -type d)
+      - name: Package chart if new version
+        id: package
+        run: |
+          chart=${{ needs.detect-changed-chart.outputs.chart }}
+          name=$(yq '.name' $chart/Chart.yaml)
+          version=$(yq '.version' $chart/Chart.yaml)
 
-          # Determine which ones need packaging
-          to_package=""
-          for chart in $charts; do
-            name=$(yq '.name' $chart/Chart.yaml)
-            version=$(yq '.version' $chart/Chart.yaml)
+          exists=$(yq eval ".entries[\"$name\"][]?.version" .cr-existing-index/index.yaml | grep -Fx "$version" || true)
 
-            # Check if the chart exists in index.yaml
-            if yq eval "(.entries.\"$name\" | type) == \"array\"" .cr-existing-index/index.yaml > /dev/null 2>&1; then
-              existing_versions=$(yq eval ".entries[\"$name\"][].version" .cr-existing-index/index.yaml)
-              if ! echo "$existing_versions" | grep -q "^$version$"; then
-                echo "📦 New version detected for chart $name: $version"
-                helm package "$chart" --destination .cr-release-packages
-                to_package+="$chart,"
-              else
-                echo "✔️ Chart $name version $version already exists in index"
-              fi
-            else
-              echo "📦 New chart detected: $name-$version"
-              helm package "$chart" --destination .cr-release-packages
-              to_package+="$chart,"
-            fi
-          done
-
-          to_package=${to_package%,} # Trim trailing comma
-          echo "charts=$to_package" >> $GITHUB_OUTPUT
+          if [ -z "$exists" ]; then
+            echo "📦 Packaging new chart version: $name-$version"
+            helm package "$chart" --destination .cr-release-packages
+            echo "packaged=true" >> $GITHUB_OUTPUT
+          else
+            echo "✔️ Chart $name version $version already exists in index.yaml. Skipping package."
+            echo "packaged=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Update index.yaml
         if: steps.detect.outputs.charts != ''
