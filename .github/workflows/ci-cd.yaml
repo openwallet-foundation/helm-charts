@@ -169,14 +169,21 @@ jobs:
             name=$(yq '.name' $chart/Chart.yaml)
             version=$(yq '.version' $chart/Chart.yaml)
 
-            chart_exists=$(yq eval ".entries[\"$name\"] // null" .cr-existing-index/index.yaml 2>/dev/null || true)
-
+            chart_exists=$(yq eval ".entries[\"$name\"] // null" .cr-existing-index/index.yaml)
+            if [ $? -ne 0 ]; then
+              echo "❌ Error: Failed to evaluate chart existence for $name using yq" >&2
+              exit 1
+            fi
             if [ "$chart_exists" = "null" ]; then
               echo "📦 New chart detected: $name-$version"
               helm package "$chart" --destination .cr-release-packages
               to_package+="$chart,"
             else
-              existing_versions=$(yq eval ".entries[\"$name\"][].version // []" .cr-existing-index/index.yaml 2>/dev/null || true)
+              existing_versions=$(yq eval ".entries[\"$name\"][].version // []" .cr-existing-index/index.yaml)
+              if [ $? -ne 0 ]; then
+                echo "❌ Error: Failed to evaluate existing versions for $name using yq" >&2
+                exit 1
+              fi
               if ! echo "$existing_versions" | grep -q "^$version$"; then
                 echo "📦 New version detected for chart $name: $version"
                 helm package "$chart" --destination .cr-release-packages
