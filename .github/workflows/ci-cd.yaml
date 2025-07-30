@@ -65,20 +65,29 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      - name: Lint changed charts
-        run: ct lint --config .github/ct.yaml
+      - name: Find changed or new charts
+        id: changed
+        run: |
+          changed=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '^charts/' | cut -d'/' -f2 | uniq)
+          if [ -z "$changed" ]; then
+            changed=$(git ls-files --others --exclude-standard charts/ | cut -d'/' -f2 | uniq)
+          fi
+          if [ -n "$changed" ]; then
+            echo "$changed" > changed.txt
+            echo "charts=$changed" >> $GITHUB_OUTPUT
+          else
+            echo "No charts changed or added" > changed.txt
+            echo "charts=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Lint changed chart
+        run: ct lint --charts "$(cat changed.txt)" --config .github/ct.yaml
 
       - name: Create kind cluster
         uses: helm/kind-action@v1
 
-      - name: Test install changed charts
-        run: ct install --config .github/ct.yaml
-
-      - name: Find changed charts
-        id: changed
-        run: |
-          ct list-changed --config .github/ct.yaml > changed.txt
-          echo "charts=$(cat changed.txt | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
+      - name: Test install changed chart
+        run: ct install --charts "$(cat changed.txt)" --config .github/ct.yaml
 
       - name: Check version and appVersion bump
         if: steps.changed.outputs.charts != ''
