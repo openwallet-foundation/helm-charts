@@ -1,0 +1,39 @@
+name: Detect Changed Chart
+description: Detects which Helm chart was added or modified in a PR and enforces single-chart scope.
+outputs:
+  chart:
+    description: The changed chart directory name
+    value: ${{ steps.detect.outputs.chart }}
+runs:
+  using: "composite"
+  steps:
+    - id: detect
+      shell: bash
+      run: |
+        # Determine changed files based on event type
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          changed=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '^charts/[^/]*/Chart.yaml$' | sed 's|^charts/\([^/]*\)/Chart.yaml$|\1|' | sort -u)
+        else
+          # For push events, compare against the previous commit
+          changed=$(git diff --name-only HEAD^ HEAD | grep '^charts/[^/]*/Chart.yaml$' | sed 's|^charts/\([^/]*\)/Chart.yaml$|\1|' | sort -u)
+        fi
+
+        # If no existing chart files changed, check for new chart in the PR
+        if [ -z "$changed" ]; then
+          changed=$(git ls-files --others --exclude-standard charts/ | cut -d'/' -f2 | sort -u)
+        fi
+
+        # Enforce single chart scope per PR
+        count=$(echo "$changed" | wc -w)
+        if [ "$count" -eq 0 ]; then
+          echo "❌ No Helm chart changes detected in charts/. PR should contain a new chart or updates to an existing chart."
+          exit 1
+        fi
+        if [ "$count" -gt 1 ]; then
+          echo "❌ Only one chart may be changed per PR. Found: $changed"
+          exit 1
+        fi
+
+        chart=$(echo "$changed")
+        echo "Detected chart: charts/$chart"
+        echo "chart=$chart" >> $GITHUB_OUTPUT

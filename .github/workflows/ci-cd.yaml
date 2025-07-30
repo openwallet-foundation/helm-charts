@@ -14,8 +14,22 @@ on:
       - 'charts/**'
 
 jobs:
+  detect-changed-chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed chart
+        id: detect
+        uses: ./.github/actions/detect-chart
+    outputs:
+      chart: ${{ steps.detect.outputs.chart }}
+
   lint-test:
     runs-on: ubuntu-latest
+    needs: detect-changed-chart
     steps:
       - uses: actions/checkout@v3
         with:
