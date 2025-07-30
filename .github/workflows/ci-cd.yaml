@@ -42,7 +42,7 @@ jobs:
             ~/.cache/yq
             ~/.cache/helm
             ~/.npm
-          key: ${{ runner.os }}-deps-${{ hashFiles('package-lock.json') }}-${{ hashFiles('charts/*/Chart.yaml') }}
+          key: ${{ runner.os }}-deps-${{ needs.detect-changed-chart.outputs.chart }}-${{ hashFiles('${{ needs.detect-changed-chart.outputs.chart }}/**/*') }}
           restore-keys: |
             ${{ runner.os }}-deps-
 
