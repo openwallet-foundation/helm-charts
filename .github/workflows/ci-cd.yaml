@@ -48,7 +48,7 @@ jobs:
             ~/.cache/yq
             ~/.cache/helm
             ~/.npm
-          key: ${{ runner.os }}-deps-${{ needs.detect-changed-chart.outputs.chart }}-${{ hashFiles('${{ needs.detect-changed-chart.outputs.chart }}/**/*') }}
+          key: ${{ runner.os }}-deps-${{ needs.detect-changed-chart.outputs.chart }}-${{ hashFiles('charts/${{ needs.detect-changed-chart.outputs.chart }}/**/*') }}
           restore-keys: |
             ${{ runner.os }}-deps-
 
