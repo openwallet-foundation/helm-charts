@@ -247,18 +247,16 @@ jobs:
 
       - name: Add Helm repos from chart dependencies
         run: |
-          sudo apt-get update && sudo apt-get install -y jq
-          npm install -g yq
-          charts=$(cat changed.txt 2>/dev/null || find charts -mindepth 1 -maxdepth 1 -type d)
-          repos=""
-          for chart in $charts; do
-            if [ -f "$chart/Chart.yaml" ]; then
-              yq '.dependencies // [] | .[] | .repository' "$chart/Chart.yaml"
-            fi
-          done | sort | uniq | while read repo; do
-            if [ -n "$repo" ]; then
-              name=$(echo "$repo" | sed 's|https\?://||;s|/|_|g')
-              helm repo add "$name" "$repo" || true
+          chart=${{ needs.detect-changed-chart.outputs.chart }}
+          if [ ! -f "$chart/Chart.yaml" ]; then
+            echo "❌ Chart.yaml not found in $chart"
+            exit 1
+          fi
+          yq '.dependencies // [] | .[] | .repository' "$chart/Chart.yaml" | sort | uniq | while read repo; do
+            if [ -n "$repo" ] && [ "$repo" != "null" ]; then
+              name=$(echo "$repo" | sed 's|https\?://||;s|/|_|g;s|[^a-zA-Z0-9_-]||g')
+              echo "Adding repo: $name -> $repo"
+              helm repo add "$name" "$repo" || echo "Warning: Failed to add repo $repo"
             fi
           done
 
