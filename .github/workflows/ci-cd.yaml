@@ -129,12 +129,10 @@ jobs:
           node-version: 'lts/*'
 
       - name: Install readme and changelog generators
-        if: steps.changed.outputs.charts != ''
         run: |
           npm install -g @bitnami/readme-generator-for-helm conventional-changelog-cli conventional-changelog-conventionalcommits
 
-      - name: Generate and check README and CHANGELOG
-        if: steps.changed.outputs.charts != ''
+      - name: Check README and CHANGELOG updates
         run: |
           need_update=""
           chart=$(cat changed.txt)
