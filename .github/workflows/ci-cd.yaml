@@ -291,12 +291,12 @@ jobs:
           fi
 
       - name: Update index.yaml
-        if: steps.detect.outputs.charts != ''
+        if: steps.package.outputs.packaged == 'true'
         run: |
           helm repo index .cr-release-packages --url https://openwallet-foundation.github.io/helm-charts/
 
-      - name: Deploy to GitHub Pages
-        if: steps.detect.outputs.charts != ''
+      - name: Publish to GitHub Pages
+        if: steps.package.outputs.packaged == 'true'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
