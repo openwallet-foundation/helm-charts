@@ -147,6 +147,17 @@ jobs:
           if [ "$need_update" = "yes" ]; then
             exit 1
           fi
+      - name: Post PR comment on failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '❌ PR checks failed. Review logs for linting, testing, or validation errors.'
+            })
 
   publish:
     runs-on: ubuntu-latest
