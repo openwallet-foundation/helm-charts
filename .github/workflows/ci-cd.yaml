@@ -136,7 +136,7 @@ jobs:
 
       - name: Install readme and changelog generators
         run: |
-          npm install -g @bitnami/readme-generator-for-helm conventional-changelog-cli conventional-changelog-conventionalcommits
+          npm install -g @bitnami/readme-generator-for-helm@2.7.0 conventional-changelog-cli@5.0.0 conventional-changelog-conventionalcommits
 
       - name: Check README and CHANGELOG updates
         working-directory: ./charts
