@@ -189,9 +189,6 @@ jobs:
             echo "✅ README.md is up to date"
           fi
 
-          # Clean up temporary files
-          rm -f "$chart/README.md.original" "$chart/CHANGELOG.md.original"
-
           # CHANGELOG guidance (never fails)
           if [ -z "$functional_changes" ]; then
             echo "✅ Documentation-only changes detected, CHANGELOG update not required"
