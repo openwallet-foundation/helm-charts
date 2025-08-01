@@ -234,7 +234,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    needs: [detect-changed-chart, lint-test]
+    needs: [detect-changed-chart]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     concurrency:
       group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
@@ -276,9 +276,8 @@ jobs:
 
       - name: Package chart if new version
         id: package
-        working-directory: ./charts
         run: |
-          chart=${{ needs.detect-changed-chart.outputs.chart }}
+          chart=charts/${{ needs.detect-changed-chart.outputs.chart }}
           name=$(yq '.name' $chart/Chart.yaml)
           version=$(yq '.version' $chart/Chart.yaml)
 
