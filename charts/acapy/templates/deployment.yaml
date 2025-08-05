@@ -27,16 +27,16 @@ spec:
         {{- if .Values.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
         {{- end }}
+      {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
       labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
         app.kubernetes.io/component: agent
     spec:
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ template "acapy.serviceAccountName" . }}
-      {{- include "acapy.imagePullSecrets" . | nindent 6 -}}
+      {{- include "acapy.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.affinity }}
-      affinity: {{- include "common.tplvalues.render" (dict "value" .Values.affinity "context" $) | nindent 2 }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.affinity "context" $) | nindent 8 }}
       {{- else }}
-      {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
       affinity:
         podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
         podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
