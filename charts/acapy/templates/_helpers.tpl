@@ -1,11 +1,4 @@
 {{/*
-Expand the name of the chart.
-*/}}
-{{- define "acapy.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
 Create URL based on hostname and TLS status
 */}}
 {{- define "acapy.agent.url" -}}
@@ -121,33 +114,6 @@ Generate acapy wallet storage credentials
     '{"account":"{{ .Values.walletStorageCredentials.account | default "acapy" }}","password":"$(POSTGRES_PASSWORD)","admin_account":"{{ .Values.walletStorageCredentials.admin_account }}","admin_password":"$(POSTGRES_POSTGRES_PASSWORD)"}'
 {{- end -}}
 {{- end -}}
-
-{{/*
-Create chart name and version as used by the chart label.
-*/}}
-{{- define "acapy.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Common labels
-*/}}
-{{- define "acapy.labels" -}}
-helm.sh/chart: {{ include "acapy.chart" . }}
-{{ include "acapy.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Selector labels
-*/}}
-{{- define "acapy.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "acapy.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
 
 {{/*
 Return the proper Docker Image Registry Secret Names
