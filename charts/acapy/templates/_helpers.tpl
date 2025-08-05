@@ -42,7 +42,7 @@ generate hosts if not overriden
 Return the proper AcaPy image name
 */}}
 {{- define "acapy.image" -}}
-{{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
+{{ include "common.images.image" ( dict "imageRoot" .Values.image "global" .Values.global "chart" .Chart ) }}
 {{- end -}}
 
 {{/*

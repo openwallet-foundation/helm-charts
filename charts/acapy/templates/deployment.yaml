@@ -63,7 +63,7 @@ spec:
           {{- if .Values.containerSecurityContext.enabled }}
           securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.containerSecurityContext "context" $) | nindent 12 }}
           {{- end }}
-          image: {{ include "acapy.image" . }}
+          image: {{ template "acapy.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
             - /bin/bash
