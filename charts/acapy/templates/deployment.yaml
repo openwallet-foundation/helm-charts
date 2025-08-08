@@ -1,3 +1,4 @@
+{{ $apiSecretName := printf "%s-api" (include "common.names.fullname" .) }}
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
@@ -91,7 +92,7 @@ spec:
             - name: ACAPY_ADMIN_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ printf "%s-api" (include "common.names.fullname" .) }}
+                  name: {{ $apiSecretName }}
                   key: adminApiKey
                   optional: true
             - name: ACAPY_ENDPOINT
@@ -99,7 +100,7 @@ spec:
             - name: ACAPY_WALLET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ printf "%s-api" (include "common.names.fullname" .) }}
+                  name: {{ $apiSecretName }}
                   key: walletKey
             - name: ACAPY_WALLET_SEED
               valueFrom:
@@ -116,6 +117,10 @@ spec:
                 secretKeyRef:
                   name: {{ template "acapy.database.secretName" . }}
                   key: {{ .Values.walletStorageCredentials.secretKeys.adminPasswordKey }}
+            - name: ACAPY_MULTITENANT_JWT_SECRET
+              valueFrom:
+                  name: {{ $apiSecretName }}
+                  key: jwt
             - name: ACAPY_WALLET_STORAGE_CONFIG
               value: {{ include "acapy.walletStorageConfig" . }}
             - name: ACAPY_WALLET_STORAGE_CREDS

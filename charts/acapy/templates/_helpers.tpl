@@ -59,6 +59,17 @@ Usage:
 {{- end }}
 
 {{/*
+Multitenancy config (Legacy support)
+*/}}
+{{- define "acapy.multitenancyConfiguration" -}}
+{{- if .Values.multitenancyConfiguration.json -}}
+{{- .Values.multitenancyConfiguration.json -}}
+{{- else -}}
+'{"wallet_type":"{{ .Values.multitenancyConfiguration.wallet_type | default "single-wallet-askar" }}"}'
+{{- end -}}
+{{- end -}}
+
+{{/*
 Create a default fully qualified app name for the postgres requirement.
 */}}
 {{- define "global.postgresql.fullname" -}}
