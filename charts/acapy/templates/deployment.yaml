@@ -38,10 +38,16 @@ spec:
       {{- if .Values.affinity }}
       affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.affinity "context" $) | nindent 8 }}
       {{- else }}
+      {{- /* Compute presets; only render affinity if any sub-section has content */}}
+      {{- $podAff := include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "customLabels" $podLabels "context" $) }}
+      {{- $podAntiAff := include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "customLabels" $podLabels "context" $) }}
+      {{- $nodeAff := include "common.affinities.nodes" (dict "type" .Values.nodeAffinityPreset.type "key" .Values.nodeAffinityPreset.key "values" .Values.nodeAffinityPreset.values) }}
+      {{- if or $podAff $podAntiAff $nodeAff }}
       affinity:
-        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
-        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
-        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.nodeAffinityPreset.type "key" .Values.nodeAffinityPreset.key "values" .Values.nodeAffinityPreset.values) | nindent 10 }}
+        {{- if $podAff }}podAffinity: {{ $podAff | nindent 10 }}{{- end }}
+        {{- if $podAntiAff }}podAntiAffinity: {{ $podAntiAff | nindent 10 }}{{- end }}
+        {{- if $nodeAff }}nodeAffinity: {{ $nodeAff | nindent 10 }}{{- end }}
+      {{- end }}
       {{- end }}
       {{- if .Values.nodeSelector -}}
       nodeSelector: {{- include "common.tplvalues.render" (dict "value" .Values.nodeSelector "context" $) | nindent 8 -}}
@@ -119,6 +125,7 @@ spec:
                   key: {{ .Values.walletStorageCredentials.secretKeys.adminPasswordKey }}
             - name: ACAPY_MULTITENANT_JWT_SECRET
               valueFrom:
+                secretKeyRef:
                   name: {{ $apiSecretName }}
                   key: jwt
             - name: ACAPY_WALLET_STORAGE_CONFIG
@@ -203,10 +210,6 @@ spec:
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.tolerations }}
