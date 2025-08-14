@@ -1,3 +1,13 @@
+##  (2025-08-14)
+
+### Features
+
+* Add multitenancyConfiguration ([907647e](https://github.com/i5okie/owf-helm-charts/commit/907647e3b0ef5eb550d44f2bae8272cf77bb01fd))
+* update image rendering ([05daaef](https://github.com/i5okie/owf-helm-charts/commit/05daaef949e6895ffba858697a581d0187b6ea64))
+
+### Bug Fixes
+
+* fix syntax ([da05514](https://github.com/i5okie/owf-helm-charts/commit/da05514f4c1700129222c6de5d571d526ff8fdd3))
 ##  (2025-07-28)
 
 ### Bug Fixes
