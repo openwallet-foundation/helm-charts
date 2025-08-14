@@ -34,6 +34,7 @@ jobs:
     if: github.event_name == 'pull_request'
     permissions:
       contents: write
+      pull-requests: write
     needs: detect-changed-chart
     steps:
       - uses: actions/checkout@v4
@@ -134,7 +135,7 @@ jobs:
 
       - name: Install readme and changelog generators
         run: |
-          npm install -g @bitnami/readme-generator-for-helm@2.7.0 conventional-changelog-cli@5.0.0 conventional-changelog-conventionalcommits
+          npm install -g @bitnami/readme-generator-for-helm@2.7.2 conventional-changelog-cli@5.0.0 conventional-changelog-conventionalcommits
 
       - name: Check README and CHANGELOG updates
         working-directory: ./charts
