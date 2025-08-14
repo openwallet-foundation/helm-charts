@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ printf "%s-config" (include "common.names.fullname" .) }}
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
-    app.kubernetes.io/component: agent0
+    app.kubernetes.io/component: agent
   {{- if .Values.commonAnnotations }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}

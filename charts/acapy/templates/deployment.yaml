@@ -1,4 +1,5 @@
 {{ $apiSecretName := printf "%s-api" (include "common.names.fullname" .) }}
+{{ $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
@@ -13,7 +14,6 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
-  {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
   selector:
     matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
   {{- if .Values.updateStrategy }}
@@ -28,7 +28,6 @@ spec:
         {{- if .Values.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
         {{- end }}
-      {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
       labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
         app.kubernetes.io/component: agent
     spec:
@@ -44,26 +43,32 @@ spec:
       {{- $nodeAff := include "common.affinities.nodes" (dict "type" .Values.nodeAffinityPreset.type "key" .Values.nodeAffinityPreset.key "values" .Values.nodeAffinityPreset.values) }}
       {{- if or $podAff $podAntiAff $nodeAff }}
       affinity:
-        {{- if $podAff }}podAffinity: {{ $podAff | nindent 10 }}{{- end }}
-        {{- if $podAntiAff }}podAntiAffinity: {{ $podAntiAff | nindent 10 }}{{- end }}
-        {{- if $nodeAff }}nodeAffinity: {{ $nodeAff | nindent 10 }}{{- end }}
+        {{- if $podAff }}
+        podAffinity: {{ $podAff | nindent 10 }}
+        {{- end }}
+        {{- if $podAntiAff }}
+        podAntiAffinity: {{ $podAntiAff | nindent 10 }}
+        {{- end }}
+        {{- if $nodeAff }}
+        nodeAffinity: {{ $nodeAff | nindent 10 }}
+        {{- end }}
       {{- end }}
       {{- end }}
-      {{- if .Values.nodeSelector -}}
+      {{- if .Values.nodeSelector }}
       nodeSelector: {{- include "common.tplvalues.render" (dict "value" .Values.nodeSelector "context" $) | nindent 8 -}}
       {{- end -}}
-      {{- if .Values.tolerations -}}
+      {{- if .Values.tolerations }}
       tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.tolerations "context" $) | nindent 8 }}
       {{- end -}}
-      {{- if .Values.topologySpreadConstraints -}}
+      {{- if .Values.topologySpreadConstraints }}
       topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" $) | nindent 8 }}
       {{- end -}}
-      {{- if .Values.podSecurityContext.enabled -}}
+      {{- if .Values.podSecurityContext.enabled }}
       securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.podSecurityContext "context" $) | nindent 8 }}
       {{- end -}}
       {{- if .Values.initContainers }}
       initContainers:
-      {{ include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) }}
+      {{ include "common.tplvalues.render" (dict "value" .Values.initContainers "context" $) | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -208,11 +213,3 @@ spec:
         {{- if .Values.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
         {{- end }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}

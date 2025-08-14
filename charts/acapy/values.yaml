@@ -910,6 +910,8 @@ postgresql:
     enablePostgresUser: true
     existingSecret: ""
   architecture: standalone
+  commonLabels:
+      app.kubernetes.io/component: agent
   primary:
     persistence:
       ## @param postgresql.primary.persistence.enabled Enable PostgreSQL Primary data persistence using PVC
