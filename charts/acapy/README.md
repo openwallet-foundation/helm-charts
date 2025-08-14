@@ -96,10 +96,10 @@ Note: Secure values of the configuration are passed via equivalent environment v
 
 ### Wallet Storage configuration
 
-Specifies the storage configuration to use for the wallet.
-This is required if you are for using 'postgres_storage' wallet 'storage type.
-For example, '{"url":"localhost:5432", "wallet_scheme":"MultiWalletSingleTable"}'.
-This configuration maps to the indy sdk postgres plugin (PostgresConfig).
+ Specifies the storage configuration to use for the wallet.
+ This is required if you are for using 'postgres_storage' wallet 'storage type.
+ For example, '{"url":"localhost:5432", "wallet_scheme":"MultiWalletSingleTable"}'.
+ This configuration maps to the indy sdk postgres plugin (PostgresConfig).
 
 | Name                                  | Description                                                                                                                                                            | Value               |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
@@ -110,11 +110,11 @@ This configuration maps to the indy sdk postgres plugin (PostgresConfig).
 
 ### Wallet Storage Credentials
 
-Specifies the storage credentials to use for the wallet.
-This is required if you are for using 'postgres_storage' wallet 'storage type.
-For example, '{"account":"postgres","password":"mysecretpassword","admin_account":"postgres","admin_password":"mysecretpassword"}'.
-This configuration maps to the indy sdk postgres plugin (PostgresCredential).
-NOTE: admin_user must have the CREATEDB role or else initialization will fail.
+ Specifies the storage credentials to use for the wallet.
+ This is required if you are for using 'postgres_storage' wallet 'storage type.
+ For example, '{"account":"postgres","password":"mysecretpassword","admin_account":"postgres","admin_password":"mysecretpassword"}'.
+ This configuration maps to the indy sdk postgres plugin (PostgresCredential).
+ NOTE: admin_user must have the CREATEDB role or else initialization will fail.
 
 | Name                                                   | Description                                                                                                                                                                                                                    | Value               |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- |
@@ -302,6 +302,7 @@ NOTE: admin_user must have the CREATEDB role or else initialization will fail.
 | `postgresql.auth.enablePostgresUser`                  | Assign a password to the "postgres" admin user. Otherwise, remote access will be blocked for this user. Not recommended for production deployments.                                                                        | `true`                   |
 | `postgresql.auth.existingSecret`                      | Name of existing secret to use for PostgreSQL credentials                                                                                                                                                                  | `""`                     |
 | `postgresql.architecture`                             | PostgreSQL architecture (`standalone` or `replication`)                                                                                                                                                                    | `standalone`             |
+| `postgresql.commonLabels`                             | Common labels to add to all resources, add agent label for consistency.                                                                                                                                                    | `[]`                     |
 | `postgresql.primary.persistence.enabled`              | Enable PostgreSQL Primary data persistence using PVC                                                                                                                                                                       | `true`                   |
 | `postgresql.primary.persistence.size`                 | PVC Storage Request for PostgreSQL volume                                                                                                                                                                                  | `1Gi`                    |
 | `postgresql.primary.containerSecurityContext.enabled` | Enable container security context                                                                                                                                                                                          | `false`                  |
