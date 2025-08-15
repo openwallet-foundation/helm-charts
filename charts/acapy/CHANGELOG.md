@@ -3,6 +3,11 @@
 ### Bug Fixes
 
 * incorrect indentation ([241e03f](https://github.com/i5okie/owf-helm-charts/commit/241e03f52e2e841d94a9051518b1288604cf30b2))
+##  (2025-08-15)
+
+### Bug Fixes
+
+* incorrect indentation ([241e03f](https://github.com/i5okie/owf-helm-charts/commit/241e03f52e2e841d94a9051518b1288604cf30b2))
 ##  (2025-08-14)
 
 ### Features
