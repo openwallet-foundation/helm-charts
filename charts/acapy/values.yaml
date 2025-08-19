@@ -273,7 +273,7 @@ persistence:
   ## If defined, PVC must be created manually before volume will be bound
   ##
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   ## @param persistence.size PVC Storage Request for Tails volume
   ##
   size: 1Gi
