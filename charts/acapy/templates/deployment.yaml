@@ -106,8 +106,6 @@ spec:
                   name: {{ $apiSecretName }}
                   key: adminApiKey
                   optional: true
-            - name: ACAPY_ENDPOINT
-              value: {{ include "acapy.agent.url" . }}
             - name: ACAPY_WALLET_KEY
               valueFrom:
                 secretKeyRef:
