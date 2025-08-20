@@ -169,7 +169,7 @@ argfile.yml:
   wallet-name: askar-wallet
   wallet-storage-type: postgres_storage
   wallet-type: askar
-  webhook-url: '{{ include "acapy.host" . }}'
+  webhook-url: '{{- printf "%s/webhooks" (include "acapy.agent.url" .) }}'
 
 ## @param ledgers.yml [object]
 ledgers.yml:

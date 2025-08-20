@@ -18,6 +18,9 @@ Create URL based on hostname and TLS status
 {{- else if .Values.ingress.agent.enabled -}}
 {{- $scheme := (default "https" .Values.ingress.agent.publicScheme) -}}
 {{- printf "%s://%s" $scheme (include "acapy.host" .) }}
+{{- else -}}
+{{- $scheme := (default "https" .Values.service.publicScheme) -}}
+{{- printf "%s://%s" $scheme (include "acapy.host" .) }}
 {{- end -}}
 {{- end }}
 
@@ -32,6 +35,13 @@ Create Websockets URL based on hostname and TLS status
 {{- regexReplaceAll "^http" .Values.agentUrl "ws" | trim -}}
 {{- else if .Values.ingress.agent.enabled -}}
 {{- $scheme := (default "https" .Values.ingress.agent.publicScheme) -}}
+{{- if eq $scheme "https" -}}
+{{- printf "wss://%s" (include "acapy.host" .) }}
+{{- else -}}
+{{- printf "ws://%s" (include "acapy.host" .) }}
+{{- end -}}
+{{- else -}}
+{{- $scheme := (default "https" .Values.service.publicScheme) -}}
 {{- if eq $scheme "https" -}}
 {{- printf "wss://%s" (include "acapy.host" .) }}
 {{- else -}}
