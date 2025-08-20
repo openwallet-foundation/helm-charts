@@ -202,6 +202,9 @@ plugin-config.yml: {}
 ##
 websockets:
   enabled: false
+  ## @param websockets.publicUrl Explicit public websockets URL. If not set, it will be derived from agentUrl or ingress.publicScheme.
+  ##
+  publicUrl: ""
 
 ## @section Wallet Storage configuration
 ## @descriptionStart
@@ -435,6 +438,9 @@ ingress:
     ## @param ingress.agent.hostname When the ingress is enabled, a host pointing to this will be created
     ##
     hostname: acapy.local
+    ## @param ingress.agent.publicScheme Scheme used to construct the public URL from the ingress host. Useful when TLS is terminated externally (e.g., OpenShift Routes) or handled by cert-manager.
+    ##
+    publicScheme: https
     ## @param ingress.agent.path Default path for the ingress resource
     ## The Path to AcaPy. You may need to set this to '/*' in order to use this with ALB ingress controllers.
     ##

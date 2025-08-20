@@ -1,11 +1,23 @@
 {{/*
+generate hosts if not overriden
+*/}}
+{{- define "acapy.host" -}}
+{{- if and .Values.agentUrl (not .Values.ingress.agent.enabled) }}
+    {{ .Values.agentUrl }}
+{{- else -}}
+    {{ .Values.ingress.agent.hostname }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Create URL based on hostname and TLS status
 */}}
 {{- define "acapy.agent.url" -}}
-{{- if .Values.ingress.agent.tls -}}
-{{- printf "https://%s" (include "acapy.host" .) }}
-{{- else -}}
-{{- printf "http://%s" (include "acapy.host" .) }}
+{{- if and .Values.agentUrl (not .Values.ingress.agent.enabled) }}
+{{- printf "%s" .Values.agentUrl }}
+{{- else if .Values.ingress.agent.enabled -}}
+{{- $scheme := (default "https" .Values.ingress.agent.publicScheme) -}}
+{{- printf "%s://%s" $scheme (include "acapy.host" .) }}
 {{- end -}}
 {{- end }}
 
@@ -13,23 +25,20 @@ Create URL based on hostname and TLS status
 Create Websockets URL based on hostname and TLS status
 */}}
 {{- define "acapy.agent.wsUrl" -}}
-{{- if .Values.ingress.agent.tls -}}
+{{- if .Values.websockets.publicUrl -}}
+{{- printf "%s" .Values.websockets.publicUrl }}
+{{- else if and .Values.agentUrl (not .Values.ingress.agent.enabled) -}}
+{{- /* Map http->ws and https->wss */ -}}
+{{- regexReplaceAll "^http" .Values.agentUrl "ws" | trim -}}
+{{- else if .Values.ingress.agent.enabled -}}
+{{- $scheme := (default "https" .Values.ingress.agent.publicScheme) -}}
+{{- if eq $scheme "https" -}}
 {{- printf "wss://%s" (include "acapy.host" .) }}
 {{- else -}}
 {{- printf "ws://%s" (include "acapy.host" .) }}
 {{- end -}}
+{{- end -}}
 {{- end }}
-
-{{/*
-generate hosts if not overriden
-*/}}
-{{- define "acapy.host" -}}
-{{- if .Values.ingress.agent.enabled -}}
-    {{ .Values.ingress.agent.hostname }}
-{{- else -}}
-    {{ .Values.agentUrl }}
-{{- end -}}
-{{- end -}}
 
 {{/*
 Return the proper AcaPy image name
