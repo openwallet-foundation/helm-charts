@@ -27,5 +27,6 @@ To maintain clarity, consistency, and automation reliability, please follow thes
 
 - All charts are automatically linted and tested on pull requests.
 - On merge to `main`, any changed charts are automatically published to GitHub Pages.
+- **CI override values**: To make KIND-safe CI installs pass without changing chart defaults, you may add an optional `values.ci.yaml` in the chart directory. This file is only used by CI during test installs and should be excluded from packaging via `.helmignore`.
 
 By adhering to these rules, you help ensure a smooth, automated release process and make reviewing PRs easier for maintainers. Thank you!
