@@ -83,19 +83,7 @@ spec:
           args:
             - >-
               aca-py start
-              --inbound-transport http '0.0.0.0' {{ .Values.service.ports.http }}
-              --outbound-transport http
-              {{- if .Values.websockets.enabled }}
-              --inbound-transport ws '0.0.0.0' {{ .Values.service.ports.ws }}
-              --outbound-transport ws
-              {{- end }}
-              --admin '0.0.0.0' {{ .Values.service.ports.admin }}
               --arg-file '/home/aries/argfile.yml'
-              {{- if .Values.websockets.enabled }}
-              --endpoint {{ include "acapy.agent.url" . }} {{ include "acapy.agent.wsUrl" . }}
-              {{- else }}
-              --endpoint {{ include "acapy.agent.url" . }}
-              {{- end }}
               {{- if .Values.extraArgs }}
               {{ .Values.extraArgs | join " " }}
               {{- end }}
@@ -131,8 +119,6 @@ spec:
                 secretKeyRef:
                   name: {{ $apiSecretName }}
                   key: jwt
-            - name: ACAPY_WALLET_STORAGE_CONFIG
-              value: {{ include "acapy.walletStorageConfig" . }}
             - name: ACAPY_WALLET_STORAGE_CREDS
               value: {{ include "acapy.walletStorageCredentials" . }}
             {{- if .Values.extraEnvVars }}

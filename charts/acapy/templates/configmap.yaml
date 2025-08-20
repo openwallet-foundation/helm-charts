@@ -10,7 +10,15 @@ metadata:
 data:
   argfile.yml: |
     label: '{{ include "common.names.fullname" . }}'
+    inbound-transport: http '0.0.0.0' {{ .Values.service.ports.http }}
+    outbound-transport: http
+    {{- if .Values.websockets.enabled }}
+    inbound-transport: ws '0.0.0.0' {{ .Values.service.ports.ws }}
+    outbound-transport: ws
+    {{- end }}
+    admin: '0.0.0.0' {{ .Values.service.ports.admin }}
     {{- include "common.tplvalues.render" ( dict "value" (index .Values "argfile.yml") "context" $) | nindent 4 }}
+    wallet-storage-config: {{ include "acapy.walletStorageConfig" . }}
   {{- if index .Values "ledgers.yml" }}
   ledgers.yml: |
     {{- include "common.tplvalues.render" ( dict "value" (index .Values "ledgers.yml") "context" $) | nindent 4 }}
