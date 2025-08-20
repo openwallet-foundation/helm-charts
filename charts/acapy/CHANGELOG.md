@@ -1,3 +1,10 @@
+##  (2025-08-20)
+
+### Features
+
+* move non-secret settings into the argfile ([ab4ad0a](https://github.com/i5okie/owf-helm-charts/commit/ab4ad0aa7fe0f81764d8a148d172f6e91a03d887))
+* refactor agent url and websockets url rendering ([2b3be8b](https://github.com/i5okie/owf-helm-charts/commit/2b3be8b3d1a8256d82dc957455dd970bbad6c08e))
+* refactor scheme and url setting ([ffa3e23](https://github.com/i5okie/owf-helm-charts/commit/ffa3e23c3ba12be7f63e5ac96f5b0c458cc54f05))
 ##  (2025-08-15)
 
 ### Bug Fixes
