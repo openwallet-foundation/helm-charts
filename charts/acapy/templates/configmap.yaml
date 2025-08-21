@@ -9,17 +9,25 @@ metadata:
   {{- end }}
 data:
   argfile.yml: |
-    label: '{{ include "common.names.fullname" . }}'
-    inbound-transport: http '0.0.0.0' {{ .Values.service.ports.http }}
-    outbound-transport: http
-    {{- if .Values.websockets.enabled }}
-    inbound-transport: ws '0.0.0.0' {{ .Values.service.ports.ws }}
-    outbound-transport: ws
-    endpoint: {{ include "acapy.agent.url" . }} {{ include "acapy.agent.wsUrl" . }}
-    {{- else }}
-    endpoint: {{ include "acapy.agent.url" . }}
-    {{- end }}
-    admin: '0.0.0.0' {{ .Values.service.ports.admin }}
+    label: {{ include "common.names.fullname" . | quote }}
+    inbound-transport:
+      - [http, 0.0.0.0, {{ .Values.service.ports.http }}]
+      {{- if .Values.websockets.enabled }}
+      - [ws, 0.0.0.0, {{ .Values.service.ports.ws }}]
+      {{- end }}
+    outbound-transport:
+      - http
+      {{- if .Values.websockets.enabled }}
+      - ws
+      {{- end }}
+    endpoint:
+      - {{ include "acapy.agent.url" . | quote }}
+      {{- if .Values.websockets.enabled }}
+      - {{ include "acapy.agent.wsUrl" . | quote }}
+      {{- end }}
+    admin:
+      - 0.0.0.0
+      - {{ .Values.service.ports.admin }}
     {{- include "common.tplvalues.render" ( dict "value" (index .Values "argfile.yml") "context" $) | nindent 4 }}
     wallet-storage-config: {{ include "acapy.walletStorageConfig" . }}
   {{- if index .Values "ledgers.yml" }}
