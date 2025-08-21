@@ -105,7 +105,7 @@ jobs:
           chart="${{ needs.detect-changed-chart.outputs.chart }}"
           file="charts/$chart/values.ci.yaml"
           if [[ -f "$file" ]]; then
-            echo "install_args=-f $file" >> "$GITHUB_OUTPUT"
+            echo "install_args=-f $(printf '%q' "$file")" >> "$GITHUB_OUTPUT"
             echo "Using CI values: $file"
           else
             echo "install_args=" >> "$GITHUB_OUTPUT"
