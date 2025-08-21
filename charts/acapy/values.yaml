@@ -907,7 +907,6 @@ containerSecurityContext:
 ## @param postgresql.auth.enablePostgresUser Assign a password to the "postgres" admin user. Otherwise, remote access will be blocked for this user. Not recommended for production deployments.
 ## @param postgresql.auth.existingSecret Name of existing secret to use for PostgreSQL credentials
 ## @param postgresql.architecture PostgreSQL architecture (`standalone` or `replication`)
-## @param postgresql.commonLabels [array] Common labels to add to all resources, add agent label for consistency.
 ##
 postgresql:
   enabled: true
@@ -917,8 +916,6 @@ postgresql:
     enablePostgresUser: true
     existingSecret: ""
   architecture: standalone
-  commonLabels:
-    app.kubernetes.io/component: agent
   primary:
     persistence:
       ## @param postgresql.primary.persistence.enabled Enable PostgreSQL Primary data persistence using PVC
