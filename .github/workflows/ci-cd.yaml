@@ -257,10 +257,12 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: write
-      pull-requests: write
     concurrency:
       group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
       cancel-in-progress: true
+    env:
+      OWNER: ${{ github.repository_owner }}
+      REPO: ${{ github.event.repository.name }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -303,29 +305,30 @@ jobs:
         id: package
         run: |
           chart=charts/${{ needs.detect-changed-chart.outputs.chart }}
-          name=$(yq '.name' $chart/Chart.yaml)
-          version=$(yq '.version' $chart/Chart.yaml)
+          mkdir -p .cr-release-packages
+          helm package "$chart" --destination .cr-release-packages
 
-          exists=$(yq eval ".entries[\"$name\"][]?.version" .cr-existing-index/index.yaml | grep -Fx "$version" || true)
-
-          if [ -z "$exists" ]; then
-            echo "📦 Packaging new chart version: $name-$version"
-            helm package "$chart" --destination .cr-release-packages
-            echo "packaged=true" >> $GITHUB_OUTPUT
-          else
-            echo "✔️ Chart $name version $version already exists in index.yaml. Skipping package."
-            echo "packaged=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Update index.yaml
-        if: steps.package.outputs.packaged == 'true'
+      - name: Publish Chart as GitHub Release
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          helm repo index .cr-release-packages --url https://openwallet-foundation.github.io/helm-charts/
+          cr upload \
+            --owner "${OWNER}" \
+            --git-repo "${REPO}" \
+            --package-path ".cr-release-packages" \
+            --skip-existing \
+            --generate-release-notes \
+            --release-name-template "{{ .Name }}-{{ .Version }}" \
+            --make-release-latest=false
 
-      - name: Publish to GitHub Pages
-        if: steps.package.outputs.packaged == 'true'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .cr-release-packages
-          publish_branch: gh-pages
+      - name: Rebuild & push index.yaml to gh-pages
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p .cr-index
+          cr index \
+            --owner "${OWNER}" \
+            --git-repo "${REPO}" \
+            --pages-branch "gh-pages" \
+            --pages-index-path "index.yaml" \
+            --push
