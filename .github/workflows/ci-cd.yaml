@@ -133,7 +133,7 @@ jobs:
             if [ "$(printf '%s\n' "$old_version" "$new_version" | sort -V | head -n1)" = "$old_version" ] && [ "$old_version" != "$new_version" ]; then
               echo "✅ Version bump: $old_version → $new_version"
             else
-              echo "❌ New version ($new_version) is not greater than old version ($old_version)"
+              echo "❌ Version bump required: New version ($new_version) is not greater than old version ($old_version)"
               exit 1
             fi
           }
@@ -177,7 +177,7 @@ jobs:
           readme_needs_update=false
           if ! diff -q "$chart/README.md.original" "$chart/README.md" >/dev/null 2>&1; then
             readme_needs_update=true
-            echo "📝 README.md has changes after generation"
+            echo "❌ README.md for $chart needs to be updated due to changes in values.yaml"
           fi
 
           # Check CHANGELOG (advisory only) - exclude documentation-only changes
