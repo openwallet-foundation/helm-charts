@@ -60,7 +60,7 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      - name: Add Helm repos and update dependencies
+      - name: Build Helm Dependencies
         working-directory: ./charts
         run: |
           chart=${{ needs.detect-changed-chart.outputs.chart }}
@@ -70,17 +70,18 @@ jobs:
             if [ -n "$repo" ] && [ "$repo" != "null" ]; then
               name=$(echo "$repo" | sed 's|https\?://||;s|/|_|g;s|[^a-zA-Z0-9_-]||g')
               echo "Adding repo: $name -> $repo"
-              helm repo add "$name" "$repo" || echo "⚠️ Warning: Failed to add repo $repo"
+              helm repo add "$name" "$repo" || {
+                echo "❌ Failed to add repo $repo"
+                exit 1
+              }
             fi
           done
 
-          # Update Helm dependencies
-          if [ -f "$chart/Chart.yaml" ]; then
-            helm dependency update "$chart" || {
-              echo "❌ Failed to update dependencies for $chart"
-              exit 1
-            }
-          fi
+          # Build Helm dependencies
+          helm dependency build "$chart" || {
+            echo "❌ Failed to build dependencies for $chart"
+            exit 1
+          }
 
       - name: Lint changed chart
         run: ct lint --charts "charts/${{ needs.detect-changed-chart.outputs.chart }}" --config .github/ct.yaml
@@ -251,30 +252,33 @@ jobs:
         with:
           version: v3.18.6
 
-      - name: Add Helm repos from chart dependencies
+      - name: Install chart-releaser (cr)
+        run: |
+          curl -sSL -o cr.tar.gz https://github.com/helm/chart-releaser/releases/download/v1.8.1/chart-releaser_1.8.1_linux_amd64.tar.gz
+          tar -xzf cr.tar.gz cr && sudo mv cr /usr/local/bin/cr
+
+      - name: Build Helm Dependencies
         working-directory: ./charts
         run: |
           chart=${{ needs.detect-changed-chart.outputs.chart }}
 
+          # Add Helm repos from chart dependencies
           yq '.dependencies // [] | .[] | .repository' "$chart/Chart.yaml" | sort | uniq | while read repo; do
             if [ -n "$repo" ] && [ "$repo" != "null" ]; then
               name=$(echo "$repo" | sed 's|https\?://||;s|/|_|g;s|[^a-zA-Z0-9_-]||g')
               echo "Adding repo: $name -> $repo"
-              helm repo add "$name" "$repo" || echo "Warning: Failed to add repo $repo"
+              helm repo add "$name" "$repo" || {
+                echo "❌ Failed to add repo $repo"
+                exit 1
+              }
             fi
           done
 
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.7.0
-
-      - name: Prepare release directories and index
-        run: |
-          mkdir -p .cr-release-packages
-          mkdir -p .cr-existing-index
-
-          # Clone existing index.yaml from gh-pages (if any)
-          git fetch origin gh-pages
-          git show origin/gh-pages:index.yaml > .cr-existing-index/index.yaml || echo "apiVersion: v1\nentries: {}\ngenerated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" > .cr-existing-index/index.yaml
+          # Build Helm dependencies
+          helm dependency build "$chart" || {
+            echo "❌ Failed to build dependencies for $chart"
+            exit 1
+          }
 
       - name: Package chart if new version
         id: package
