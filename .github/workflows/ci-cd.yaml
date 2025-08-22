@@ -98,27 +98,11 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1
 
-      - name: Detect CI values file
-        id: ci_values
-        shell: bash
-        run: |
-          chart="${{ needs.detect-changed-chart.outputs.chart }}"
-          file="charts/$chart/values.ci.yaml"
-          if [[ -f "$file" ]]; then
-            echo "install_args=-f $(printf '%q' "$file")" >> "$GITHUB_OUTPUT"
-            echo "Using CI values: $file"
-          else
-            echo "install_args=" >> "$GITHUB_OUTPUT"
-            echo "No CI values file found"
-          fi
-
       - name: Test install changed chart
         run: |
-          extra="${{ steps.ci_values.outputs.install_args }}"
           ct install \
             --charts "charts/${{ needs.detect-changed-chart.outputs.chart }}" \
-            --config .github/ct.yaml \
-            --helm-extra-args "$extra"
+            --config .github/ct.yaml
 
       - name: Check version and appVersion bump
         working-directory: ./charts
