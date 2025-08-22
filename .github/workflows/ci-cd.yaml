@@ -292,6 +292,11 @@ jobs:
           mkdir -p .cr-release-packages
           helm package "$chart" --destination .cr-release-packages
 
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
       - name: Publish Chart as GitHub Release
         env:
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
