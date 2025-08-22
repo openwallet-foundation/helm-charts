@@ -299,6 +299,7 @@ jobs:
           cr upload \
             --owner "${OWNER}" \
             --git-repo "${REPO}" \
+            --commit "$(git rev-parse HEAD)" \
             --package-path ".cr-release-packages" \
             --skip-existing \
             --generate-release-notes \
