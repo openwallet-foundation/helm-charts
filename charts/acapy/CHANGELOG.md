@@ -1,3 +1,8 @@
+##  (2025-08-22)
+
+### Bug Fixes
+
+* refactor argfile to fix expected formatting ([1f92b9f](https://github.com/i5okie/owf-helm-charts/commit/1f92b9f23a389bbed76697676effe7eb22a132fb))
 ##  (2025-08-20)
 
 ### Features

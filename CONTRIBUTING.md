@@ -40,7 +40,7 @@ To maintain clarity, consistency, and automation reliability, please follow thes
 
 - The chart-testing tool (`ct`) **automatically discovers** and uses any files ending in `-values.yaml` in the `ci/` folder during test installs.
 
-- **Packaging tip:** Add the following to your chart’s `.helmignore` so CI-only files aren’t included in release artifacts: `ci/**`
+- **Packaging tip:** Add the following to your chart’s `.helmignore` so CI-only files aren’t included in release artifacts: `ci/*.*`
 
 
 ## CI/CD and Automation
