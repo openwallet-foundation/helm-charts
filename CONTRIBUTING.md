@@ -47,7 +47,9 @@ To maintain clarity, consistency, and automation reliability, please follow thes
 
 - **Pull Requests**
 - CI lints and test-installs the changed chart(s) in a temporary Kind cluster.
-- PRs that modify more than one chart will fail a guardrail check.
+- **Pull Requests:** When you open a pull request, automated checks will run to ensure chart quality and compliance.
+  - CI lints and test-installs the changed chart(s) in a temporary Kind cluster.
+  - PRs that modify more than one chart will fail a guardrail check.
 
 - **Publishing on merge to `main`**
   - If a chart’s `version` changed, the workflow:
