@@ -1,3 +1,8 @@
+##  (2025-08-26)
+
+### Bug Fixes
+
+* correct network policy rendering ([052095b](https://github.com/i5okie/owf-helm-charts/commit/052095b025f90bd5a675e9b414b4e50e9b61f582))
 ##  (2025-08-22)
 
 ### Bug Fixes
