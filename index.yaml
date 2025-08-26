@@ -3,6 +3,33 @@ entries:
   acapy:
   - apiVersion: v2
     appVersion: 1.3.1
+    created: "2025-08-26T19:18:13.329953131Z"
+    dependencies:
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami/
+      version: 15.5.38
+    - name: common
+      repository: https://charts.bitnami.com/bitnami/
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    description: A Helm chart for ACA-Py - A Cloud Agent - Python
+    digest: 867ae58c782dfed7b41f40838582fbb9a1df61a03cdf8d99718d25318948cdff
+    maintainers:
+    - email: emiliano.sune@quartech.com
+      name: esune
+      url: https://github.com/esune
+    - email: ivan.polchenko@quartech.com
+      name: i5okie
+      url: https://github.com/i5okie
+    name: acapy
+    type: application
+    urls:
+    - https://github.com/openwallet-foundation/helm-charts/releases/download/acapy-0.1.7/acapy-0.1.7.tgz
+    version: 0.1.7
+  - apiVersion: v2
+    appVersion: 1.3.1
     created: "2025-08-26T10:03:33.204424-07:00"
     dependencies:
     - condition: postgresql.enabled
@@ -28,4 +55,4 @@ entries:
     urls:
     - https://github.com/openwallet-foundation/helm-charts/releases/download/acapy-0.1.6/acapy-0.1.6.tgz
     version: 0.1.6
-generated: "2025-08-26T10:03:33.204456-07:00"
+generated: "2025-08-26T19:18:13.329967688Z"
