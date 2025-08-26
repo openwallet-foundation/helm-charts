@@ -32,7 +32,14 @@ spec:
     {{- end }}
   ingress:
     - ports:
-        - port: {{ .Values.containerPorts }}
+        - port: {{ .Values.service.ports.http | default 8021 }}
+          protocol: TCP
+        - port: {{ .Values.service.ports.admin | default 8022 }}
+          protocol: TCP
+        {{- if .Values.websockets.enabled }}
+        - port: {{ .Values.service.ports.ws | default 8023 }}
+          protocol: TCP
+        {{- end }}
       {{- if not .Values.networkPolicy.allowExternal }}
       from:
         - podSelector:
