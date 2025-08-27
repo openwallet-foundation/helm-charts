@@ -84,6 +84,7 @@ spec:
             - >-
               aca-py start
               --arg-file '/home/aries/argfile.yml'
+              --plugin-config '/home/aries/plugin-config.yml'
               {{- if .Values.extraArgs }}
               {{ .Values.extraArgs | join " " }}
               {{- end }}
