@@ -120,7 +120,7 @@ image:
 ## @param argfile.yml.monitor-ping Send a webhook when a ping is sent or received.
 ## @param argfile.yml.multitenant-admin Specify whether to enable the multitenant admin api.
 ## @param argfile.yml.multitenant Enable multitenant mode.
-## @param argfile.yml.notify-revocation Specifies that ACA-Py  will notify credential recipients when revoking a credential it issued.
+## @param argfile.yml.notify-revocation Specifies that ACA-Py will notify credential recipients when revoking a credential it issued.
 ## @param argfile.yml.preserve-exchange-records Keep credential exchange records after exchange has completed.
 ## @param argfile.yml.requests-through-public-did Must be set to true when using "implicit" invitations.
 ## @param argfile.yml.public-invites Send invitations out using the public DID for the agent, and receive connection requests solicited by invitations which use the public DID. Default: false.
