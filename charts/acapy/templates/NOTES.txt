@@ -82,4 +82,4 @@ Access options:
 {{- end }}
 
 Admin API key:
-  ADMIN_API_KEY=$(kubectl -n {{ .Release.Namespace }} get secret acapy-api -o jsonpath='{.data.adminApiKey}' | base64 --decode)
+  ADMIN_API_KEY=$(kubectl -n {{ .Release.Namespace }} get secret {{ printf "%s-api" (include "common.names.fullname" .) }} -o jsonpath='{.data.adminApiKey}' | base64 --decode)
