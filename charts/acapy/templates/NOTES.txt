@@ -2,26 +2,84 @@ CHART NAME: {{ .Chart.Name }}
 CHART VERSION: {{ .Chart.Version }}
 APP VERSION: {{ .Chart.AppVersion }}
 
-1. Get the application URL by running these commands:
-{{- if contains "LoadBalancer" .Values.service.type }}
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
 
-  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w {{ include "common.names.fullname" . }}'
+Service: {{ include "common.names.fullname" . }}
+Ports:
+  - http:  {{ .Values.service.ports.http }}
+  - admin: {{ .Values.service.ports.admin }}
+  {{- if .Values.websockets.enabled }}
+  - ws:    {{ .Values.service.ports.ws }}
+  {{- end }}
 
-    export SERVICE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].port}" services {{ include "common.names.fullname" . }})
-    export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "common.names.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-    echo "http://${SERVICE_IP}:${SERVICE_PORT}"
+External URLs (if configured):
+{{- $hasAgentURL := or (and .Values.agentUrl (not .Values.ingress.agent.enabled)) (.Values.ingress.agent.enabled) -}}
+{{- $hasAdminURL := or (and .Values.adminUrl (not .Values.ingress.admin.enabled)) (.Values.ingress.admin.enabled) -}}
+{{- if or $hasAgentURL $hasAdminURL }}
+  {{- if $hasAgentURL }}
+  - Agent: {{ include "acapy.agent.url" . }}
+    {{- if .Values.websockets.enabled }}
+    - WebSockets: {{ include "acapy.agent.wsUrl" . }}
+    {{- end }}
+  {{- end }}
+  {{- if $hasAdminURL }}
+  - Admin: {{- if .Values.ingress.admin.enabled -}}
+           {{- $adminScheme := ternary "http" "https" .Values.ingress.admin.tls -}}
+           {{ $adminScheme }}://{{ tpl .Values.ingress.admin.hostname . }}
+           {{- else -}}
+           {{ .Values.adminUrl }}
+           {{- end }}
+  {{- end }}
+{{- else }}
+  (No external URLs detected. See access options below.)
+{{- end }}
 
-{{- else if contains "ClusterIP"  .Values.service.type }}
+Access options:
+{{- if eq .Values.service.type "ClusterIP" }}
 
-    export SERVICE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].port}" services {{ include "common.names.fullname" . }})
-    kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "common.names.fullname" . }} ${SERVICE_PORT}:${SERVICE_PORT} &
-    echo "http://127.0.0.1:${SERVICE_PORT}"
+1) Port-forward (recommended for local access):
+   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "common.names.fullname" . }} \
+     {{ .Values.service.ports.http }}:{{ .Values.service.ports.http }} \
+     {{ .Values.service.ports.admin }}:{{ .Values.service.ports.admin }} \
+     {{- if .Values.websockets.enabled }} {{ .Values.service.ports.ws }}:{{ .Values.service.ports.ws }}{{- end }}
 
-{{- else if contains "NodePort" .Values.service.type }}
+   Agent: http://127.0.0.1:{{ .Values.service.ports.http }}
+   Admin: http://127.0.0.1:{{ .Values.service.ports.admin }}
+   {{- if .Values.websockets.enabled }}
+   WS:    ws://127.0.0.1:{{ .Values.service.ports.ws }}
+   {{- end }}
 
-    export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "common.names.fullname" . }})
-    export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
-    echo "http://${NODE_IP}:${NODE_PORT}"
+{{- else if eq .Values.service.type "NodePort" }}
+
+1) NodePort access:
+   AGENT_PORT=$(kubectl -n {{ .Release.Namespace }} get svc {{ include "common.names.fullname" . }} -o jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
+   ADMIN_PORT=$(kubectl -n {{ .Release.Namespace }} get svc {{ include "common.names.fullname" . }} -o jsonpath='{.spec.ports[?(@.name=="admin")].nodePort}')
+   NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
+   echo "Agent: http://${NODE_IP}:${AGENT_PORT}"
+   echo "Admin: http://${NODE_IP}:${ADMIN_PORT}"
+   {{- if .Values.websockets.enabled }}
+   WS_PORT=$(kubectl -n {{ .Release.Namespace }} get svc {{ include "common.names.fullname" . }} -o jsonpath='{.spec.ports[?(@.name=="ws")].nodePort}')
+   echo "WS:    ws://${NODE_IP}:${WS_PORT}"
+   {{- end }}
+
+{{- else if eq .Values.service.type "LoadBalancer" }}
+
+1) LoadBalancer access (may take time to provision):
+   SERVICE_NAME={{ include "common.names.fullname" . }}
+   AGENT_PORT=$(kubectl -n {{ .Release.Namespace }} get svc ${SERVICE_NAME} -o jsonpath='{.spec.ports[?(@.name=="http")].port}')
+   ADMIN_PORT=$(kubectl -n {{ .Release.Namespace }} get svc ${SERVICE_NAME} -o jsonpath='{.spec.ports[?(@.name=="admin")].port}')
+   LB_HOST=$(kubectl -n {{ .Release.Namespace }} get svc ${SERVICE_NAME} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+   LB_IP=$(kubectl -n {{ .Release.Namespace }} get svc ${SERVICE_NAME} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+   HOST=${LB_HOST:-$LB_IP}
+   echo "Agent: http://${HOST}:${AGENT_PORT}"
+   echo "Admin: http://${HOST}:${ADMIN_PORT}"
+   {{- if .Values.websockets.enabled }}
+   WS_PORT=$(kubectl -n {{ .Release.Namespace }} get svc ${SERVICE_NAME} -o jsonpath='{.spec.ports[?(@.name=="ws")].port}')
+   echo "WS:    ws://${HOST}:${WS_PORT}"
+   {{- end }}
 
 {{- end }}
+
+Admin API key:
+  ADMIN_API_KEY=$(kubectl -n {{ .Release.Namespace }} get secret acapy-api -o jsonpath='{.data.adminApiKey}' | base64 --decode)
