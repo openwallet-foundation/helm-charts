@@ -1,3 +1,12 @@
+##  (2025-08-27)
+
+### Features
+
+* rewrite NOTES with relevant information ([c7a2708](https://github.com/i5okie/owf-helm-charts/commit/c7a2708fb3785e1fe878f471aa0a4506ce9be21b))
+
+### Bug Fixes
+
+* admin ingress must point to admin service port ([707ae11](https://github.com/i5okie/owf-helm-charts/commit/707ae11a28fb3b86547254ec6c7281e21efd628a))
 ##  (2025-08-26)
 
 ### Bug Fixes
