@@ -1,4 +1,4 @@
-# Default values for AcaPy.
+# Default values for ACA-Py.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -48,9 +48,9 @@ commonLabels: {}
 ## @param commonAnnotations Annotations to add to all deployed objects
 ##
 commonAnnotations: {}
-## @param replicaCount Number of AcaPy pods
+## @param replicaCount Number of ACA-Py pods
 replicaCount: 1
-## @param updateStrategy.type Set up update strategy for AcaPy installation.
+## @param updateStrategy.type Set up update strategy for ACA-Py installation.
 ## Set to Recreate if you use persistent volume that cannot be mounted by more than one pods to make sure the pods is destroyed first.
 ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
 ## Example:
@@ -62,13 +62,13 @@ replicaCount: 1
 ##
 updateStrategy:
   type: RollingUpdate
-## AcaPy image version
+## ACA-Py image version
 ## ref: https://github.com/openwallet-foundation/acapy/pkgs/container/acapy-agent
-## @param image.registry [default: REGISTRY_NAME] AcaPy image registry
-## @param image.repository [default: REPOSITORY_NAME/AcaPy] AcaPy Image name
-## @skip image.tag AcaPy Image tag
-## @param image.digest AcaPy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
-## @param image.pullPolicy AcaPy image pull policy
+## @param image.registry ACA-Py image registry
+## @param image.repository ACA-Py Image name
+## @skip image.tag ACA-Py Image tag
+## @param image.digest ACA-Py image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+## @param image.pullPolicy ACA-Py image pull policy
 ## @param image.pullSecrets Specify docker-registry secret names as an array
 ##
 image:
@@ -89,7 +89,7 @@ image:
 ## @section Configuration files
 ##
 ## @descriptionStart
-## Configuration file is mounted as is into the container. See the AcaPy documentation for details.
+## Configuration file is mounted as is into the container. See the ACA-Py documentation for details.
 ## Note: Secure values of the configuration are passed via equivalent environment variables from secrets.
 ## @descriptionEnd
 ##
@@ -120,7 +120,7 @@ image:
 ## @param argfile.yml.monitor-ping Send a webhook when a ping is sent or received.
 ## @param argfile.yml.multitenant-admin Specify whether to enable the multitenant admin api.
 ## @param argfile.yml.multitenant Enable multitenant mode.
-## @param argfile.yml.notify-revocation Specifies that aca-py will notify credential recipients when revoking a credential it issued.
+## @param argfile.yml.notify-revocation Specifies that ACA-Py  will notify credential recipients when revoking a credential it issued.
 ## @param argfile.yml.preserve-exchange-records Keep credential exchange records after exchange has completed.
 ## @param argfile.yml.requests-through-public-did Must be set to true when using "implicit" invitations.
 ## @param argfile.yml.public-invites Send invitations out using the public DID for the agent, and receive connection requests solicited by invitations which use the public DID. Default: false.
@@ -285,15 +285,15 @@ persistence:
   annotations: {}
 
 ## @section Service and Ports
-## AcaPy service parameters
+## ACA-Py service parameters
 ##
 service:
-  ## @param service.type AcaPy service type
+  ## @param service.type ACA-Py service type
   ##
   type: ClusterIP
-  ## @param service.ports.http AcaPy service HTTP port
-  ## @param service.ports.admin AcaPy service admin port
-  ## @param service.ports.ws AcaPy service websockets port
+  ## @param service.ports.http ACA-Py service HTTP port
+  ## @param service.ports.admin ACA-Py service admin port
+  ## @param service.ports.ws ACA-Py service websockets port
   ##
   ports:
     http: 8021
@@ -321,30 +321,30 @@ service:
   ##     timeoutSeconds: 300
   ##
   sessionAffinityConfig: {}
-  ## @param service.clusterIP AcaPy service Cluster IP
+  ## @param service.clusterIP ACA-Py service Cluster IP
   ## e.g.:
   ## clusterIP: None
   ##
   clusterIP: ""
-  ## @param service.loadBalancerIP AcaPy service Load Balancer IP
+  ## @param service.loadBalancerIP ACA-Py service Load Balancer IP
   ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
   ##
   loadBalancerIP: ""
-  ## @param service.loadBalancerSourceRanges AcaPy service Load Balancer sources
+  ## @param service.loadBalancerSourceRanges ACA-Py service Load Balancer sources
   ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
   ## e.g:
   ## loadBalancerSourceRanges:
   ##   - 10.10.10.0/24
   ##
   loadBalancerSourceRanges: []
-  ## @param service.externalTrafficPolicy AcaPy service external traffic policy
+  ## @param service.externalTrafficPolicy ACA-Py service external traffic policy
   ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
   ##
   externalTrafficPolicy: Cluster
-  ## @param service.annotations Additional custom annotations for AcaPy service
+  ## @param service.annotations Additional custom annotations for ACA-Py service
   ##
   annotations: {}
-  ## @param service.extraPorts Extra port to expose on AcaPy service
+  ## @param service.extraPorts Extra port to expose on ACA-Py service
   ##
   extraPorts: []
 
@@ -416,7 +416,7 @@ networkPolicy:
 
 ## @section Ingress and Endpoint configuration
 ## Configure the ingress resource that allows you to access the
-## AcaPy installation. Set up the URL
+## ACA-Py installation. Set up the URL
 ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ##
 ## @param agentUrl must be set if ingress is not enabled
@@ -442,7 +442,7 @@ ingress:
     ##
     publicScheme: https
     ## @param ingress.agent.path Default path for the ingress resource
-    ## The Path to AcaPy. You may need to set this to '/*' in order to use this with ALB ingress controllers.
+    ## The Path to ACA-Py. You may need to set this to '/*' in order to use this with ALB ingress controllers.
     ##
     path: /
     ## @param ingress.agent.annotations Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
@@ -534,7 +534,7 @@ ingress:
     ##
     hostname: admin.acapy.local
     ## @param ingress.admin.path Default path for the ingress resource
-    ## The Path to AcaPy. You may need to set this to '/*' in order to use this with ALB ingress controllers.
+    ## The Path to ACA-Py. You may need to set this to '/*' in order to use this with ALB ingress controllers.
     ##
     path: /
     ## @param ingress.admin.annotations Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
@@ -614,7 +614,7 @@ ingress:
     extraRules: []
 
 ## @section Deployment parameters
-## AcaPy container's resource requests and limits
+## ACA-Py container's resource requests and limits
 ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
 ## We usually recommend not to specify default resources and to leave this as a conscious
 ## choice for the user. This also increases chances charts run on environments with little
@@ -636,7 +636,7 @@ resourcesPreset: "none"
 ##
 resources: {}
 
-## AcaPy pods' liveness probe. Evaluated as a template.
+## ACA-Py pods' liveness probe. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
 ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
@@ -655,7 +655,7 @@ livenessProbe:
   httpGet:
     path: /status/live
     port: admin
-## AcaPy pods' readiness probe. Evaluated as a template.
+## ACA-Py pods' readiness probe. Evaluated as a template.
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
 ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
 ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
@@ -686,7 +686,7 @@ readinessProbe:
 ##
 initContainers: []
 ##
-## @param extraArgs Array containing extra command line arguments to configure aca-py
+## @param extraArgs Array containing extra command line arguments to configure ACA-Py
 ## For example:
 ## extraArgs:
 ##  - --my-arg=my-value
@@ -699,7 +699,7 @@ extraEnvVarsCM: ""
 ## @param extraEnvVarsSecret Name of existing Secret containing extra env vars
 ##
 extraEnvVarsSecret: ""
-## @param extraEnvVars Array containing extra env vars to configure AcaPy
+## @param extraEnvVars Array containing extra env vars to configure ACA-Py
 ## For example:
 ## extraEnvVars:
 ##  - name: GF_DEFAULT_INSTANCE_NAME
@@ -790,9 +790,9 @@ extraDeploy: []
 ## @section Autoscaling
 ## Autoscaling configuration
 ## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
-## @param autoscaling.enabled Enable Horizontal POD autoscaling for AcaPy
-## @param autoscaling.minReplicas Minimum number of AcaPy replicas
-## @param autoscaling.maxReplicas Maximum number of AcaPy replicas
+## @param autoscaling.enabled Enable Horizontal POD autoscaling for ACA-Py
+## @param autoscaling.minReplicas Minimum number of ACA-Py replicas
+## @param autoscaling.maxReplicas Maximum number of ACA-Py replicas
 ## @param autoscaling.targetCPUUtilizationPercentage Target CPU utilization percentage
 ## @param autoscaling.targetMemoryUtilizationPercentage Target Memory utilization percentage
 ##
@@ -843,7 +843,7 @@ autoscaling:
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
 ##
 serviceAccount:
-  ## @param serviceAccount.create Enable creation of ServiceAccount for acapy pod
+  ## @param serviceAccount.create Enable creation of ServiceAccount for ACA-Py pod
   ##
   create: true
   ## @param serviceAccount.name The name of the ServiceAccount to use.
@@ -859,7 +859,7 @@ serviceAccount:
 ## @param automountServiceAccountToken Auto-mount token in pod
 ##
 automountServiceAccountToken: false
-## @param podSecurityContext.enabled Enable securityContext on for AcaPy deployment
+## @param podSecurityContext.enabled Enable securityContext on for ACA-Py deployment
 ## @param podSecurityContext.fsGroupChangePolicy Set filesystem group change policy
 ## @param podSecurityContext.sysctls Set kernel settings using the sysctl interface
 ## @param podSecurityContext.supplementalGroups Set filesystem extra groups

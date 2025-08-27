@@ -51,7 +51,7 @@ Create Websockets URL based on hostname and TLS status
 {{- end }}
 
 {{/*
-Return the proper AcaPy image name
+Return the proper ACA-Py image name
 */}}
 {{- define "acapy.image" -}}
 {{ include "common.images.image" ( dict "imageRoot" .Values.image "global" .Values.global "chart" .Chart ) }}
@@ -118,7 +118,7 @@ Return the Secret that holds the Postgres credentials.
 {{- end -}}
 
 {{/*
-Generate acapy wallet storage config
+Generate ACA-Py wallet storage config
 */}}
 {{- define "acapy.walletStorageConfig" -}}
 {{- if .Values.walletStorageConfig.json -}}
@@ -133,7 +133,7 @@ Generate acapy wallet storage config
 {{- end -}}
 
 {{/*
-Generate acapy wallet storage credentials
+Generate ACA-Py wallet storage credentials
 */}}
 {{- define "acapy.walletStorageCredentials" -}}
 {{- if .Values.walletStorageCredentials.json -}}

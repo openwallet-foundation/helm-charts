@@ -1,6 +1,6 @@
 # AcaPy
 
-![Version: 0.1.6](https://img.shields.io/badge/Version-0.1.6-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.3.1](https://img.shields.io/badge/AppVersion-1.3.1-informational?style=flat-square)
+![Version: 0.1.8](https://img.shields.io/badge/Version-0.1.8-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.3.1](https://img.shields.io/badge/AppVersion-1.3.1-informational?style=flat-square)
 
 A Helm chart to deploy A Cloud Agent - Python.
 
@@ -15,11 +15,11 @@ A Helm chart to deploy A Cloud Agent - Python.
 To install the chart with the release name `my-release`:
 
 ```console
-helm repo add acapy	https://openwallet-foundation.github.io/acapy/
-helm install my-release acapy/acapy
+helm repo add owf	https://openwallet-foundation.github.io/helm-charts/
+helm install my-release owf/acapy
 ```
 
-The command deploys AcaPY agent, along with PostgreSQL on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
+The command deploys ACA-Py agent, along with PostgreSQL on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
 
 > **Tip**: List all releases using `helm list`
 
@@ -28,25 +28,25 @@ The command deploys AcaPY agent, along with PostgreSQL on the Kubernetes cluster
 
 ### Common parameters
 
-| Name                  | Description                                                                                           | Value                   |
-| --------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------- |
-| `nameOverride`        | String to partially override fullname include (will maintain the release name)                        | `""`                    |
-| `fullnameOverride`    | String to fully override fullname template                                                            | `""`                    |
-| `namespaceOverride`   | String to fully override common.names.namespace                                                       | `""`                    |
-| `kubeVersion`         | Force target Kubernetes version (using Helm capabilities if not set)                                  | `""`                    |
-| `commonLabels`        | Labels to add to all deployed objects                                                                 | `{}`                    |
-| `commonAnnotations`   | Annotations to add to all deployed objects                                                            | `{}`                    |
-| `replicaCount`        | Number of AcaPy pods                                                                                  | `1`                     |
-| `updateStrategy.type` | Set up update strategy for AcaPy installation.                                                        | `RollingUpdate`         |
-| `image.registry`      | AcaPy image registry                                                                                  | `REGISTRY_NAME`         |
-| `image.repository`    | AcaPy Image name                                                                                      | `REPOSITORY_NAME/AcaPy` |
-| `image.digest`        | AcaPy image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                    |
-| `image.pullPolicy`    | AcaPy image pull policy                                                                               | `IfNotPresent`          |
-| `image.pullSecrets`   | Specify docker-registry secret names as an array                                                      | `[]`                    |
+| Name                  | Description                                                                                            | Value                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| `nameOverride`        | String to partially override fullname include (will maintain the release name)                         | `""`                                |
+| `fullnameOverride`    | String to fully override fullname template                                                             | `""`                                |
+| `namespaceOverride`   | String to fully override common.names.namespace                                                        | `""`                                |
+| `kubeVersion`         | Force target Kubernetes version (using Helm capabilities if not set)                                   | `""`                                |
+| `commonLabels`        | Labels to add to all deployed objects                                                                  | `{}`                                |
+| `commonAnnotations`   | Annotations to add to all deployed objects                                                             | `{}`                                |
+| `replicaCount`        | Number of ACA-Py pods                                                                                  | `1`                                 |
+| `updateStrategy.type` | Set up update strategy for ACA-Py installation.                                                        | `RollingUpdate`                     |
+| `image.registry`      | ACA-Py image registry                                                                                  | `ghcr.io`                           |
+| `image.repository`    | ACA-Py Image name                                                                                      | `openwallet-foundation/acapy-agent` |
+| `image.digest`        | ACA-Py image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                                |
+| `image.pullPolicy`    | ACA-Py image pull policy                                                                               | `IfNotPresent`                      |
+| `image.pullSecrets`   | Specify docker-registry secret names as an array                                                       | `[]`                                |
 
 ### Configuration files
 
-Configuration file is mounted as is into the container. See the AcaPy documentation for details.
+Configuration file is mounted as is into the container. See the ACA-Py documentation for details.
 Note: Secure values of the configuration are passed via equivalent environment variables from secrets.
 
 | Name                                              | Description                                                                                                                                                                                                                                                                                                                                                                                          | Value                                                       |
@@ -78,7 +78,7 @@ Note: Secure values of the configuration are passed via equivalent environment v
 | `argfile.yml.monitor-ping`                        | Send a webhook when a ping is sent or received.                                                                                                                                                                                                                                                                                                                                                      | `false`                                                     |
 | `argfile.yml.multitenant-admin`                   | Specify whether to enable the multitenant admin api.                                                                                                                                                                                                                                                                                                                                                 | `false`                                                     |
 | `argfile.yml.multitenant`                         | Enable multitenant mode.                                                                                                                                                                                                                                                                                                                                                                             | `false`                                                     |
-| `argfile.yml.notify-revocation`                   | Specifies that aca-py will notify credential recipients when revoking a credential it issued.                                                                                                                                                                                                                                                                                                        | `false`                                                     |
+| `argfile.yml.notify-revocation`                   | Specifies that ACA-Py  will notify credential recipients when revoking a credential it issued.                                                                                                                                                                                                                                                                                                       | `false`                                                     |
 | `argfile.yml.preserve-exchange-records`           | Keep credential exchange records after exchange has completed.                                                                                                                                                                                                                                                                                                                                       | `true`                                                      |
 | `argfile.yml.requests-through-public-did`         | Must be set to true when using "implicit" invitations.                                                                                                                                                                                                                                                                                                                                               | `false`                                                     |
 | `argfile.yml.public-invites`                      | Send invitations out using the public DID for the agent, and receive connection requests solicited by invitations which use the public DID. Default: false.                                                                                                                                                                                                                                          | `false`                                                     |
@@ -142,21 +142,21 @@ Note: Secure values of the configuration are passed via equivalent environment v
 
 | Name                               | Description                                                      | Value       |
 | ---------------------------------- | ---------------------------------------------------------------- | ----------- |
-| `service.type`                     | AcaPy service type                                               | `ClusterIP` |
-| `service.ports.http`               | AcaPy service HTTP port                                          | `8021`      |
-| `service.ports.admin`              | AcaPy service admin port                                         | `8022`      |
-| `service.ports.ws`                 | AcaPy service websockets port                                    | `8023`      |
+| `service.type`                     | ACA-Py service type                                              | `ClusterIP` |
+| `service.ports.http`               | ACA-Py service HTTP port                                         | `8021`      |
+| `service.ports.admin`              | ACA-Py service admin port                                        | `8022`      |
+| `service.ports.ws`                 | ACA-Py service websockets port                                   | `8023`      |
 | `service.nodePorts.http`           | Node port for HTTP                                               | `""`        |
 | `service.nodePorts.admin`          | Node port for admin                                              | `""`        |
 | `service.nodePorts.ws`             | Node port for websockets                                         | `""`        |
 | `service.sessionAffinity`          | Control where client requests go, to the same pod or round-robin | `None`      |
 | `service.sessionAffinityConfig`    | Additional settings for the sessionAffinity                      | `{}`        |
-| `service.clusterIP`                | AcaPy service Cluster IP                                         | `""`        |
-| `service.loadBalancerIP`           | AcaPy service Load Balancer IP                                   | `""`        |
-| `service.loadBalancerSourceRanges` | AcaPy service Load Balancer sources                              | `[]`        |
-| `service.externalTrafficPolicy`    | AcaPy service external traffic policy                            | `Cluster`   |
-| `service.annotations`              | Additional custom annotations for AcaPy service                  | `{}`        |
-| `service.extraPorts`               | Extra port to expose on AcaPy service                            | `[]`        |
+| `service.clusterIP`                | ACA-Py service Cluster IP                                        | `""`        |
+| `service.loadBalancerIP`           | ACA-Py service Load Balancer IP                                  | `""`        |
+| `service.loadBalancerSourceRanges` | ACA-Py service Load Balancer sources                             | `[]`        |
+| `service.externalTrafficPolicy`    | ACA-Py service external traffic policy                           | `Cluster`   |
+| `service.annotations`              | Additional custom annotations for ACA-Py service                 | `{}`        |
+| `service.extraPorts`               | Extra port to expose on ACA-Py service                           | `[]`        |
 
 ### Network Policy
 
@@ -231,10 +231,10 @@ Note: Secure values of the configuration are passed via equivalent environment v
 | `readinessProbe.httpGet.path`        | Request path for readinessProbe                                                                                                                                                                                   | `/status/ready` |
 | `readinessProbe.httpGet.port`        | Port for readinessProbe                                                                                                                                                                                           | `admin`         |
 | `initContainers`                     | Add additional init containers for the hidden node pod(s)                                                                                                                                                         | `[]`            |
-| `extraArgs`                          | Array containing extra command line arguments to configure aca-py                                                                                                                                                 | `[]`            |
+| `extraArgs`                          | Array containing extra command line arguments to configure ACA-Py                                                                                                                                                 | `[]`            |
 | `extraEnvVarsCM`                     | Name of existing ConfigMap containing extra env vars                                                                                                                                                              | `""`            |
 | `extraEnvVarsSecret`                 | Name of existing Secret containing extra env vars                                                                                                                                                                 | `""`            |
-| `extraEnvVars`                       | Array containing extra env vars to configure AcaPy                                                                                                                                                                | `[]`            |
+| `extraEnvVars`                       | Array containing extra env vars to configure ACA-Py                                                                                                                                                               | `[]`            |
 | `nodeAffinityPreset.type`            | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                                                                                                                         | `""`            |
 | `nodeAffinityPreset.key`             | Node label key to match Ignored if `affinity` is set.                                                                                                                                                             | `""`            |
 | `nodeAffinityPreset.values`          | Node label values to match. Ignored if `affinity` is set.                                                                                                                                                         | `[]`            |
@@ -257,9 +257,9 @@ Note: Secure values of the configuration are passed via equivalent environment v
 
 | Name                                                        | Description                                                                                  | Value   |
 | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------- |
-| `autoscaling.enabled`                                       | Enable Horizontal POD autoscaling for AcaPy                                                  | `false` |
-| `autoscaling.minReplicas`                                   | Minimum number of AcaPy replicas                                                             | `1`     |
-| `autoscaling.maxReplicas`                                   | Maximum number of AcaPy replicas                                                             | `10`    |
+| `autoscaling.enabled`                                       | Enable Horizontal POD autoscaling for ACA-Py                                                 | `false` |
+| `autoscaling.minReplicas`                                   | Minimum number of ACA-Py replicas                                                            | `1`     |
+| `autoscaling.maxReplicas`                                   | Maximum number of ACA-Py replicas                                                            | `10`    |
 | `autoscaling.targetCPUUtilizationPercentage`                | Target CPU utilization percentage                                                            | `80`    |
 | `autoscaling.targetMemoryUtilizationPercentage`             | Target Memory utilization percentage                                                         | `80`    |
 | `autoscaling.behavior.scaleUp.stabilizationWindowSeconds`   | The number of seconds for which past recommendations should be considered while scaling up   | `60`    |
@@ -273,12 +273,12 @@ Note: Secure values of the configuration are passed via equivalent environment v
 
 | Name                                                | Description                                               | Value            |
 | --------------------------------------------------- | --------------------------------------------------------- | ---------------- |
-| `serviceAccount.create`                             | Enable creation of ServiceAccount for acapy pod           | `true`           |
+| `serviceAccount.create`                             | Enable creation of ServiceAccount for ACA-Py pod          | `true`           |
 | `serviceAccount.name`                               | The name of the ServiceAccount to use.                    | `""`             |
 | `serviceAccount.annotations`                        | Annotations for service account. Evaluated as a template. | `{}`             |
 | `serviceAccount.automountServiceAccountToken`       | Auto-mount token for the Service Account                  | `false`          |
 | `automountServiceAccountToken`                      | Auto-mount token in pod                                   | `false`          |
-| `podSecurityContext.enabled`                        | Enable securityContext on for AcaPy deployment            | `true`           |
+| `podSecurityContext.enabled`                        | Enable securityContext on for ACA-Py deployment           | `true`           |
 | `podSecurityContext.fsGroupChangePolicy`            | Set filesystem group change policy                        | `Always`         |
 | `podSecurityContext.sysctls`                        | Set kernel settings using the sysctl interface            | `[]`             |
 | `podSecurityContext.supplementalGroups`             | Set filesystem extra groups                               | `[]`             |
