@@ -5,7 +5,7 @@ generate hosts if not overriden
 {{- if and .Values.agentUrl (not .Values.ingress.agent.enabled) }}
     {{ .Values.agentUrl }}
 {{- else -}}
-    {{ .Values.ingress.agent.hostname }}
+    {{ tpl .Values.ingress.agent.hostname . }}
 {{- end -}}
 {{- end -}}
 
