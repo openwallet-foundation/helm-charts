@@ -1,3 +1,22 @@
+##  (2025-09-05)
+
+### Features
+
+* render the ingress hostname as template, to allow other charts to specify templated hostnames. ([77cd136](https://github.com/i5okie/owf-helm-charts/commit/77cd13646fb7dec9dcf383efd1432fb6a8db5212))
+* set plugin-config path if plugin-config is provided ([ede863c](https://github.com/i5okie/owf-helm-charts/commit/ede863cb3d9fed8ef95f95f0e74827094f0984c1))
+
+### Bug Fixes
+
+* replace missing plugin-config path ([f8c1587](https://github.com/i5okie/owf-helm-charts/commit/f8c15870f9717bcc40702ef434eeb159b2bd7c90))
+##  (2025-08-28)
+
+### Features
+
+* set plugin-config path if plugin-config is provided ([ede863c](https://github.com/i5okie/owf-helm-charts/commit/ede863cb3d9fed8ef95f95f0e74827094f0984c1))
+
+### Bug Fixes
+
+* replace missing plugin-config path ([f8c1587](https://github.com/i5okie/owf-helm-charts/commit/f8c15870f9717bcc40702ef434eeb159b2bd7c90))
 ##  (2025-08-27)
 
 ### Features
