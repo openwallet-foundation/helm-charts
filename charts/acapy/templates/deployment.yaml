@@ -107,7 +107,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ $seedSecretName }}
-                  key: {{ default "seed" .Values.secrets.seed.secretKeys.seed }}
+                  key: {{ .Values.secrets.seed.secretKeys.seed | default "seed" }}
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
