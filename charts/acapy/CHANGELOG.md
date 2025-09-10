@@ -5,6 +5,9 @@
 * add support for existing API and seed secrets, with configurable keys and retention policy ([2e21e3e](https://github.com/i5okie/owf-helm-charts/commit/2e21e3e5491de2f85adccedd7167fb80326b4ba0))
 * render the ingress hostname as template, to allow other charts to specify templated hostnames. ([77cd136](https://github.com/i5okie/owf-helm-charts/commit/77cd13646fb7dec9dcf383efd1432fb6a8db5212))
 
+### Bug Fixes
+
+* revert change to database secret name rendering ([7e1cfbe](https://github.com/i5okie/owf-helm-charts/commit/7e1cfbe49cbc45f4e432429f0ac2a74d18e34701))
 ##  (2025-08-28)
 
 ### Features
