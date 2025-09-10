@@ -942,6 +942,7 @@ containerSecurityContext:
 ## PostgreSQL chart configuration
 ## ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
 ## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
+## @param postgresql.image [object] Set image parameters. Default to Bitnami Legacy repository.
 ## @param postgresql.auth.username Name for a custom user to create
 ## @param postgresql.auth.database Name for a custom database to create
 ## @param postgresql.auth.enablePostgresUser Assign a password to the "postgres" admin user. Otherwise, remote access will be blocked for this user. Not recommended for production deployments.
@@ -950,6 +951,10 @@ containerSecurityContext:
 ##
 postgresql:
   enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/postgresql
+    tag: 16.4.0-debian-12-r14
   auth:
     username: acapy
     database: ""
