@@ -1,6 +1,6 @@
 # VC-AuthN OIDC
 
-![Version: 0.4.3](https://img.shields.io/badge/Version-0.4.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.3.0](https://img.shields.io/badge/AppVersion-2.3.0-informational?style=flat-square)
+![Version: 0.4.4](https://img.shields.io/badge/Version-0.4.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.3.0](https://img.shields.io/badge/AppVersion-2.3.0-informational?style=flat-square)
 
 A Helm chart to deploy Verifiable Credential Identity Provider for OpenID Connect.
 
@@ -11,9 +11,9 @@ Make sure to read the [best practices](/docs/BestPractices.md) to be used when p
 ## TL;DR
 
 ```console
-helm repo add acapy-vc-authn-oidc	https://openwallet-foundation.github.io/acapy-vc-authn-oidc/
+helm repo add owf	https://openwallet-foundation.github.io/helm-charts/
 helm repo update
-helm install my-release acapy-vc-authn-oidc/vc-authn-oidc
+helm install my-release owf/vc-authn-oidc
 ```
 
 ## Prerequisites
