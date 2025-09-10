@@ -5,5 +5,11 @@ acapy:
   autoscaling:
     enabled: false
   persistence:
-    accessModes:
-      - ReadWriteOnce
+    enabled: false
+  postgresql:
+    persistence:
+      enabled: false
+
+mongodb:
+  persistence:
+    enabled: false
