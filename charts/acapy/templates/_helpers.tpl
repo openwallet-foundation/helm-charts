@@ -118,6 +118,28 @@ Return the Secret that holds the Postgres credentials.
 {{- end -}}
 
 {{/*
+Return the Secret name or API secret
+*/}}
+{{- define "acapy.api.secretName" -}}
+{{- if .Values.secrets.api.existingSecret -}}
+{{- tpl .Values.secrets.api.existingSecret . }}
+{{- else -}}
+{{- printf "%s-api" (include "common.names.fullname" .) }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the Secret name or seed secret
+*/}}
+{{- define "acapy.seed.secretName" -}}
+{{- if .Values.secrets.seed.existingSecret -}}
+{{- tpl .Values.secrets.seed.existingSecret . }}
+{{- else -}}
+{{- printf "%s-seed" (include "common.names.fullname" .) }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Generate ACA-Py wallet storage config
 */}}
 {{- define "acapy.walletStorageConfig" -}}

@@ -1,4 +1,6 @@
-{{ $apiSecretName := printf "%s-api" (include "common.names.fullname" .) }}
+{{ $apiSecretName := include "acapy.api.secretName" . }}
+{{ $seedSecretName := include "acapy.seed.secretName" . }}
+{{ $databaseSecretName := tpl "acapy.database.secretName" . }}
 {{ $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
@@ -95,33 +97,33 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ $apiSecretName }}
-                  key: adminApiKey
+                  key: {{ .Values.secrets.api.secretKeys.adminApiKey | default "adminApiKey" }}
                   optional: true
             - name: ACAPY_WALLET_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ $apiSecretName }}
-                  key: walletKey
+                  key: {{ .Values.secrets.api.secretKeys.walletKey | default "walletKey" }}
             - name: ACAPY_WALLET_SEED
               valueFrom:
                 secretKeyRef:
-                  name: {{ printf "%s-seed" (include "common.names.fullname" .) }}
-                  key: seed
+                  name: {{ $seedSecretName }}
+                  key: {{ default "seed" .Values.secrets.seed.secretKeys.seed }}
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "acapy.database.secretName" . }}
+                  name: {{ $databaseSecretName }}
                   key: {{ .Values.walletStorageCredentials.secretKeys.userPasswordKey }}
             - name: POSTGRES_POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "acapy.database.secretName" . }}
+                  name: {{ $databaseSecretName }}
                   key: {{ .Values.walletStorageCredentials.secretKeys.adminPasswordKey }}
             - name: ACAPY_MULTITENANT_JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ $apiSecretName }}
-                  key: jwt
+                  key: {{ .Values.secrets.api.secretKeys.jwtKey | default "jwt" }}
             - name: ACAPY_WALLET_STORAGE_CREDS
               value: {{ include "acapy.walletStorageCredentials" . }}
             {{- if .Values.extraEnvVars }}
