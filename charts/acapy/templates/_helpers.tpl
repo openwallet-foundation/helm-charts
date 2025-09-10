@@ -118,7 +118,7 @@ Return the Secret that holds the Postgres credentials.
 {{- end -}}
 
 {{/*
-Return the Secret name or API secret
+Return the Secret name for API secret
 */}}
 {{- define "acapy.api.secretName" -}}
 {{- if .Values.secrets.api.existingSecret -}}
@@ -129,7 +129,7 @@ Return the Secret name or API secret
 {{- end -}}
 
 {{/*
-Return the Secret name or seed secret
+Return the Secret name for seed secret
 */}}
 {{- define "acapy.seed.secretName" -}}
 {{- if .Values.secrets.seed.existingSecret -}}
