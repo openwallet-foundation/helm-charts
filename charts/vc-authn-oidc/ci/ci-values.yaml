@@ -1,4 +1,9 @@
+autoscaling:
+  enabled: false
+
 acapy:
+  autoscaling:
+    enabled: false
   persistence:
     accessModes:
       - ReadWriteOnce
