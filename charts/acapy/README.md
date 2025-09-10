@@ -1,6 +1,6 @@
 # AcaPy
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.3.1](https://img.shields.io/badge/AppVersion-1.3.1-informational?style=flat-square)
+![Version: 0.2.1](https://img.shields.io/badge/Version-0.2.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.3.1](https://img.shields.io/badge/AppVersion-1.3.1-informational?style=flat-square)
 
 A Helm chart to deploy A Cloud Agent - Python.
 
@@ -94,6 +94,32 @@ Note: Secure values of the configuration are passed via equivalent environment v
 | `plugin-config.yml`                               | Plugin configuration file                                                                                                                                                                                                                                                                                                                                                                            | `{}`                                                        |
 | `websockets.enabled`                              | Enable or disable the websocket transport for the agent.                                                                                                                                                                                                                                                                                                                                             | `false`                                                     |
 | `websockets.publicUrl`                            | Explicit public websockets URL. If not set, it will be derived from agentUrl or ingress.publicScheme.                                                                                                                                                                                                                                                                                                | `""`                                                        |
+
+### Secrets
+
+Secrets used by the chart. By default the chart will generate (and retain) the API and seed secrets
+using the getOrGeneratePass helper (random if not already present). In GitOps environments where
+lookups are not possible (e.g. ArgoCD dry‑run), provide existing secrets instead to avoid drift.
+
+API Secret keys expected (unless overridden via secretKeys):
+  adminApiKey   (omitted if argfile.yml.admin-insecure-mode=true)
+  jwt           (multitenant JWT signing secret)
+  walletKey     (primary wallet key / encryption key)
+  webhookapi    (optional key appended to webhook-url if using #APIKEY pattern)
+Seed Secret keys expected:
+  seed          (32 char wallet seed when wallet-local-did=true or deterministic DID needed)
+
+| Name                                   | Description                                                                                              | Value         |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------- |
+| `secrets.api.retainOnUninstall`        | When true, adds helm.sh/resource-policy: keep to generated api secret                                    | `true`        |
+| `secrets.api.existingSecret`           | Name of an existing Secret providing API related keys. If set, the chart will NOT create the api secret. | `""`          |
+| `secrets.api.secretKeys.adminApiKey`   | Key in the API secret holding the admin API key.                                                         | `adminApiKey` |
+| `secrets.api.secretKeys.jwtKey`        | Key in the API secret holding the multitenant JWT signing secret.                                        | `jwt`         |
+| `secrets.api.secretKeys.walletKey`     | Key in the API secret holding the wallet key.                                                            | `walletKey`   |
+| `secrets.api.secretKeys.webhookapiKey` | Key in the API secret holding the webhook API key (used when embedding in webhook-url).                  | `webhookapi`  |
+| `secrets.seed.retainOnUninstall`       | When true, adds helm.sh/resource-policy: keep to generated api secret                                    | `true`        |
+| `secrets.seed.existingSecret`          | Name of an existing Secret providing the wallet seed. If set, the chart will NOT create the seed secret. | `""`          |
+| `secrets.seed.secretKeys.seed`         | Key in the seed secret holding the wallet seed value.                                                    | `seed`        |
 
 ### Wallet Storage configuration
 
