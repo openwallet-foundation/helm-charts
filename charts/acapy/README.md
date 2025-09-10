@@ -117,7 +117,7 @@ Seed Secret keys expected:
 | `secrets.api.secretKeys.jwtKey`        | Key in the API secret holding the multitenant JWT signing secret.                                        | `jwt`         |
 | `secrets.api.secretKeys.walletKey`     | Key in the API secret holding the wallet key.                                                            | `walletKey`   |
 | `secrets.api.secretKeys.webhookapiKey` | Key in the API secret holding the webhook API key (used when embedding in webhook-url).                  | `webhookapi`  |
-| `secrets.seed.retainOnUninstall`       | When true, adds helm.sh/resource-policy: keep to generated api secret                                    | `true`        |
+| `secrets.seed.retainOnUninstall`       | When true, adds helm.sh/resource-policy: keep to generated seed secret                                   | `true`        |
 | `secrets.seed.existingSecret`          | Name of an existing Secret providing the wallet seed. If set, the chart will NOT create the seed secret. | `""`          |
 | `secrets.seed.secretKeys.seed`         | Key in the seed secret holding the wallet seed value.                                                    | `seed`        |
 
