@@ -1,0 +1,4 @@
+acapy:
+  persistence:
+    accessModes:
+      - ReadWriteOnce
