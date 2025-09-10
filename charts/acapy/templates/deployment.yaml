@@ -1,6 +1,5 @@
 {{ $apiSecretName := include "acapy.api.secretName" . }}
 {{ $seedSecretName := include "acapy.seed.secretName" . }}
-{{ $databaseSecretName := tpl "acapy.database.secretName" . }}
 {{ $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
@@ -112,12 +111,12 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ $databaseSecretName }}
+                  name: {{ template "acapy.database.secretName" . }}
                   key: {{ .Values.walletStorageCredentials.secretKeys.userPasswordKey }}
             - name: POSTGRES_POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ $databaseSecretName }}
+                  name: {{ template "acapy.database.secretName" . }}
                   key: {{ .Values.walletStorageCredentials.secretKeys.adminPasswordKey }}
             - name: ACAPY_MULTITENANT_JWT_SECRET
               valueFrom:
