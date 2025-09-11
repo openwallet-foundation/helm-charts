@@ -1,0 +1,120 @@
+name: Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (do not upload releases or update index)"
+        required: false
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+  pull_request:
+    types: [closed]
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/'))
+      || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'false' }}
+      PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract chart & version
+        id: info
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "No PR context; using latest release/* branch for simulation"
+            ref=$(git branch -r --list 'origin/release/*' | sed 's|.*origin/||' | sort -V | tail -n1)
+          else
+            ref="${PR_HEAD_REF}" # release/acapy-v1.2.3
+          fi
+          base=$(echo "$ref" | cut -d/ -f2)
+          chart=$(echo "$base" | sed -E 's/-v[0-9].*//')
+          version=$(echo "$base" | sed -E 's/^.*-v//')
+          echo "chart=$chart" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Publishing $chart $version"
+
+      - name: Tag if missing
+        run: |
+          chart='${{ steps.info.outputs.chart }}'
+          version='${{ steps.info.outputs.version }}'
+          tag="${chart}-${version}"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "Tag $tag already exists"
+          else
+            if [ "${DRY_RUN}" = "true" ]; then
+              echo "[DRY RUN] Would create and push tag $tag"
+            else
+              git tag -a "$tag" -m "${chart} ${version}"
+              git push origin "$tag"
+            fi
+          fi
+
+      - name: Load pins
+        uses: ./.github/actions/load-pins
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4.3.1
+        with:
+          version: v${{ env.HELM_VERSION }}
+
+      - name: Install chart-releaser
+        run: |
+          curl -sSL -o cr.tar.gz "https://github.com/helm/chart-releaser/releases/download/v${CHART_RELEASER_VERSION}/chart-releaser_${CHART_RELEASER_VERSION}_linux_amd64.tar.gz"
+          tar -xzf cr.tar.gz cr && sudo mv cr /usr/local/bin/cr
+
+      - name: Build dependencies
+        run: |
+          chart='${{ steps.info.outputs.chart }}'
+          helm dependency build "charts/$chart" || true
+
+      - name: Package chart
+        run: |
+          mkdir -p .cr-release-packages
+          helm package "charts/${{ steps.info.outputs.chart }}" --destination .cr-release-packages
+
+      - name: Publish release
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # shellcheck disable=SC2086
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "[DRY RUN] Would run cr upload for packages in .cr-release-packages"
+          else
+            cr upload \
+              --owner "${GITHUB_REPOSITORY_OWNER}" \
+              --git-repo "${GITHUB_REPOSITORY#*/}" \
+              --package-path .cr-release-packages \
+              --skip-existing \
+              --release-name-template "{{ .Name }}-{{ .Version }}" \
+              --make-release-latest=false
+          fi
+
+      - name: Update index.yaml
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # shellcheck disable=SC2086
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "[DRY RUN] Would run cr index and push gh-pages update"
+          else
+            cr index \
+              --owner "${GITHUB_REPOSITORY_OWNER}" \
+              --git-repo "${GITHUB_REPOSITORY#*/}" \
+              --pages-branch gh-pages \
+              --pages-index-path index.yaml \
+              --push
+          fi
