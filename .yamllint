@@ -1,0 +1,18 @@
+# Global yamllint configuration for this repo
+
+extends: default
+
+ignore: |
+  charts/**/templates/**
+  charts/**/charts/**
+  charts/**/ci/**
+  charts/**/README.md
+  charts/**/CHANGELOG.md
+
+rules:
+  truthy: disable
+  document-start: disable
+  line-length:
+    max: 120
+    level: warning
+  comments-indentation: disable
