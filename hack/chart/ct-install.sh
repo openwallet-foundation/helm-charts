@@ -3,6 +3,7 @@
 # Usage: ct-install.sh <chart>
 
 set -Eeuo pipefail
+repo_root=$(cd "$(dirname "$0")/../.." && pwd)
 chart="${1:-}"
 if [[ -z "${chart}" ]]; then
   echo "Usage: $0 <chart-name>" >&2
@@ -18,11 +19,16 @@ if [[ ! -f .github/ct.yaml ]]; then
   exit 1
 fi
 cluster="owf-${chart}-dev"
+kc_dir="${repo_root}/.kube"
+kc_file="${kc_dir}/${cluster}.kubeconfig"
+mkdir -p "${kc_dir}"
+export KUBECONFIG="${kc_file}"
 echo "[info] Creating kind cluster ${cluster}"
 if ! kind create cluster --name "${cluster}" --wait 60s; then
   echo "[error] Failed to create cluster" >&2
   exit 1
 fi
+kind export kubeconfig --name "${cluster}" >/dev/null 2>&1 || true
 trap 'echo "[info] Deleting cluster ${cluster}"; kind delete cluster --name "${cluster}" >/dev/null 2>&1 || true' EXIT
 
 set +e
