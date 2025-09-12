@@ -209,30 +209,3 @@ jobs:
           fi
 
           echo "🎉 All documentation is up to date!"
-
-      - name: Post PR comment on failure
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `❌ **PR checks failed**
-
-              Please check the workflow logs for specific issues. Common fixes:
-
-              📝 **Documentation Updates Needed:**
-              - If \`values.yaml\` was modified: \`npx @bitnami/readme-generator-for-helm --readme charts/CHART/README.md --values charts/CHART/values.yaml\`
-              - If significant changes were made: \`npx conventional-changelog -p conventionalcommits -i charts/CHART/CHANGELOG.md -s\`
-
-              🔧 **Other Common Issues:**
-              - Version bump required in Chart.yaml
-              - Helm template validation errors
-              - Chart linting issues
-
-              After making fixes, commit and push the changes.`
-            })
-
-  # Former publish job removed; publishing handled in release-publish workflow after Release PR merge.
