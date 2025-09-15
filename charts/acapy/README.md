@@ -110,8 +110,8 @@ Seed Secret keys expected:
   seed          (32 char wallet seed when wallet-local-did=true or deterministic DID needed)
 
 Note: When using multitenant mode, a seed should generally NOT be specified for the base wallet.
-      This can be achieved by secrets.seed.enabled=false. However, if a seed is specified, the base wallet will need to be registered
-      using the corresponding did/verkey onto the ledger used to root the agent.
+      This can be achieved by setting secrets.seed.enabled=false. However, if a seed is specified,
+      the base wallet will need to be registered using the corresponding did/verkey onto the ledger where the agent is rooted.
 
 | Name                                   | Description                                                                                              | Value         |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------- |
