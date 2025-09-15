@@ -1,3 +1,8 @@
+##  (2025-09-15)
+
+### Features
+
+* **helm:** add flag to disable wallet seed secret and env var ([1f2c442](https://github.com/openwallet-foundation/helm-charts/commit/1f2c4428632280472779d8a87f2e8c08283ff341))
 ##  (2025-09-10)
 
 ### Features
