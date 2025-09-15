@@ -103,11 +103,13 @@ spec:
                 secretKeyRef:
                   name: {{ $apiSecretName }}
                   key: {{ .Values.secrets.api.secretKeys.walletKey | default "walletKey" }}
+            {{- if .Values.secrets.seed.enabled }}
             - name: ACAPY_WALLET_SEED
               valueFrom:
                 secretKeyRef:
                   name: {{ $seedSecretName }}
                   key: {{ .Values.secrets.seed.secretKeys.seed | default "seed" }}
+            {{- end }}
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
