@@ -23,6 +23,7 @@ SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl git jq bash make tar gzip xz-utils gnupg lsb-release openssh-client yamllint \
+    python3 python3-pip python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user (UID 1000 to align with vscode) with passwordless sudo
@@ -86,6 +87,15 @@ RUN set -euo pipefail 2>/dev/null || set -euo || set -eu; \
     tar -xJf shellcheck.tar.xz shellcheck-v${SHELLCHECK_VERSION}/shellcheck || { echo 'shellcheck untar failed'; exit 29; }; mv shellcheck-v${SHELLCHECK_VERSION}/shellcheck /usr/local/bin/shellcheck; rm -rf shellcheck.tar.xz shellcheck-v${SHELLCHECK_VERSION}; shellcheck --version | head -2; \
     # shfmt
     fetch https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_${SHFMT_ARCH} /usr/local/bin/shfmt; chmod +x /usr/local/bin/shfmt; shfmt --version || { echo 'shfmt failed'; exit 30; }; set +x
+
+# Python tools via pip (Yamale for Chart.yaml schema validation) in isolated venv (avoid PEP 668)
+RUN set -euo pipefail; \
+    . /tmp/versions.env; \
+    python3 -m venv /opt/venv && \
+    . /opt/venv/bin/activate && \
+    python -m pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir yamale==${YAMALE_VERSION} && \
+    echo 'source /opt/venv/bin/activate' >> /etc/profile.d/10-python-venv.sh
 
 # Install local workflow/test tools (act, actionlint) using pins
 RUN set -euo pipefail; \
