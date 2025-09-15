@@ -221,8 +221,9 @@ websockets:
 ## Seed Secret keys expected:
 ##   seed          (32 char wallet seed when wallet-local-did=true or deterministic DID needed)
 ##
-## Note: In multitenant mode the base wallet should not use a seed. You can explicitly disable the
-## seed secret and env var by setting secrets.seed.enabled=false.
+## Note: When using multitenant mode, a seed should generally NOT be specified for the base wallet.
+##       This can be achieved by secrets.seed.enabled=false. However, if a seed is specified, the base wallet will need to be registered
+##       using the corresponding did/verkey onto the ledger used to root the agent.
 ## @descriptionEnd
 ##
 ## @param secrets.api.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated api secret
