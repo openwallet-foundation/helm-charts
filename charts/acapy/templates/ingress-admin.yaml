@@ -1,5 +1,5 @@
 {{- if .Values.ingress.admin.enabled }}
-apiVersion: {{ include "common.capabilities.ingress.apiVersion" . }}
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "common.names.fullname" . }}-admin
@@ -10,7 +10,7 @@ metadata:
   annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
   {{- end }}
 spec:
-  {{- if and .Values.ingress.admin.ingressClassName (eq "true" (include "common.ingress.supportsIngressClassname" .)) }}
+  {{- if .Values.ingress.admin.ingressClassName }}
   ingressClassName: {{ .Values.ingress.admin.ingressClassName | quote }}
   {{- end }}
   rules:
@@ -21,10 +21,8 @@ spec:
           {{- if .Values.ingress.admin.extraPaths }}
           {{- toYaml .Values.ingress.admin.extraPaths | nindent 10 }}
           {{- end }}
-          - path: {{ .Values.ingress.admin.path }}
-            {{- if eq "true" (include "common.ingress.supportsPathType" .) }}
+          - path: {{ tpl .Values.ingress.admin.path | quote }}
             pathType: {{ .Values.ingress.admin.pathType }}
-            {{- end }}
             backend: {{- include "common.ingress.backend" (dict "serviceName" (include "common.names.fullname" .) "servicePort" "admin" "context" $)  | nindent 14 }}
     {{- end }}
     {{- range .Values.ingress.admin.extraHosts }}
@@ -32,9 +30,7 @@ spec:
       http:
         paths:
           - path: {{ default "/" .path }}
-            {{- if eq "true" (include "common.ingress.supportsPathType" $) }}
             pathType: {{ default "ImplementationSpecific" .pathType }}
-            {{- end }}
             backend: {{- include "common.ingress.backend" (dict "serviceName" (include "common.names.fullname" $) "servicePort" "admin" "context" $) | nindent 14 }}
     {{- end }}
     {{- if .Values.ingress.admin.extraRules }}

@@ -478,9 +478,6 @@ ingress:
     ## @param ingress.agent.pathType Ingress Path type
     ##
     pathType: ImplementationSpecific
-    ## @param ingress.agent.apiVersion Override API Version (automatically detected if not set)
-    ##
-    apiVersion: ""
     ## @param ingress.agent.hostname When the ingress is enabled, a host pointing to this will be created
     ##
     hostname: acapy.local
@@ -573,9 +570,6 @@ ingress:
     ## @param ingress.admin.pathType Ingress Path type
     ##
     pathType: ImplementationSpecific
-    ## @param ingress.admin.apiVersion Override API Version (automatically detected if not set)
-    ##
-    apiVersion: ""
     ## @param ingress.admin.hostname When the ingress is enabled, a host pointing to this will be created
     ##
     hostname: admin.acapy.local

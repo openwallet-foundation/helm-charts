@@ -1,7 +1,7 @@
 {{ $apiSecretName := include "acapy.api.secretName" . }}
 {{ $seedSecretName := include "acapy.seed.secretName" . }}
 {{ $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
-apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "common.names.fullname" . }}
