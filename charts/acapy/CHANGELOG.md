@@ -2,6 +2,13 @@
 
 ### Features
 
+* **acapy:** Add flag to disable wallet seed secret creation and env var mounting ([#37](https://github.com/openwallet-foundation/helm-charts/issues/37)) ([12b75b0](https://github.com/openwallet-foundation/helm-charts/commit/12b75b054957fae71caae0d3c746d177e3647c1c))
+* pin bitnami common library chart to 2.31.3 ([ccf916b](https://github.com/openwallet-foundation/helm-charts/commit/ccf916b260fb24704394e91fb1d5e614636d7d7f))
+* remove deprecated bitnami common library function references ([464efe9](https://github.com/openwallet-foundation/helm-charts/commit/464efe9ba668fd410069199f1f28afd46fc275b8))
+##  (2025-09-15)
+
+### Features
+
 * **helm:** add flag to disable wallet seed secret and env var ([1f2c442](https://github.com/openwallet-foundation/helm-charts/commit/1f2c4428632280472779d8a87f2e8c08283ff341))
 ##  (2025-09-10)
 
