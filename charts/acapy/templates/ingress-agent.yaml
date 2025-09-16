@@ -21,7 +21,7 @@ spec:
           {{- if .Values.ingress.agent.extraPaths }}
           {{- toYaml .Values.ingress.agent.extraPaths | nindent 10 }}
           {{- end }}
-          - path: {{ (tpl .Values.ingress.agent.path .) | quote }}
+          - path: {{ tpl .Values.ingress.agent.path . | quote }}
             pathType: {{ .Values.ingress.agent.pathType }}
             backend: {{- include "common.ingress.backend" (dict "serviceName" (include "common.names.fullname" .) "servicePort" "http" "context" $)  | nindent 14 }}
     {{- end }}
