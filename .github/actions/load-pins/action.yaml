@@ -1,0 +1,18 @@
+name: Load pinned versions
+description: Load tool version pins from hack/versions.env into GITHUB_ENV
+inputs: {}
+outputs: {}
+runs:
+  using: composite
+  steps:
+    - name: Load pins from hack/versions.env
+      shell: bash
+      run: |
+        if [ ! -f hack/versions.env ]; then
+          echo "hack/versions.env not found" >&2; exit 1;
+        fi
+        while IFS='=' read -r k v; do
+          if [ -z "$k" ] || echo "$k" | grep -Eq '^#'; then continue; fi
+          v="${v%%#*}"; v="$(echo "$v" | xargs)"; k="$(echo "$k" | xargs)";
+          if [ -n "$k" ]; then echo "$k=$v" >> "$GITHUB_ENV"; fi
+        done < hack/versions.env

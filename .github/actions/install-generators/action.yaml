@@ -1,0 +1,22 @@
+name: Install pinned README/CHANGELOG generators
+description: Install @bitnami/readme-generator-for-helm and conventional-changelog-cli using pinned versions from env
+inputs: {}
+outputs: {}
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install generators (pinned)
+      shell: bash
+      run: |
+        if [ -z "${BITNAMI_README_GENERATOR_VERSION}" ] || [ -z "${CONVENTIONAL_CHANGELOG_CLI_VERSION}" ]; then
+          echo "Generator versions not set; ensure load-pins ran first" >&2; exit 1;
+        fi
+        npm install -g \
+          @bitnami/readme-generator-for-helm@"${BITNAMI_README_GENERATOR_VERSION}" \
+          conventional-changelog-cli@"${CONVENTIONAL_CHANGELOG_CLI_VERSION}" \
+          conventional-changelog-conventionalcommits >/dev/null 2>&1

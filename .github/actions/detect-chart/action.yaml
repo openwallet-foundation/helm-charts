@@ -10,6 +10,18 @@ runs:
     - id: detect
       shell: bash
       run: |
+        # Local override for act/dev runs: if DETECT_CHART is set, trust it
+        if [ -n "${DETECT_CHART:-}" ]; then
+          if [ -d "charts/${DETECT_CHART}" ] && [ -f "charts/${DETECT_CHART}/Chart.yaml" ]; then
+            echo "chart=${DETECT_CHART}" >> $GITHUB_OUTPUT
+            echo "✅ Using DETECT_CHART override: ${DETECT_CHART}"
+            exit 0
+          else
+            echo "❌ DETECT_CHART=${DETECT_CHART} is invalid (charts/${DETECT_CHART} not found)" >&2
+            exit 1
+          fi
+        fi
+
         # Determine the correct base and head SHAs for comparison
         if [ "${{ github.event_name }}" = "pull_request" ]; then
           base_sha="${{ github.event.pull_request.base.sha }}"
