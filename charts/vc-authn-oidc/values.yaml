@@ -511,9 +511,13 @@ cleanup:
     ## Resource limits for cleanup jobs
     ##
     resources:
+      ## @param cleanup.cronjob.resources.limits.cpu CPU limit for cleanup job containers
+      ## @param cleanup.cronjob.resources.limits.memory Memory limit for cleanup job containers
       limits:
         cpu: 100m
         memory: 128Mi
+      ## @param cleanup.cronjob.resources.requests.cpu CPU request for cleanup job containers
+      ## @param cleanup.cronjob.resources.requests.memory Memory request for cleanup job containers
       requests:
         cpu: 50m
         memory: 64Mi
