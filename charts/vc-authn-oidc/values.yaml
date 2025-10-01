@@ -482,6 +482,52 @@ acapy:
     commonLabels:
       app.kubernetes.io/role: wallet
 
+## @section Cleanup Configuration
+##
+## Cleanup service configuration for scheduled maintenance tasks
+##
+cleanup:
+  ## CronJob configuration for scheduled cleanup
+  ##
+  cronjob:
+    ## @param cleanup.cronjob.enabled Enable scheduled cleanup via Kubernetes CronJob
+    ##
+    enabled: false
+    ## @param cleanup.cronjob.schedule Cron schedule for cleanup job (default: every hour)
+    ##
+    schedule: "0 * * * *"
+    ## @param cleanup.cronjob.timeoutSeconds Timeout for cleanup HTTP requests in seconds
+    ##
+    timeoutSeconds: 300
+    ## @param cleanup.cronjob.retryDelaySeconds Delay between retry attempts in seconds
+    ##
+    retryDelaySeconds: 10
+    ## @param cleanup.cronjob.successfulJobsHistoryLimit Number of successful jobs to keep in history
+    ##
+    successfulJobsHistoryLimit: 3
+    ## @param cleanup.cronjob.failedJobsHistoryLimit Number of failed jobs to keep in history
+    ##
+    failedJobsHistoryLimit: 3
+    ## Resource limits for cleanup jobs
+    ##
+    resources:
+      ## @param cleanup.cronjob.resources.limits.cpu CPU limit for cleanup job containers
+      ## @param cleanup.cronjob.resources.limits.memory Memory limit for cleanup job containers
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      ## @param cleanup.cronjob.resources.requests.cpu CPU request for cleanup job containers
+      ## @param cleanup.cronjob.resources.requests.memory Memory request for cleanup job containers
+      requests:
+        cpu: 50m
+        memory: 64Mi
+    ## @param cleanup.cronjob.nodeSelector [object] Node labels for cleanup job pod assignment
+    ##
+    nodeSelector: {}
+    ## @param cleanup.cronjob.tolerations [array] Tolerations for cleanup job pod assignment
+    ##
+    tolerations: []
+
 ##  Overrides for bitnami/mongodb chart - https://github.com/bitnami/charts/tree/main/bitnami/mongodb
 mongodb:
   ## @param mongodb.image [object] Pin image tag, and use bitnamilegacy repo.
