@@ -1,6 +1,2 @@
 autoscaling:
   enabled: false
-
-postgresql:
-  persistence:
-    enabled: false
