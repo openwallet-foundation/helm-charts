@@ -176,11 +176,26 @@ livenessProbe:
   httpGet:
     path: /health
     port: http
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
 ## @param readinessProbe [object] Readiness probe configuration
 readinessProbe:
   httpGet:
     path: /health
     port: http
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+## @param startupProbe [object] Startup probe configuration
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30  # 30 * 10 = 300 seconds (5 minutes) max startup time
 
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 ## @param autoscaling.enabled Enable Horizontal POD autoscaling for the Credo Mediator
