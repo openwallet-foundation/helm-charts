@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "mediator.labels" . | nindent 4 }}
 spec:
-  #  Allow ingress traffic into the comediator podsntroller
+  #  Allow ingress traffic into the mediator pods controller
   ingress:
      {{- if and .Values.ingress.enabled .Values.networkPolicy.ingress.enabled (or .Values.networkPolicy.ingress.namespaceSelector .Values.networkPolicy.ingress.podSelector) }}
     - from:

@@ -23,7 +23,7 @@ imagePullSecrets: []
 # This is to override the chart name.
 ## @param nameOverride String to override the helm chart name, second part of the prefix.
 nameOverride: ""
-## @param fullnameOverride String to fully override the helm chart name, full prefix. *Must be provided if using a custom release name that does not include the name of the helm chart (`vc-authn-oidc`).*
+## @param fullnameOverride String to fully override the helm chart name, full prefix. *Must be provided if using a custom release name that does not include the name of the helm chart (`didcomm-mediator-credo`).*
 fullnameOverride: ""
 
 # This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
@@ -42,12 +42,12 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-# This is for setting Kubernetes Annotations to a Pod.
+# This is for setting Kubernetes annotations to a pod.
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 ## @param podAnnotations Map of annotations to add to the mediator pods
 podAnnotations: {}
 
-# This is for setting Kubernetes Labels to a Pod.
+# This is for setting Kubernetes labels to a pod.
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 ## @param podLabels Map of labels to add to the mediator pods
 podLabels: {}

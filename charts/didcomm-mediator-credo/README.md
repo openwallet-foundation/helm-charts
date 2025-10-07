@@ -43,7 +43,7 @@ kubectl delete secret,pvc --selector "app.kubernetes.io/instance"=my-release
 
 ## Persistence
 
-The mediator chart assumes a PostgreSQL deployment is available. The appropriate settings must be configured in the `environment, `networkpolicy` and `postgresql` sections.
+The mediator chart assumes a PostgreSQL deployment is available. The appropriate settings must be configured in the `environment`, `networkpolicy` and `postgresql` sections.
 
 ## Parameters
 
@@ -57,7 +57,7 @@ The mediator chart assumes a PostgreSQL deployment is available. The appropriate
 | `image.tag`                                  | Overrides the image tag which defaults to the chart appVersion.                                                                                                                  | `""`                                                            |
 | `imagePullSecrets`                           |                                                                                                                                                                                  | `[]`                                                            |
 | `nameOverride`                               | String to override the helm chart name, second part of the prefix.                                                                                                               | `""`                                                            |
-| `fullnameOverride`                           | String to fully override the helm chart name, full prefix. *Must be provided if using a custom release name that does not include the name of the helm chart (`vc-authn-oidc`).* | `""`                                                            |
+| `fullnameOverride`                           | String to fully override the helm chart name, full prefix. *Must be provided if using a custom release name that does not include the name of the helm chart (`didcomm-mediator-credo`).* | `""`                                                            |
 | `serviceAccount.create`                      | Specifies whether a ServiceAccount should be created                                                                                                                             | `true`                                                          |
 | `serviceAccount.annotations`                 | Annotations for service account. Evaluated as a template. Only used if `create` is `true`.                                                                                       | `{}`                                                            |
 | `serviceAccount.automount`                   | Automount service account token for the server service account                                                                                                                   | `true`                                                          |
