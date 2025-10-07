@@ -81,7 +81,7 @@ service:
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
   ## @param ingress.enabled Enable ingress record generation for controller
-  enabled: true
+  enabled: false
   ## @param ingress.className IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
   ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
   ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
@@ -114,7 +114,7 @@ networkPolicy:
   ## @param networkPolicy.ingress.namespaceSelector [object] Namespace selector label that is allowed to access the Tenant proxy pods.
   ## @param networkPolicy.ingress.podSelector [object] Pod selector label that is allowed to access the Tenant proxy pods.
   ingress:
-    enabled: true
+    enabled: false
     namespaceSelector: []
     ## Example:
     # network.openshift.io/policy-group: ingress
