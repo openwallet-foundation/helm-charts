@@ -1,2 +1,14 @@
+environment:
+  - name: POSTGRES_USER
+    value: Null
+  - name: POSTGRES_HOST
+    value: Null
+  - name: POSTGRES_ADMIN_USER
+    value: Null
+  - name: POSTGRES_PASSWORD
+    value: Null
+  - name: POSTGRES_ADMIN_PASSWORD
+    value: Null
+
 autoscaling:
   enabled: false
