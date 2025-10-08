@@ -9,6 +9,7 @@
 * **didcomm-mediator-credo:** Minor tweaks f263de4
 * disable mediator ingress by default cc5e73c
 * update ci settings 47ff616
+
 ##  (2025-10-07)
 
 ### Features
