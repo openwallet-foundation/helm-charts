@@ -1,14 +1,20 @@
 environment:
-  - name: POSTGRES_USER
-    value: Null
-  - name: POSTGRES_HOST
-    value: Null
-  - name: POSTGRES_ADMIN_USER
-    value: Null
-  - name: POSTGRES_PASSWORD
-    value: Null
-  - name: POSTGRES_ADMIN_PASSWORD
-    value: Null
+  - name: AGENT_PORT
+    value: 3000
+  - name: AGENT_NAME
+    value: Mediator
+  - name: WALLET_NAME
+    value: mediator-wallet
+  - name: AGENT_ENDPOINTS
+    value: "http://example.com,wss://example.com"
+  - name: LOG_LEVEL
+    value: 2
+  - name: PICKUP_TYPE
+    value: ""       # The default is undefined which means it will not use a pickup repository. Additionally, it can be set to 'postgres'.
+  - name: PICKUP_STRATEGY
+    value: DirectDelivery       # The default is 'DirectDelivery', it can be also be 'QueueOnly' or 'QueueAndLiveModeDelivery'
+  - name: PICKUP_SETTINGS
+    value: "{}"
 
 autoscaling:
   enabled: false
