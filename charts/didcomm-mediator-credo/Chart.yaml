@@ -3,7 +3,7 @@ name: mediator
 description: A Helm chart for the Credo DIDComm Mediator Service
 type: application
 
-version: 0.3.0
+version: 0.3.1
 appVersion: "0.1.0"
 
 maintainers:
