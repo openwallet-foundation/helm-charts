@@ -147,11 +147,6 @@ environment:
     value: "http://example.com,wss://example.com"
   - name: WALLET_NAME
     value: mediator-wallet
-  - name: WALLET_KEY
-    valueFrom:
-      secretKeyRef:
-        name: mediator-credo-agent
-        key: wallet-key
   - name: POSTGRES_USER
     valueFrom:
       secretKeyRef:

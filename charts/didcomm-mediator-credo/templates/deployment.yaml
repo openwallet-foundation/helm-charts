@@ -68,6 +68,11 @@ spec:
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+            - name: WALLET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mediator.fullname" . }}-agent
+                  key: wallet-key
             - name: FIREBASE_PROJECT_ID
               valueFrom:
                 secretKeyRef:
