@@ -179,7 +179,7 @@ environment:
     valueFrom:
       secretKeyRef:
         name: mediator-credo-db
-        key: pickup-connection-json # This is a JSON string that contains the settings for the pickup repository. It is only required if PICKUP_TYPE is set to 'postgres'.
+        key: pickup-connection-json     # This is a JSON string that contains the settings for the pickup repository. It is only required if PICKUP_TYPE is set to 'postgres'.
   - name: CREATE_NEW_INVITATION
     value: "false"       # used to create a new invitation on startup. The default is 'false'.
   - name: GOAL_CODE
