@@ -137,22 +137,30 @@ resources: {}
 ## @param environment [array] Variables to be passed to the container
 ## ref: https://kubernetes.io/docs/concepts/configuration/overview/
 environment:
+  - name: LOG_LEVEL
+    value: "2"
   - name: AGENT_PORT
     value: "3000"
   - name: AGENT_NAME
     value: Mediator
+  - name: AGENT_ENDPOINTS
+    value: "http://example.com,wss://example.com"
   - name: WALLET_NAME
     value: mediator-wallet
+  - name: WALLET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: mediator-credo-agent
+        key: wallet-key
   - name: POSTGRES_USER
-    value: mediator
+    valueFrom:
+      secretKeyRef:
+        name: mediator-credo-db
+        key: database-user
   - name: POSTGRES_HOST
     value: mediator-credo-db
   - name: POSTGRES_ADMIN_USER
     value: postgres
-  - name: AGENT_ENDPOINTS
-    value: "http://example.com,wss://example.com"
-  - name: LOG_LEVEL
-    value: "2"
   - name: POSTGRES_PASSWORD
     valueFrom:
       secretKeyRef:
@@ -168,8 +176,41 @@ environment:
   - name: PICKUP_STRATEGY
     value: DirectDelivery       # The default is 'DirectDelivery', it can be also be 'QueueOnly' or 'QueueAndLiveModeDelivery'
   - name: PICKUP_SETTINGS
-    value: "{}"
-
+    valueFrom:
+      secretKeyRef:
+        name: mediator-credo-db
+        key: pickup-connection-json # This is a JSON string that contains the settings for the pickup repository. It is only required if PICKUP_TYPE is set to 'postgres'.
+  - name: CREATE_NEW_INVITATION
+    value: "false"       # used to create a new invitation on startup. The default is 'false'.
+  - name: GOAL_CODE
+    value: "vc.mediate"      # used to set the goal code for the invitation. The default is 'vc.mediate'
+  - name: USE_PUSH_NOTIFICATIONS
+    value: "false"       # used to globally enable/disable push notifications. The default is 'false'.
+  - name: FIREBASE_PROJECT_ID
+    valueFrom:
+      secretKeyRef:
+        name: mediator-agent-firebase
+        key: project-id
+  - name: FIREBASE_CLIENT_EMAIL
+    valueFrom:
+      secretKeyRef:
+        name: mediator-agent-firebase
+        key: client-email
+  - name: FIREBASE_PRIVATE_KEY
+    valueFrom:
+      secretKeyRef:
+        name: mediator-agent-firebase
+        key: private-key
+  - name: PUSH_NOTIFICATION_TITLE
+    value: "You have a new message"
+  - name: PUSH_NOTIFICATION_BODY
+    value: "Open your app to read it"
+  - name: NODE_OPTIONS
+    value: Null      # Example: --max-old-space-size=512 to limit memory usage to 512MB
+  - name: MALLOC_CONF
+    value: Null      # Example: "background_thread:true,metadata_thp:auto,dirty_decay_ms:30000,muzzy_decay_ms:30000" to tune jemalloc memory allocator
+  - name: LD_PRELOAD
+    value: Null      # Example: /usr/lib/x86_64-linux-gnu/libjemalloc.so.2 to use jemalloc memory allocator
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 ## @param livenessProbe [object] Liveness probe configuration
 livenessProbe:
