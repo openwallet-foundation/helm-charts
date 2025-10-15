@@ -175,32 +175,12 @@ environment:
     value: null       # The default is undefined which means it will not use a pickup repository. Additionally, it can be set to 'postgres'.
   - name: PICKUP_STRATEGY
     value: DirectDelivery       # The default is 'DirectDelivery', it can be also be 'QueueOnly' or 'QueueAndLiveModeDelivery'
-  - name: PICKUP_SETTINGS
-    valueFrom:
-      secretKeyRef:
-        name: mediator-credo-db
-        key: pickup-connection-json     # This is a JSON string that contains the settings for the pickup repository.
   - name: CREATE_NEW_INVITATION
     value: "false"       # used to create a new invitation on startup. The default is 'false'.
   - name: GOAL_CODE
     value: "vc.mediate"      # used to set the goal code for the invitation. The default is 'vc.mediate'
   - name: USE_PUSH_NOTIFICATIONS
     value: "false"       # used to globally enable/disable push notifications. The default is 'false'.
-  - name: FIREBASE_PROJECT_ID
-    valueFrom:
-      secretKeyRef:
-        name: mediator-agent-firebase
-        key: project-id
-  - name: FIREBASE_CLIENT_EMAIL
-    valueFrom:
-      secretKeyRef:
-        name: mediator-agent-firebase
-        key: client-email
-  - name: FIREBASE_PRIVATE_KEY
-    valueFrom:
-      secretKeyRef:
-        name: mediator-agent-firebase
-        key: private-key
   - name: PUSH_NOTIFICATION_TITLE
     value: "You have a new message"
   - name: PUSH_NOTIFICATION_BODY
