@@ -156,7 +156,7 @@ environment:
     valueFrom:
       secretKeyRef:
         name: mediator-credo-db
-        key: database-user
+        key: user
   - name: POSTGRES_HOST
     value: mediator-credo-db
   - name: POSTGRES_ADMIN_USER
@@ -170,16 +170,16 @@ environment:
     valueFrom:
       secretKeyRef:
         name: mediator-credo-db
-        key: postgres-password
+        key: admin-password
   - name: PICKUP_TYPE
-    value: Null       # The default is undefined which means it will not use a pickup repository. Additionally, it can be set to 'postgres'.
+    value: null       # The default is undefined which means it will not use a pickup repository. Additionally, it can be set to 'postgres'.
   - name: PICKUP_STRATEGY
     value: DirectDelivery       # The default is 'DirectDelivery', it can be also be 'QueueOnly' or 'QueueAndLiveModeDelivery'
   - name: PICKUP_SETTINGS
     valueFrom:
       secretKeyRef:
         name: mediator-credo-db
-        key: pickup-connection-json     # This is a JSON string that contains the settings for the pickup repository. It is only required if PICKUP_TYPE is set to 'postgres'.
+        key: pickup-connection-json     # This is a JSON string that contains the settings for the pickup repository.
   - name: CREATE_NEW_INVITATION
     value: "false"       # used to create a new invitation on startup. The default is 'false'.
   - name: GOAL_CODE
@@ -206,11 +206,11 @@ environment:
   - name: PUSH_NOTIFICATION_BODY
     value: "Open your app to read it"
   - name: NODE_OPTIONS
-    value: Null      # Example: --max-old-space-size=512 to limit memory usage to 512MB
+    value: null      # Example: --max-old-space-size=512 to limit memory usage to 512MB
   - name: MALLOC_CONF
-    value: Null      # Example: "background_thread:true,metadata_thp:auto,dirty_decay_ms:30000,muzzy_decay_ms:30000" to tune jemalloc memory allocator
+    value: null      # Example: "background_thread:true,metadata_thp:auto,dirty_decay_ms:30000,muzzy_decay_ms:30000" to tune jemalloc memory allocator
   - name: LD_PRELOAD
-    value: Null      # Example: /usr/lib/x86_64-linux-gnu/libjemalloc.so.2 to use jemalloc memory allocator
+    value: null      # Example: /usr/lib/x86_64-linux-gnu/libjemalloc.so.2 to use jemalloc memory allocator
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 ## @param livenessProbe [object] Liveness probe configuration
 livenessProbe:
