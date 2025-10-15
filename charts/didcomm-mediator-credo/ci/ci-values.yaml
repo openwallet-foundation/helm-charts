@@ -28,7 +28,7 @@ environment:
   - name: MALLOC_CONF
     value: null      # Example: "background_thread:true,metadata_thp:auto,dirty_decay_ms:30000,muzzy_decay_ms:30000" to tune jemalloc memory allocator
   - name: LD_PRELOAD
-    value: null    
+    value: null
 
 autoscaling:
   enabled: false
