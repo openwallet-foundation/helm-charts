@@ -121,6 +121,20 @@ spec:
               value: {{ printf "/opt/token/%s" .Values.auth.token.privateKey.filename }}
             - name: LOG_LEVEL
               value: {{ .Values.logLevel | quote }}
+            {{- if .Values.redis.enabled }}
+            - name: REDIS_URL
+              value: "redis://{{ include "global.fullname" . }}-redis:6379/0"
+            - name: REDIS_HOST
+              value: "{{ include "global.fullname" . }}-redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_DB
+              value: "0"
+            - name: SESSION_STORAGE_TYPE
+              value: "redis"
+            - name: USE_REDIS_ADAPTER
+              value: "true"
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
