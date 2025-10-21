@@ -19,11 +19,12 @@ labels: ["chart"]
 ## Checklist
 
 - [ ] This PR changes exactly one chart (`charts/<chart-name>`)
-- [ ] No manual version bump in `Chart.yaml` (handled by Release‑PR)
+- [ ] No manual version bump in `Chart.yaml` (handled by Release-PR automation)
 - [ ] Values are annotated (`@param`) and README regenerates cleanly
-	- Prefer `helm-docs`; Bitnami generator also supported via `make docs CHART=<chart-name>`
-- [ ] Added/updated `charts/<chart-name>/ci/*-values.yaml` if needed for `ct`
-- [ ] `make verify CHART=<chart-name>` passes locally
+	- Prefer `helm-docs`; Bitnami generator fallback via `make docs CHART=<chart-name>`
+- [ ] Added/updated `charts/<chart-name>/ci/*-values.yaml` if needed for chart-testing
+- [ ] `make check CHART=<chart-name>` passes locally
+- [ ] `make ct-install CHART=<chart-name>` passes (or explain why skipped)
 - [ ] If mixing multiple change types, the description clearly separates them (Feat/Fix/Docs/etc.)
 
 ## Release notes (optional)

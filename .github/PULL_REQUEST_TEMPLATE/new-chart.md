@@ -9,19 +9,21 @@ labels: ["chart","new-chart"]
 - New Chart: <chart-name>
 - Upstream app/image version: <x.y.z>
 
-## What’s included
+## What's included
 
 - [ ] `charts/<chart-name>/Chart.yaml` with maintainers
 - [ ] Templates follow helpers/naming conventions
-- [ ] `values.yaml` annotated for README generator
-- [ ] `README.md` generated (Bitnami generator)
-- [ ] Minimal `ci/ci-values.yaml` for chart-testing install
+- [ ] `values.yaml` annotated with `@param` for README generator
+- [ ] `README.md` generated (prefer `helm-docs`, Bitnami fallback OK)
+- [ ] Minimal `ci/ci-values.yaml` for chart-testing install tests
+- [ ] `.helmignore` includes `ci/*.*` to exclude test files from package
 
 ## Testing
 
-- [ ] `helm lint charts/<chart-name>`
-- [ ] `make verify CHART=<chart-name>`
-- [ ] (optional) `make local-test CHART=<chart-name>`
+- [ ] `helm lint charts/<chart-name>` passes
+- [ ] `make check CHART=<chart-name>` passes (all validations)
+- [ ] `make ct-install CHART=<chart-name>` passes (install test in kind)
+- [ ] (optional) `make local-test CHART=<chart-name>` (full CI simulation)
 
 ## Notes for reviewers
 
