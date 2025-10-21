@@ -10,244 +10,244 @@ on:
         type: choice
         options: ["true", "false"]
       chart:
-        description: "Optional: limit to a single chart name (ad‑hoc release)"
+        description: "Optional: limit to a single chart name (leave empty for all charts)"
         required: false
         default: ""
         type: string
   schedule:
-    - cron: '15 * * * *'
+    # Daily at 2:00 AM UTC
+    - cron: '0 2 * * *'
   push:
-    branches: [ main ]
-    paths: [ 'charts/**' ]
+    branches: [main]
+    paths: ['charts/**']
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  prepare:
+  release-pr:
     runs-on: ubuntu-latest
-    outputs:
-      charts: ${{ steps.filter.outputs.charts }}
-    if: >-
-      github.event_name != 'workflow_dispatch' || github.event.inputs.chart == ''
+    env:
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'false' }}
+      CHART_INPUT: ${{ github.event.inputs.chart || '' }}
     steps:
       - name: Checkout
-        if: github.actor != 'nektos/act'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Use local workspace (act)
-        if: github.actor == 'nektos/act'
-        run: |
-          git config user.email "devnull@example.com"; git config user.name "Release Bot"
-          git status --porcelain >/dev/null || true
-      - name: Load pins
+
+      - name: Load version pins
         uses: ./.github/actions/load-pins
 
-      - name: List & filter charts with a bump
-        id: filter
-        shell: bash
-        env:
-          CHART_INPUT: ${{ github.event.inputs.chart }}
+      - name: Install generators (pinned)
+        uses: ./.github/actions/install-generators
+
+      - name: Configure git
         run: |
-          # shellcheck disable=SC2086
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+      - name: Discover charts needing release
+        id: discover
+        shell: bash
+        run: |
+          # Discover which charts have unreleased changes
           if [ -n "${CHART_INPUT}" ]; then
             if [ -d "charts/${CHART_INPUT}" ]; then
               charts="${CHART_INPUT}"
               echo "Scoping to input chart: ${CHART_INPUT}"
             else
-              echo "Input chart '${CHART_INPUT}' not found under charts/" >&2
-              charts=""
+              echo "::error::Input chart '${CHART_INPUT}' not found under charts/"
+              exit 1
             fi
           else
             charts="$(find charts -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null || true)"
           fi
-          out=()
-          while IFS= read -r c; do
-            [ -z "$c" ] && continue
-            last="$(git tag --list "${c}-*" | sort -V | tail -1 || true)"
-            eval "$(hack/release/classify_commits.sh "charts/$c" "$last")"
+
+          # Filter charts that need a release
+          charts_needing_release=()
+          while IFS= read -r chart; do
+            [ -z "$chart" ] && continue
+            echo "::group::Checking ${chart}"
+
+            last_tag="$(git tag --list "${chart}-*" | sort -V | tail -1 || true)"
+            echo "Last tag for ${chart}: ${last_tag:-none}"
+
+            # Classify commits since last tag
+            chmod +x hack/release/*.sh
+            eval "$(hack/release/classify_commits.sh "charts/${chart}" "$last_tag")"
+
             if [ "${BUMP_LEVEL}" != "none" ] && [ -n "${BUMP_LEVEL}" ]; then
-              out+=("${c}")
+              echo "✅ ${chart} needs ${BUMP_LEVEL} bump"
+              charts_needing_release+=("${chart}")
+            else
+              echo "⏭️  ${chart} has no changes requiring release"
             fi
+            echo "::endgroup::"
           done <<< "$charts"
-          if [ ${#out[@]} -eq 0 ]; then
-            echo "No charts require a release bump";
-          fi
-          printf '%s\n' "${out[@]}" | jq -R -s -c 'split("\n") | map(select(length>0))' | tee /tmp/charts.json
-          echo "charts=$(cat /tmp/charts.json)" >> "$GITHUB_OUTPUT"
 
-  release-pr:
-    needs: prepare
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        chart: ${{ fromJson(needs.prepare.outputs.charts) }}
-    if: >-
-      github.event_name != 'workflow_dispatch' || github.event.inputs.chart == ''
-    concurrency:
-      group: release-pr-${{ matrix.chart }}
-      cancel-in-progress: false
-    env:
-      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'false' }}
-      CHART: ${{ matrix.chart }}
-    steps:
-      - name: Checkout
-        if: github.actor != 'nektos/act'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Use local workspace (act)
-        if: github.actor == 'nektos/act'
-        run: |
-          git config user.email "devnull@example.com"; git config user.name "Release Bot"
-          git status --porcelain >/dev/null || true
-
-  release-pr-single:
-    name: release-pr (single)
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.chart != ''
-    concurrency:
-      group: release-pr-${{ github.event.inputs.chart }}
-      cancel-in-progress: false
-    env:
-      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
-      CHART: ${{ github.event.inputs.chart }}
-    steps:
-      - name: Checkout
-        if: github.actor != 'nektos/act'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Use local workspace (act)
-        if: github.actor == 'nektos/act'
-        run: |
-          git config user.email "devnull@example.com"; git config user.name "Release Bot"
-          git status --porcelain >/dev/null || true
-
-      - name: Load pins
-        uses: ./.github/actions/load-pins
-
-      - name: Determine last tag
-        id: lasttag
-        run: |
-          # shellcheck disable=SC2086
-          last="$(git tag --list "${CHART}-*" | sort -V | tail -1 || true)"
-          echo "last_tag=$last" >> "$GITHUB_OUTPUT"
-          echo "Last tag for ${CHART}: $last"
-
-      - name: Classify commits
-        id: classify
-        run: |
-          # shellcheck disable=SC2086
-          chmod +x hack/release/*.sh
-          last_tag='${{ steps.lasttag.outputs.last_tag }}'
-          current_version="$(yq '.version' "charts/${CHART}/Chart.yaml")"
-          eval "$(hack/release/classify_commits.sh "charts/${CHART}" "$last_tag")"
-          echo "auto_bump=$BUMP_LEVEL" >> "$GITHUB_OUTPUT"
-          echo "current_version=$current_version" >> "$GITHUB_OUTPUT"
-
-      - name: Decide bump & next version (labels override)
-        id: decide
-        uses: actions/github-script@v7
-        env:
-          AUTO_BUMP: ${{ steps.classify.outputs.auto_bump }}
-          CURRENT_VERSION: ${{ steps.classify.outputs.current_version }}
-          CHART: ${{ env.CHART }}
-        with:
-          script: |
-            const fs = require('fs');
-            const cp = require('child_process');
-            const autoBump = process.env.AUTO_BUMP;
-            const current = process.env.CURRENT_VERSION;
-            const chart = process.env.CHART;
-            if (!autoBump || autoBump === 'none') {
-              core.setOutput('skip','true');
-              fs.appendFileSync(process.env.GITHUB_WORKSPACE + '/decide.env', 'SKIP=true\n');
-              return;
-            }
-            let labels = [];
-            try {
-              const { data: prs } = await github.rest.pulls.list({ owner: context.repo.owner, repo: context.repo.repo, state: 'open', base: 'main' });
-              const existing = prs.find(p => p.head.ref.startsWith(`release/${chart}-v`));
-              labels = existing ? existing.labels.map(l => l.name) : [];
-            } catch (e) {
-              core.notice('Skipping PR label override (GitHub API unavailable)');
-            }
-            if (labels.includes('no-release')) { core.setOutput('skip','true'); fs.appendFileSync(process.env.GITHUB_WORKSPACE + '/decide.env', 'SKIP=true\n'); return; }
-            let override = '';
-            if (labels.includes('bump:major')) override='major'; else if (labels.includes('bump:minor')) override='minor'; else if (labels.includes('bump:patch')) override='patch';
-            const finalBump = override || autoBump;
-            const next = cp.execSync(`hack/release/next_version.sh ${current} '' ${finalBump}`).toString().trim();
-            core.setOutput('skip','false');
-            core.setOutput('next_version', next);
-            core.setOutput('final_bump', finalBump);
-            fs.appendFileSync(process.env.GITHUB_WORKSPACE + '/decide.env', `SKIP=false\nNEXT_VERSION=${next}\nFINAL_BUMP=${finalBump}\n`);
-
-      - name: Export decision outputs
-        id: export
-        run: |
-          # shellcheck disable=SC2086
-          if [ -f decide.env ]; then cat decide.env >> "$GITHUB_ENV"; else echo 'SKIP=true' >> "$GITHUB_ENV"; fi
-
-      - name: Install generators (pinned)
-        uses: ./.github/actions/install-generators
-
-      - name: Prepare release branch
-        id: prep
-        run: |
-          # shellcheck disable=SC2086
-          if [ "${SKIP}" = "true" ]; then echo "Skip true - not preparing branch"; exit 0; fi
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"; git config user.name "Release Bot"
-          next="${NEXT_VERSION}"
-          branch="release/${CHART}-v${next}"
-          git switch -c "$branch" || git switch "$branch"
-          hack/release/update_chart_version.sh "charts/${CHART}" "$next"
-          printf '{"name":"%s-chart","version":"%s"}' "${CHART}" "$next" > package.json
-          npx conventional-changelog -p conventionalcommits --tag-prefix "${CHART}-" --commit-path "charts/${CHART}" -i "charts/${CHART}/CHANGELOG.md" -s || true
-          rm package.json
-          npx @bitnami/readme-generator-for-helm --readme "charts/${CHART}/README.md" --values "charts/${CHART}/values.yaml"
-          git add "charts/${CHART}/Chart.yaml" "charts/${CHART}/CHANGELOG.md" "charts/${CHART}/README.md"
-          git diff --cached --quiet && { echo "No diffs"; exit 0; }
-          git commit -m "chore(${CHART}): prepare release v${next}" -m "Automated Release PR preparation"
-          if [ "${DRY_RUN}" = "true" ] || [ "${GITHUB_ACTOR}" = "nektos/act" ]; then
-            echo "[DRY RUN] Would push branch $branch to origin"
+          if [ ${#charts_needing_release[@]} -eq 0 ]; then
+            echo "::notice::No charts require a release"
+            echo "charts_json=[]" >> "$GITHUB_OUTPUT"
           else
-            git push origin "$branch" --force
+            echo "::notice::Charts needing release: ${charts_needing_release[*]}"
+            printf '%s\n' "${charts_needing_release[@]}" | jq -R -s -c 'split("\n") | map(select(length>0))' > /tmp/charts.json
+            echo "charts_json=$(cat /tmp/charts.json)" >> "$GITHUB_OUTPUT"
           fi
-          echo "branch=$branch" >> "$GITHUB_OUTPUT"
 
-      - name: Open / update PR
-        if: env.DRY_RUN != 'true'
-        uses: actions/github-script@v7
+      - name: Process release PRs
+        if: steps.discover.outputs.charts_json != '[]'
+        shell: bash
         env:
-          NEXT_VERSION: ${{ env.NEXT_VERSION }}
-          LAST_TAG: ${{ steps.lasttag.outputs.last_tag }}
-          RELEASE_BRANCH: ${{ steps.prep.outputs.branch }}
-          SKIP: ${{ env.SKIP }}
-          CHART: ${{ env.CHART }}
-        with:
-          script: |
-            if (process.env.SKIP === 'true' || !process.env.RELEASE_BRANCH) { core.notice('Skip true - no PR'); return; }
-            const next = process.env.NEXT_VERSION;
-            const branch = process.env.RELEASE_BRANCH;
-            const lastTag = process.env.LAST_TAG || 'INITIAL';
-            const chart = process.env.CHART;
-            const { data: pulls } = await github.rest.pulls.list({ owner: context.repo.owner, repo: context.repo.repo, state: 'open' });
-            const existing = pulls.find(p => p.head.ref === branch);
-            const compare = `${context.payload.repository.html_url}/compare/${lastTag}...${branch}`;
-            const body = `Automated Release PR for ${chart} v${next}\n\n- Chart: ${chart}\n- Next Version: ${next}\n- Compare: ${compare}\n\nLabels:\n- bump:major | bump:minor | bump:patch\n- no-release`;
-            const title = `release(${chart}): v${next}`;
-            if (!existing) {
-              const pr = await github.rest.pulls.create({ owner: context.repo.owner, repo: context.repo.repo, head: branch, base: 'main', title, body });
-              try { await github.rest.issues.addLabels({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.data.number, labels: ['release-pr'] }); } catch(e) {}
-            } else {
-              await github.rest.pulls.update({ owner: context.repo.owner, repo: context.repo.repo, pull_number: existing.number, title, body });
-            }
-
-      - name: Dry-run summary
-        if: env.DRY_RUN == 'true'
+          CHARTS_JSON: ${{ steps.discover.outputs.charts_json }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "[DRY RUN] Release-PR would have created/updated branch: ${RELEASE_BRANCH:-'(none)'} and opened/updated a PR for chart ${CHART}."
+          charts=$(echo "$CHARTS_JSON" | jq -r '.[]')
+
+          for chart in $charts; do
+            echo "::group::Processing release for ${chart}"
+
+            # Determine last tag
+            last_tag="$(git tag --list "${chart}-*" | sort -V | tail -1 || true)"
+            echo "Last tag: ${last_tag:-none}"
+
+            # Classify commits and get bump level
+            current_version="$(yq '.version' "charts/${chart}/Chart.yaml")"
+            eval "$(hack/release/classify_commits.sh "charts/${chart}" "$last_tag")"
+            auto_bump="${BUMP_LEVEL}"
+            echo "Current version: ${current_version}"
+            echo "Automatic bump level: ${auto_bump}"
+
+            # Check for label overrides on existing PRs
+            override=""
+            skip="false"
+            if [ "${{ github.event_name }}" != "schedule" ]; then
+              # Query GitHub API for existing release PR
+              existing_pr=$(gh pr list --state open --head "release/${chart}-" --json number,labels --jq '.[0]' || echo "{}")
+              if [ "$existing_pr" != "{}" ] && [ "$existing_pr" != "null" ]; then
+                labels=$(echo "$existing_pr" | jq -r '.labels[].name')
+                if echo "$labels" | grep -q "no-release"; then
+                  echo "::notice::Found 'no-release' label, skipping ${chart}"
+                  skip="true"
+                elif echo "$labels" | grep -q "bump:major"; then
+                  override="major"
+                elif echo "$labels" | grep -q "bump:minor"; then
+                  override="minor"
+                elif echo "$labels" | grep -q "bump:patch"; then
+                  override="patch"
+                fi
+                if [ -n "$override" ]; then
+                  echo "::notice::Label override detected: ${override}"
+                fi
+              fi
+            fi
+
+            if [ "$skip" = "true" ]; then
+              echo "::endgroup::"
+              continue
+            fi
+
+            # Calculate next version
+            final_bump="${override:-$auto_bump}"
+            if [ "$final_bump" = "none" ]; then
+              echo "::warning::No bump needed for ${chart}, skipping"
+              echo "::endgroup::"
+              continue
+            fi
+
+            next_version="$(hack/release/next_version.sh "$current_version" "" "$final_bump")"
+            echo "Next version: ${next_version} (${final_bump} bump)"
+
+            # Create/switch to release branch
+            branch="release/${chart}-v${next_version}"
+            git switch -c "$branch" 2>/dev/null || git switch "$branch"
+
+            # Update Chart.yaml version
+            hack/release/update_chart_version.sh "charts/${chart}" "$next_version"
+
+            # Generate CHANGELOG
+            printf '{"name":"%s-chart","version":"%s"}' "${chart}" "$next_version" > package.json
+            npx conventional-changelog -p conventionalcommits --tag-prefix "${chart}-" --commit-path "charts/${chart}" -i "charts/${chart}/CHANGELOG.md" -s || true
+            rm package.json
+
+            # Generate README
+            if command -v helm-docs > /dev/null 2>&1; then
+              helm-docs -c "charts/${chart}"
+            else
+              npx @bitnami/readme-generator-for-helm --readme "charts/${chart}/README.md" --values "charts/${chart}/values.yaml"
+            fi
+
+            # Commit changes
+            git add "charts/${chart}/Chart.yaml" "charts/${chart}/CHANGELOG.md" "charts/${chart}/README.md"
+            if git diff --cached --quiet; then
+              echo "::warning::No changes to commit for ${chart}"
+              echo "::endgroup::"
+              continue
+            fi
+
+            git commit -m "chore(${chart}): prepare release v${next_version}" \
+                       -m "Automated Release PR preparation" \
+                       -m "" \
+                       -m "Bump: ${final_bump}" \
+                       -m "Previous version: ${current_version}" \
+                       -m "Next version: ${next_version}"
+
+            # Push branch (skip if dry-run)
+            if [ "${DRY_RUN}" = "true" ]; then
+              echo "::warning::[DRY RUN] Would push branch: ${branch}"
+            else
+              git push origin "${branch}" --force
+              echo "✅ Pushed branch: ${branch}"
+
+              # Open or update PR
+              existing_pr_number=$(gh pr list --state open --head "${branch}" --json number --jq '.[0].number' || echo "")
+              compare_url="https://github.com/${{ github.repository }}/compare/${last_tag:-main}...${branch}"
+
+              # Create PR body using heredoc
+              pr_body=$(cat <<EOF
+          Automated Release PR for **${chart}** v${next_version}
+
+          ## Release Information
+          - **Chart:** ${chart}
+          - **Current version:** ${current_version}
+          - **Next version:** ${next_version}
+          - **Bump type:** ${final_bump}
+          - **Compare:** ${compare_url}
+
+          ## Label Overrides
+          You can override the version bump by adding labels:
+          - \`bump:major\` - Force major version bump
+          - \`bump:minor\` - Force minor version bump
+          - \`bump:patch\` - Force patch version bump
+          - \`no-release\` - Skip this release
+
+          Merge this PR to publish the chart.
+          EOF
+              )
+
+              if [ -n "$existing_pr_number" ]; then
+                gh pr edit "$existing_pr_number" \
+                  --title "release(${chart}): v${next_version}" \
+                  --body "$pr_body"
+                echo "✅ Updated PR #${existing_pr_number}"
+              else
+                gh pr create \
+                  --head "${branch}" \
+                  --base main \
+                  --title "release(${chart}): v${next_version}" \
+                  --body "$pr_body" \
+                  --label "release-pr"
+                echo "✅ Created new PR"
+              fi
+            fi
+
+            # Return to main branch for next chart
+            git switch main
+
+            echo "::endgroup::"
+          done
+
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "::notice::[DRY RUN] Workflow completed without making changes"
+          fi
