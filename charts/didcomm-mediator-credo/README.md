@@ -29,14 +29,6 @@ helm install my-release owf/didcomm-mediator-credo
 
 > **Tip**: List all releases using `helm list`
 
-## Installing the Chart
-
-To install the chart with the release name `my-release`:
-
-```console
-helm install my-release charts/mediator
-```
-
 
 ## Uninstalling the Chart
 
