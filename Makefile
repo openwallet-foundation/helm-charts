@@ -6,7 +6,7 @@
 SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 .PHONY: help tools-check lint ct-lint ct-install local-test docs changelog release-pr kind-delete _ensure-chart _cluster-name \
-	sync-versions shell-lint shell-format shell-format-check fmt yamllint verify test install-cli uninstall-cli act-pr actionlint act-release-publish
+	sync-versions shell-lint shell-format shell-format-check fmt yamllint check verify test install-cli uninstall-cli act-pr actionlint act-release-publish
 
 # -------------------------------------------------------------------------------------------------
 # Core variables
@@ -144,16 +144,18 @@ uninstall-cli: ## Remove installed user-local shims
 	@bash hack/dev/uninstall-cli.sh
 
 # -------------------------------------------------------------------------------------------------
-# Verification meta target
+# Check meta target (validation before PR)
 # -------------------------------------------------------------------------------------------------
-verify: _ensure-chart ## Run tool/version check + lint suite for CHART
-	@echo "[verify] tools-check"; $(MAKE) tools-check >/dev/null || exit 1; \
-	echo "[verify] shell-lint"; $(MAKE) shell-lint SHELL_LINT_STRICT=1 || exit 1; \
-	echo "[verify] shell-format-check"; $(MAKE) shell-format-check || exit 1; \
-	echo "[verify] yamllint"; $(MAKE) yamllint || exit 1; \
-	echo "[verify] helm lint"; $(MAKE) lint CHART=$(CHART) || exit 1; \
-	if [ -f .github/ct.yaml ]; then echo "[verify] ct lint"; $(MAKE) ct-lint CHART=$(CHART) || exit 1; else echo "[verify] skip ct-lint (no .github/ct.yaml)"; fi; \
-	echo "[verify] done"
+check: _ensure-chart ## Run all validations for CHART (lint suite + formatting)
+	@echo "[check] tools-check"; $(MAKE) tools-check >/dev/null || exit 1; \
+	echo "[check] shell-lint"; $(MAKE) shell-lint SHELL_LINT_STRICT=1 || exit 1; \
+	echo "[check] shell-format-check"; $(MAKE) shell-format-check || exit 1; \
+	echo "[check] yamllint"; $(MAKE) yamllint || exit 1; \
+	echo "[check] helm lint"; $(MAKE) lint CHART=$(CHART) || exit 1; \
+	if [ -f .github/ct.yaml ]; then echo "[check] ct lint"; $(MAKE) ct-lint CHART=$(CHART) || exit 1; else echo "[check] skip ct-lint (no .github/ct.yaml)"; fi; \
+	echo "[check] done"
+
+verify: check ## Alias for 'make check' (deprecated, will be removed)
 
 # -------------------------------------------------------------------------------------------------
 # Local workflow testing (optional; requires 'act')
@@ -178,3 +180,4 @@ install-act: ## (deprecated) act is installed via devcontainer pins
 
 actionlint: ## Run actionlint against workflows
 	@actionlint -color
+`
