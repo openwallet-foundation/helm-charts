@@ -217,6 +217,27 @@ entries:
     urls:
     - https://github.com/openwallet-foundation/helm-charts/releases/download/acapy-0.1.6/acapy-0.1.6.tgz
     version: 0.1.6
+  didcomm-mediator-credo:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2025-10-22T17:57:08.551002617Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    description: A Helm chart for the Credo DIDComm Mediator Service
+    digest: a243e61ca896097c9708b80b82e582dcaf2fbd47ff27bdda1af8531c83ab7b71
+    maintainers:
+    - email: emiliano.sune@quartech.com
+      name: esune
+      url: https://github.com/esune
+    name: didcomm-mediator-credo
+    type: application
+    urls:
+    - https://github.com/openwallet-foundation/helm-charts/releases/download/didcomm-mediator-credo-0.3.3/didcomm-mediator-credo-0.3.3.tgz
+    version: 0.3.3
   mediator:
   - apiVersion: v2
     appVersion: 0.1.0
@@ -337,4 +358,4 @@ entries:
     urls:
     - https://github.com/openwallet-foundation/helm-charts/releases/download/vc-authn-oidc-0.4.3/vc-authn-oidc-0.4.3.tgz
     version: 0.4.3
-generated: "2025-10-21T16:39:40.219441043Z"
+generated: "2025-10-22T17:57:08.55103088Z"
