@@ -44,7 +44,7 @@ spec:
                   -X DELETE \
                   "http://{{ include "global.fullname" . }}:{{ .Values.service.port }}/cleanup")
 
-                http_code="${response: -3}"
+                http_code="${response:(-3)}"
                 echo "HTTP Status: $http_code"
 
                 if [ "$http_code" = "200" ]; then
