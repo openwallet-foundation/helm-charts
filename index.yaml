@@ -301,6 +301,35 @@ entries:
     version: 0.3.0
   vc-authn-oidc:
   - apiVersion: v2
+    appVersion: 2.3.1
+    created: "2025-10-23T22:13:48.260151135Z"
+    dependencies:
+    - name: acapy
+      repository: https://openwallet-foundation.github.io/helm-charts/
+      version: 0.2.3
+    - name: mongodb
+      repository: https://charts.bitnami.com/bitnami
+      version: 16.4.1
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    description: A Helm chart to deploy ACAPy VC-AuthN on OpenShift
+    digest: 1d041f42f0e2f1860e1f58534fbfdd8ec88e50f4cff6e28d6abd5fb4fddce579
+    maintainers:
+    - email: emiliano.sune@quartech.com
+      name: esune
+      url: https://github.com/esune
+    - email: ivan.polchenko@quartech.com
+      name: i5okie
+      url: https://github.com/i5okie
+    name: vc-authn-oidc
+    type: application
+    urls:
+    - https://github.com/openwallet-foundation/helm-charts/releases/download/vc-authn-oidc-0.4.5/vc-authn-oidc-0.4.5.tgz
+    version: 0.4.5
+  - apiVersion: v2
     appVersion: 2.3.0
     created: "2025-09-10T23:55:31.71014541Z"
     dependencies:
@@ -358,4 +387,4 @@ entries:
     urls:
     - https://github.com/openwallet-foundation/helm-charts/releases/download/vc-authn-oidc-0.4.3/vc-authn-oidc-0.4.3.tgz
     version: 0.4.3
-generated: "2025-10-22T17:57:08.55103088Z"
+generated: "2025-10-23T22:13:48.260184508Z"
