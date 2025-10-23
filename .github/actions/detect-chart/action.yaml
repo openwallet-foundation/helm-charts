@@ -23,7 +23,8 @@ runs:
         echo "Comparing $base_sha...$head_sha"
 
         # Look for any changes in charts/ directory to detect affected charts
-        changed_charts=$(git diff --name-only $base_sha $head_sha | grep '^charts/' | cut -d'/' -f2 | sort -u || true)
+        # Use three-dot diff to compare changes from merge-base, avoiding issues with stale PR branches
+        changed_charts=$(git diff --name-only $base_sha...$head_sha | grep '^charts/' | cut -d'/' -f2 | sort -u || true)
 
         if [ -z "$changed_charts" ]; then
           echo "❌ No changes detected in charts/ directory"
