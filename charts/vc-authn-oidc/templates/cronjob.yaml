@@ -40,7 +40,7 @@ spec:
                   --retry-max-time 30 \
                   --fail-with-body \
                   -H "Content-Type: application/json" \
-                  -H "X-API-Key: $(CLEANUP_API_KEY)" \
+                  -H "X-API-Key: $CLEANUP_API_KEY" \
                   -X DELETE \
                   "http://{{ include "global.fullname" . }}:{{ .Values.service.port }}/cleanup")
 
