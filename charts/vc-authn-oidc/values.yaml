@@ -606,3 +606,68 @@ mongodb:
     ## @param mongodb.metrics.enabled Enable using a sidecar Prometheus exporter
     ##
     enabled: false
+
+## @section Redis Configuration
+##
+## @param redis.enabled Enable Redis deployment
+## @param redis.image.registry Redis image registry
+## @param redis.image.repository Redis image repository
+## @param redis.image.tag Redis image tag
+## @param redis.image.pullPolicy Redis image pull policy
+##
+redis:
+  enabled: false
+  image:
+    registry: docker.io
+    repository: redis
+    tag: "7.2-alpine"
+    pullPolicy: IfNotPresent
+  ## @param redis.resources.limits.cpu CPU limit for Redis containers
+  ## @param redis.resources.limits.memory Memory limit for Redis containers
+  ## @param redis.resources.requests.cpu CPU request for Redis containers
+  ## @param redis.resources.requests.memory Memory request for Redis containers
+  ##
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  ## @param redis.nodeSelector [object] Node labels for Redis pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param redis.tolerations [array] Tolerations for Redis pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## Redis Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param redis.securityContext.enabled Enable Redis pods' Security Context
+  ## @param redis.securityContext.runAsUser Set Redis pods' Security Context runAsUser
+  ## @param redis.securityContext.runAsNonRoot Set Redis pods' Security Context runAsNonRoot
+  ## @param redis.securityContext.fsGroup Set Redis pods' Security Context fsGroup
+  ##
+  securityContext:
+    enabled: true
+    runAsUser: 999
+    runAsNonRoot: true
+    fsGroup: 999
+  ## Redis Container Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+  ## @param redis.containerSecurityContext.enabled Enable Redis containers' Security Context
+  ## @param redis.containerSecurityContext.runAsUser Set Redis containers' Security Context runAsUser
+  ## @param redis.containerSecurityContext.runAsNonRoot Set Redis containers' Security Context runAsNonRoot
+  ## @param redis.containerSecurityContext.allowPrivilegeEscalation Set Redis containers' Security Context allowPrivilegeEscalation
+  ## @param redis.containerSecurityContext.readOnlyRootFilesystem Set Redis containers' Security Context readOnlyRootFilesystem
+  ## @param redis.containerSecurityContext.capabilities.drop List of capabilities to be dropped in Redis containers
+  ##
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 999
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
