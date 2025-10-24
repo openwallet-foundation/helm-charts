@@ -1,13 +1,15 @@
 # DIDComm Mediator Credo
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.3.2](https://img.shields.io/badge/Version-0.3.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 A Helm chart to deploy the DIDComm Mediator Credo service.
 
 ## TL;DR
 
 ```console
-helm install my-release charts/mediator
+helm repo add owf	https://openwallet-foundation.github.io/helm-charts/
+helm repo update
+helm install my-release owf/didcomm-mediator-credo
 ```
 
 ## Prerequisites
@@ -21,8 +23,11 @@ helm install my-release charts/mediator
 To install the chart with the release name `my-release`:
 
 ```console
-helm install my-release charts/mediator
+helm repo add owf	https://openwallet-foundation.github.io/helm-charts/
+helm install my-release owf/didcomm-mediator-credo
 ```
+
+> **Tip**: List all releases using `helm list`
 
 
 ## Uninstalling the Chart
@@ -54,7 +59,7 @@ The mediator chart assumes a PostgreSQL deployment is available. The appropriate
 | `replicaCount`                               | This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/                                              | `1`                                                             |
 | `image.repository`                           |                                                                                                                                                                                           | `ghcr.io/openwallet-foundation/didcomm-mediator-credo/mediator` |
 | `image.pullPolicy`                           |                                                                                                                                                                                           | `Always`                                                        |
-| `image.tag`                                  | Overrides the image tag which defaults to the chart appVersion.                                                                                                                           | `e628910`                                                       |
+| `image.tag`                                  | Overrides the image tag which defaults to the chart appVersion.                                                                                                                           | `314112b`                                                       |
 | `imagePullSecrets`                           |                                                                                                                                                                                           | `[]`                                                            |
 | `nameOverride`                               | String to override the helm chart name, second part of the prefix.                                                                                                                        | `""`                                                            |
 | `fullnameOverride`                           | String to fully override the helm chart name, full prefix. *Must be provided if using a custom release name that does not include the name of the helm chart (`didcomm-mediator-credo`).* | `""`                                                            |
@@ -70,6 +75,7 @@ The mediator chart assumes a PostgreSQL deployment is available. The appropriate
 | `service.port`                               |                                                                                                                                                                                           | `3000`                                                          |
 | `ingress.enabled`                            | Enable ingress record generation for controller                                                                                                                                           | `false`                                                         |
 | `ingress.className`                          | IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)                                                                                                             | `""`                                                            |
+| `ingress.labels`                             | Additional labels for the Ingress resource.                                                                                                                                               | `{}`                                                            |
 | `ingress.annotations`                        | Additional annotations for the Ingress resource.                                                                                                                                          | `{}`                                                            |
 | `ingress.hosts`                              | List of hosts to be configured for the specified ingress record.                                                                                                                          | `[]`                                                            |
 | `ingress.tls`                                | Enable TLS configuration for the host defined at ingress.                                                                                                                                 | `[]`                                                            |
@@ -94,8 +100,9 @@ The mediator chart assumes a PostgreSQL deployment is available. The appropriate
 
 ### PostgreSQL parameters
 
-| Name                                          | Description                                                               | Value  |
-| --------------------------------------------- | ------------------------------------------------------------------------- | ------ |
-| `postgresql.commonLabels`                     | Add labels to all the deployed resources (sub-charts are not considered). | `[]`   |
-| `postgresql.primary.service.ports.postgresql` | PostgreSQL service port                                                   | `5432` |
+| Name                        | Description                                                                    | Value   |
+| --------------------------- | ------------------------------------------------------------------------------ | ------- |
+| `postgresql.enabled`        | Enable network policy for PostgreSQL access                                    | `false` |
+| `postgresql.selectorLabels` | Labels selecting the postgresql resources to give the mediator pods access to. | `[]`    |
+| `postgresql.servicePort`    | PostgreSQL service port to be used in the network policy                       | `5432`  |
 

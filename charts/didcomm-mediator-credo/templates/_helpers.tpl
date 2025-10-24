@@ -110,3 +110,41 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Returns a secret if it already in Kubernetes, otherwise it creates
+it randomly.
+
+Usage:
+{{ include "getOrGeneratePass" (dict "Namespace" .Release.Namespace "Kind" "Secret" "Name" secretName "Key" "secret-key" "Length" 32) }}
+
+*/}}
+{{- define "getOrGeneratePass" }}
+{{- $len := (default 16 .Length) | int -}}
+{{- $obj := (lookup "v1" .Kind .Namespace .Name).data -}}
+{{- if $obj }}
+{{- index $obj .Key -}}
+{{- else if (eq (lower .Kind) "secret") -}}
+{{- randAlphaNum $len | b64enc -}}
+{{- else -}}
+{{- randAlphaNum $len -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Returns a secret if it already in Kubernetes, otherwise it creates
+it with the given value.
+
+Usage:
+{{ include "getOrCreateSecret" (dict "Namespace" .Release.Namespace "Kind" "Secret" "Name" secretName "Key" "secret-key" "DefaultValue" "default-value") }}
+
+*/}}
+{{- define "getOrCreateSecret" }}
+{{- $default := .DefaultValue -}}
+{{- $obj := (lookup "v1" .Kind .Namespace .Name).data -}}
+{{- if $obj }}
+{{- index $obj .Key -}}
+{{- else -}}
+{{- $default | b64enc -}}
+{{- end -}}
+{{- end }}

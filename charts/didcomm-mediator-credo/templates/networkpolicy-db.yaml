@@ -1,8 +1,8 @@
-{{- if .Values.networkPolicy.enabled -}}
+{{- if .Values.postgresql.enabled -}}
 kind: NetworkPolicy
 apiVersion: {{ include "common.capabilities.networkPolicy.apiVersion" . }}
 metadata:
-  name: {{ include "mediator.fullname" . }}-wallet
+  name: {{ include "mediator.fullname" . }}-db
   labels:
     {{- include "mediator.labels" . | nindent 4 }}
 spec:
@@ -14,9 +14,9 @@ spec:
               {{- include "mediator.selectorLabels" . | nindent 14 }}
       ports:
         - protocol: TCP
-          port: {{ .Values.postgresql.primary.service.ports.postgresql }}
+          port: {{ .Values.postgresql.servicePort }}
   podSelector:
-    {{- with .Values.postgresql.commonLabels }}
+    {{- with .Values.postgresql.selectorLabels }}
     matchLabels:
       {{- toYaml . | nindent 6 }}
     {{- end }}

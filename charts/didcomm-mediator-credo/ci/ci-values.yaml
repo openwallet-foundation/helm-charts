@@ -1,20 +1,34 @@
 environment:
+  - name: LOG_LEVEL
+    value: "2"
   - name: AGENT_PORT
     value: "3000"
   - name: AGENT_NAME
     value: Mediator
-  - name: WALLET_NAME
-    value: mediator-wallet
   - name: AGENT_ENDPOINTS
     value: "http://example.com,wss://example.com"
-  - name: LOG_LEVEL
-    value: "2"
+  - name: WALLET_NAME
+    value: mediator-wallet
   - name: PICKUP_TYPE
-    value: Null
+    value: null       # The default is undefined which means it will not use a pickup repository. Additionally, it can be set to 'postgres'.
   - name: PICKUP_STRATEGY
-    value: DirectDelivery
-  - name: PICKUP_SETTINGS
-    value: "{}"
+    value: DirectDelivery       # The default is 'DirectDelivery', it can be also be 'QueueOnly' or 'QueueAndLiveModeDelivery'
+  - name: CREATE_NEW_INVITATION
+    value: "false"       # used to create a new invitation on startup. The default is 'false'.
+  - name: GOAL_CODE
+    value: "vc.mediate"      # used to set the goal code for the invitation. The default is 'vc.mediate'
+  - name: USE_PUSH_NOTIFICATIONS
+    value: "false"       # used to globally enable/disable push notifications. The default is 'false'.
+  - name: PUSH_NOTIFICATION_TITLE
+    value: "You have a new message"
+  - name: PUSH_NOTIFICATION_BODY
+    value: "Open your app to read it"
+  - name: NODE_OPTIONS
+    value: null      # Example: --max-old-space-size=512 to limit memory usage to 512MB
+  - name: MALLOC_CONF
+    value: null      # Example: "background_thread:true,metadata_thp:auto,dirty_decay_ms:30000,muzzy_decay_ms:30000" to tune jemalloc memory allocator
+  - name: LD_PRELOAD
+    value: null
 
 autoscaling:
   enabled: false

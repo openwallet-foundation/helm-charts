@@ -1,3 +1,9 @@
+##  (2025-10-21)
+
+### Features
+
+* Improved secret and label management ea7c298
+
 ##  (2025-10-08)
 
 ### Features

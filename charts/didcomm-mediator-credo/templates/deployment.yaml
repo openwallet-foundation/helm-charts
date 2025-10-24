@@ -68,6 +68,31 @@ spec:
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+            - name: WALLET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mediator.fullname" . }}-agent
+                  key: wallet-key
+            - name: FIREBASE_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mediator.fullname" . }}-agent
+                  key: firebase-project-id
+            - name: FIREBASE_CLIENT_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mediator.fullname" . }}-agent
+                  key: firebase-client-email
+            - name: FIREBASE_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mediator.fullname" . }}-agent
+                  key: firebase-private-key
+            - name: PICKUP_SETTINGS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mediator.fullname" . }}-agent
+                  key: pickup-connection-json     # This is a JSON string that contains the settings for the pickup repository.
       {{- with .Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}
