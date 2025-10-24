@@ -60,15 +60,15 @@ app.kubernetes.io/name: {{ include "vc-authn-oidc.acapy.name" . }}
 Selector labels
 */}}
 {{- define "vc-authn-oidc.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "global.name" . }}
 {{ include "common.selectorLabels" . }}
+component: controller
 {{- end }}
 
 {{/*
 Selector redis labels
 */}}
 {{- define "vc-authn-oidc.redis.selectorLabels" -}}
-{{ include "vc-authn-oidc.selectorLabels" . }}
+{{ include "common.selectorLabels" . }}
 component: redis
 {{- end -}}
 
