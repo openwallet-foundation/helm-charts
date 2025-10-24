@@ -14,6 +14,5 @@ spec:
       protocol: TCP
       name: redis
   selector:
-    {{- include "vc-authn-oidc.selectorLabels" . | nindent 4 }}
-    component: redis
+    {{- include "vc-authn-oidc.redis.selectorLabels" . | nindent 4 }}
 {{- end }}

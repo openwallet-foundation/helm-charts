@@ -10,13 +10,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "vc-authn-oidc.selectorLabels" . | nindent 6 }}
-      component: redis
+      {{- include "vc-authn-oidc.redis.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "vc-authn-oidc.selectorLabels" . | nindent 8 }}
-        component: redis
+        {{- include "vc-authn-oidc.redis.selectorLabels" . | nindent 8 }}
     spec:
       {{- if .Values.redis.securityContext.enabled }}
       securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.redis.securityContext "context" $) | nindent 8 }}

@@ -65,6 +65,14 @@ app.kubernetes.io/name: {{ include "global.name" . }}
 {{- end }}
 
 {{/*
+Selector redis labels
+*/}}
+{{- define "vc-authn-oidc.redis.selectorLabels" -}}
+{{ include "vc-authn-oidc.selectorLabels" . }}
+component: redis
+{{- end -}}
+
+{{/*
 vc-authn-oidc labels
 */}}
 {{- define "vc-authn-oidc.labels" -}}
