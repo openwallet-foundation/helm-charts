@@ -137,32 +137,68 @@ jobs:
         with:
           node-version: 'lts/*'
 
-      - name: Install readme and changelog generators
+      - name: Install documentation generators
         run: |
+          # Install Node.js-based tools
           npm install -g @bitnami/readme-generator-for-helm@2.7.2 conventional-changelog-cli@5.0.0 conventional-changelog-conventionalcommits
+
+          # Install helm-docs (Go-based tool)
+          GO111MODULE=on go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.14.2
 
       - name: Check README and CHANGELOG updates
         working-directory: ./charts
         run: |
           chart=${{ needs.detect-changed-chart.outputs.chart }}
 
+          # Detect which documentation tool to use
+          echo "🔍 Detecting documentation format for $chart..."
+          if grep -q "^## @param" "$chart/values.yaml"; then
+            doc_tool="readme-generator"
+            echo "✅ Detected readme-generator format (## @param annotations)"
+          elif grep -q "^# --" "$chart/values.yaml"; then
+            doc_tool="helm-docs"
+            echo "✅ Detected helm-docs format (# -- annotations)"
+          else
+            doc_tool="none"
+            echo "⚠️  No documentation annotations found in values.yaml"
+            echo "   Consider adding '## @param' (readme-generator) or '# --' (helm-docs) annotations"
+          fi
+
           # Store original files for comparison
           cp "$chart/README.md" "$chart/README.md.original" 2>/dev/null || touch "$chart/README.md.original"
           cp "$chart/CHANGELOG.md" "$chart/CHANGELOG.md.original" 2>/dev/null || touch "$chart/CHANGELOG.md.original"
 
-          # Generate fresh README and CHANGELOG
-          echo "🔄 Generating fresh README for $chart..."
-          npx @bitnami/readme-generator-for-helm --readme "$chart/README.md" --values "$chart/values.yaml"
+          # Generate fresh README based on detected tool
+          readme_needs_update=false
+          doc_tool_missing=false
+          if [ "$doc_tool" = "readme-generator" ]; then
+            echo "🔄 Generating fresh README with readme-generator..."
+            npx @bitnami/readme-generator-for-helm --readme "$chart/README.md" --values "$chart/values.yaml"
 
+            # Check if README needs to be updated
+            if ! diff -q "$chart/README.md.original" "$chart/README.md" >/dev/null 2>&1; then
+              readme_needs_update=true
+              echo "📝 Detected differences in README.md:"
+              diff -u "$chart/README.md.original" "$chart/README.md" | head -50 || true
+            fi
+          elif [ "$doc_tool" = "helm-docs" ]; then
+            echo "🔄 Generating fresh README with helm-docs..."
+            ~/go/bin/helm-docs -c "$chart" --skip-version-footer
+
+            # Check if README needs to be updated
+            if ! diff -q "$chart/README.md.original" "$chart/README.md" >/dev/null 2>&1; then
+              readme_needs_update=true
+              echo "📝 Detected differences in README.md:"
+              diff -u "$chart/README.md.original" "$chart/README.md" | head -50 || true
+            fi
+          else
+            doc_tool_missing=true
+            echo "⏭️  Skipping README generation (no documentation annotations found)"
+          fi
+
+          # Generate CHANGELOG
           echo "🔄 Generating fresh CHANGELOG for $chart..."
           npx conventional-changelog -p conventionalcommits -i "$chart/CHANGELOG.md" -s
-
-          # Check if README needs to be updated
-          readme_needs_update=false
-          if ! diff -q "$chart/README.md.original" "$chart/README.md" >/dev/null 2>&1; then
-            readme_needs_update=true
-            echo "❌ README.md for $chart needs to be updated due to changes in values.yaml"
-          fi
 
           # Check CHANGELOG (advisory only) - exclude documentation-only changes
           functional_changes=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} "$chart/" | grep -v -E '(README\.md|CHANGELOG\.md|\.md$|NOTES\.txt)$' || true)
@@ -176,16 +212,36 @@ jobs:
           mv "$chart/README.md.original" "$chart/README.md"
           mv "$chart/CHANGELOG.md.original" "$chart/CHANGELOG.md"
 
-          # Report results - only fail on README issues
-          if [ "$readme_needs_update" = true ]; then
-            echo "❌ README.md for $chart needs to be updated."
-            echo "   The values.yaml file has @param annotations that require README regeneration."
-            echo "   Please run: npx @bitnami/readme-generator-for-helm --readme $chart/README.md --values $chart/values.yaml"
+          # Report results
+          if [ "$doc_tool_missing" = true ]; then
+            echo "⚠️  No documentation annotations found in $chart/values.yaml"
+            echo "   Consider adding documentation to make your chart easier to use:"
             echo ""
-            echo "🛠️  To fix this issue:"
-            echo "   1. Install generator: npm install -g @bitnami/readme-generator-for-helm"
-            echo "   2. Update README: npx @bitnami/readme-generator-for-helm --readme $chart/README.md --values $chart/values.yaml"
-            echo "   3. Commit the updated README.md"
+            echo "   📚 Option 1 - helm-docs format (recommended):"
+            echo "      Add '# --' comments above your values in values.yaml"
+            echo "      Then run: helm-docs -c $chart --skip-version-footer"
+            echo ""
+            echo "   📚 Option 2 - readme-generator format:"
+            echo "      Add '## @param' comments in values.yaml"
+            echo "      Then run: npx @bitnami/readme-generator-for-helm --readme $chart/README.md --values $chart/values.yaml"
+            echo ""
+          elif [ "$readme_needs_update" = true ]; then
+            echo "❌ README.md for $chart needs to be updated."
+            if [ "$doc_tool" = "readme-generator" ]; then
+              echo "   The values.yaml file has '## @param' annotations that require README regeneration."
+              echo ""
+              echo "🛠️  To fix this issue:"
+              echo "   1. Install generator: npm install -g @bitnami/readme-generator-for-helm"
+              echo "   2. Update README: npx @bitnami/readme-generator-for-helm --readme $chart/README.md --values $chart/values.yaml"
+              echo "   3. Commit the updated README.md"
+            elif [ "$doc_tool" = "helm-docs" ]; then
+              echo "   The values.yaml file has '# --' annotations that require README regeneration."
+              echo ""
+              echo "🛠️  To fix this issue:"
+              echo "   1. Install helm-docs: go install github.com/norwoodj/helm-docs/cmd/helm-docs@latest"
+              echo "   2. Update README: helm-docs -c $chart --skip-version-footer"
+              echo "   3. Commit the updated README.md"
+            fi
             echo ""
             exit 1
           else
@@ -224,7 +280,8 @@ jobs:
               Please check the workflow logs for specific issues. Common fixes:
 
               📝 **Documentation Updates Needed:**
-              - If \`values.yaml\` was modified: \`npx @bitnami/readme-generator-for-helm --readme charts/CHART/README.md --values charts/CHART/values.yaml\`
+              - If \`values.yaml\` has \`## @param\` annotations: \`npx @bitnami/readme-generator-for-helm --readme charts/CHART/README.md --values charts/CHART/values.yaml\`
+              - If \`values.yaml\` has \`# --\` annotations: \`helm-docs -c charts/CHART\`
               - If significant changes were made: \`npx conventional-changelog -p conventionalcommits -i charts/CHART/CHANGELOG.md -s\`
 
               🔧 **Other Common Issues:**
