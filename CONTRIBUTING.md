@@ -6,65 +6,80 @@ To maintain clarity, consistency, and automation reliability, please follow thes
 
 ## General Guidelines
 
-- **One Chart per PR:** Each pull request (PR) must be scoped to a single chart.
-  - You may introduce **one new** Helm chart, **or**
-  - Modify **one existing** Helm chart.
-  - Do **not** include changes for multiple charts in a single PR (this is enforced by CI).
+- **Keep PRs focused:** Focus each PR on a single chart - introduce a new chart or modify an existing one. CI will validate this for you.
 
-- **Chart Location:** Create new charts under `charts/<CHART>` using a unique, meaningful name that reflects the OWF project the chart supports.
+- **Chart location:** Create new charts under `charts/<CHART>` with a meaningful name that reflects the OWF project.
 
-- **Chart Versioning:** Bump the chart `version` in `Chart.yaml` whenever you make changes.
+- **Chart versioning:** Don't bump the chart `version` in `Chart.yaml` - automation handles version increments.
 
-- **Maintainers:** Ensure that a valid `maintainers` list is included in the chart’s `Chart.yaml`.
+- **Maintainers:** Include a valid `maintainers` list in your chart's `Chart.yaml`.
 
 - **Documentation:**
-  - Update the chart’s `README.md` to reflect any changes.
-    - Use [`@bitnami/readme-generator-for-helm`](https://github.com/bitnami/readme-generator-for-helm).
-    - Command:
-      `npx @bitnami/readme-generator-for-helm --readme charts/<CHART>/README.md --values charts/<CHART>/values.yaml`
-    - **Note:** CI fails the PR if `README.md` needs regeneration due to `@param` annotations in `values.yaml`.
-  - Update the chart’s `CHANGELOG.md` for meaningful changes.
-    - Use [`conventional-changelog-cli`](https://github.com/conventional-changelog/conventional-changelog).
-    - Command:
-      `npx conventional-changelog -p conventionalcommits -i charts/<CHART>/CHANGELOG.md -s`
+  - Keep `values.yaml` annotations current - CI validates README generation
+  - Regenerate README with: `make docs CHART=<CHART>`
+  - Don't edit `CHANGELOG.md` manually - automation generates it from commits
+  - New scripts should use shared logging helpers from `hack/lib/log.sh`
+  - Tool versions are pinned in `hack/versions.env` (validated by CI)
 
-## CI / Test-Install Values (Kind-friendly)
+## How to Contribute
 
-- To supply CI-only overrides without changing chart defaults, add one or more files under:
-`charts/<CHART>/ci/*-values.yaml`
+<details>
+<summary><strong>For Contributors</strong></summary>
 
-  Examples:
-  - `charts/acapy/ci/ci-values.yaml`
-  - `charts/acapy/ci/disable-ingress-values.yaml`
-  - `charts/acapy/ci/minimal-values.yaml`
+If you're new to GitHub collaboration, see [GitHub's guide on forking and pull requests](https://docs.github.com/en/get-started/quickstart/contributing-to-projects).
 
-- The chart-testing tool (`ct`) **automatically discovers** and uses any files ending in `-values.yaml` in the `ci/` folder during test installs.
+1. **(Optional)** Open an issue first for significant changes (new features, major refactors, breaking changes)
+2. Fork the repository and create a feature branch: `git checkout -b fix/acapy-health-probe`
+3. Make your changes
+   - Follow existing patterns and conventions
+   - Update `values.yaml` annotations if adding/changing parameters
+   - Add or update `ci/*-values.yaml` if install tests need specific overrides
+4. Test locally (see [Testing & Validation](#testing--validation) section below)
+5. Commit with DCO sign-off: `git commit -s -m "fix(acapy): resolve health probe timeout"`
+   - The `-s` flag is required for Linux Foundation projects ([DCO](https://developercertificate.org/))
+   - Use Conventional Commits format: `feat:`, `fix:`, `docs:`, `chore:`
+   - Scope is optional in commits, but include the chart name in PR titles: `feat(acapy): add health probe`
+6. Open a Pull Request from your fork to `main`
+   - Provide a clear description of what changed and why
+   - Address CI feedback and review comments
+7. Maintainer merges your PR
+   - Version bumping and publishing is handled by maintainers
+   - Your contribution will be included in the next release
+</details>
 
-- **Packaging tip:** Add the following to your chart’s `.helmignore` so CI-only files aren’t included in release artifacts: `ci/*.*`
+<details>
+<summary><strong>For Maintainers</strong></summary>
 
+1. **Review and merge feature PRs**
+   - Ensure CI passes and changes follow conventions
+   - Merge to `main` when ready
 
-## CI/CD and Automation
+2. **Manage Release PRs** (opened automatically by workflow)
+   - Review generated version bumps and changelogs
+   - Apply labels to control release behavior:
+     - `bump:major`, `bump:minor`, `bump:patch` - override automatic version calculation
+     - `skip-release` - accumulate more changes before releasing
+   - Merge Release PR to trigger publishing
 
-- **Pull Requests**
-- CI lints and test-installs the changed chart(s) in a temporary Kind cluster.
-- **Pull Requests:** When you open a pull request, automated checks will run to ensure chart quality and compliance.
-  - CI lints and test-installs the changed chart(s) in a temporary Kind cluster.
-  - PRs that modify more than one chart will fail a guardrail check.
+After a feature PR merges, the Release-PR workflow runs (2 AM UTC or on push to main) and opens a Release PR with bumped version and generated changelog.
 
-- **Publishing on merge to `main`**
-  - If a chart’s `version` changed, the workflow:
-    1. Packages the chart and publishes it as a **GitHub Release asset** (release name: `<name>-<version>`).
-    2. Rebuilds `index.yaml` from Releases and pushes it to the `gh-pages` branch.
-  - Users can use the repo like any Helm repository:
-    ```bash
-    helm repo add owf https://openwallet-foundation.github.io/helm-charts
-    helm repo update
-    helm install <release> owf/<chart> --version <x.y.z>
-    ```
+**To defer release:** Add `skip-release` label to the Release PR (not the feature PR). More changes can accumulate. When ready, remove the label or close the PR to create a new one with all accumulated commits.
 
-### Notes
-- Prefer small, focused PRs.
-- Keep `CHANGELOG.md` meaningful (features, fixes, breaking changes).
-- Consider adding `OWNERS`/CODEOWNERS for charts you maintain.
+**To release immediately:** Review and merge the Release PR. Publishing triggers automatically.
+</details>
 
-By adhering to these rules, you help ensure a smooth, automated release process and make reviewing PRs easier for maintainers. Thank you!
+## Testing & Validation
+
+A devcontainer is provided to assist with local development and testing.
+A `Makefile` is included to simplify common tasks.
+All testing commands require `CHART=<name>` parameter (e.g., `acapy`, `vc-authn-oidc`, `endorser-service`).
+
+```bash
+make check CHART=acapy           # Fast (~30s): lint + docs validation
+make test CHART=acapy            # Full (~5m): deps + lint + template + install
+make lint CHART=acapy            # Lint only (helm + yaml + maintainers + version)
+make install CHART=acapy         # Install test only (requires kind cluster)
+make docs CHART=acapy            # Regenerate/validate README
+```
+
+Pre-commit hooks are available to catch common issues before pushing - run `pre-commit install` to enable them.
