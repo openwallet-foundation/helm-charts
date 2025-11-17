@@ -1,0 +1,32 @@
+name: Install pinned README/CHANGELOG generators
+description: Install helm-docs, @bitnami/readme-generator-for-helm, and conventional-changelog-cli using pinned versions from env
+inputs: {}
+outputs: {}
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install generators (pinned)
+      shell: bash
+      run: |
+        if [ -z "${HELM_DOCS_VERSION}" ] || [ -z "${BITNAMI_README_GENERATOR_VERSION}" ] || [ -z "${CONVENTIONAL_CHANGELOG_CLI_VERSION}" ]; then
+          echo "Generator versions not set; ensure load-pins ran first" >&2; exit 1;
+        fi
+
+        # Install helm-docs
+        curl -fsSL -o /tmp/helm-docs.tar.gz \
+          "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz"
+        tar -xzf /tmp/helm-docs.tar.gz -C /tmp
+        sudo mv /tmp/helm-docs /usr/local/bin/helm-docs
+        sudo chmod +x /usr/local/bin/helm-docs
+        rm -f /tmp/helm-docs.tar.gz
+
+        # Install Node-based generators
+        npm install -g \
+          @bitnami/readme-generator-for-helm@"${BITNAMI_README_GENERATOR_VERSION}" \
+          conventional-changelog-cli@"${CONVENTIONAL_CHANGELOG_CLI_VERSION}" \
+          conventional-changelog-conventionalcommits >/dev/null 2>&1
