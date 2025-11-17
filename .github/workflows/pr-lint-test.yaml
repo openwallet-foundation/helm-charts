@@ -1,0 +1,121 @@
+name: Pull Request - Lint and Test
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [ main ]
+    paths: [ 'charts/**' ]
+
+jobs:
+  detect-changed-chart:
+    name: Detect Chart Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed chart
+        id: detect
+        uses: ./.github/actions/detect-chart
+    outputs:
+      chart: ${{ steps.detect.outputs.chart }}
+
+  lint-and-test:
+    name: Lint and Test Chart
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: write
+      pull-requests: write
+    needs: detect-changed-chart
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Load version pins
+        uses: ./.github/actions/load-pins
+
+      - name: Cache Helm repositories and dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/helm/repository
+            ~/.local/share/helm/repository
+            charts/${{ needs.detect-changed-chart.outputs.chart }}/charts/*.tgz
+          key: ${{ runner.os }}-helm-${{ needs.detect-changed-chart.outputs.chart }}-${{ hashFiles('charts/${{ needs.detect-changed-chart.outputs.chart }}/Chart.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-helm-${{ needs.detect-changed-chart.outputs.chart }}-
+            ${{ runner.os }}-helm-
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.3.1
+        with:
+          # Version sourced from hack/versions.env (HELM_VERSION)
+          version: v${{ env.HELM_VERSION }}
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.7.0
+
+      - name: Build Helm Dependencies
+        working-directory: ./charts
+        run: |
+          chart="${{ needs.detect-changed-chart.outputs.chart }}"
+
+          # Add Helm repos from chart dependencies (deduplicated)
+          # Use hash-based naming to avoid collisions and handle special chars
+          repos=$(yq '.dependencies // [] | .[] | .repository' "$chart/Chart.yaml" | sort -u)
+
+          repos_added=0
+          for repo in $repos; do
+            if [ -n "$repo" ] && [ "$repo" != "null" ]; then
+              # Generate deterministic name from URL hash (first 8 chars of sha256)
+              repo_hash=$(echo -n "$repo" | sha256sum | cut -c1-8)
+              repo_name="repo-${repo_hash}"
+
+              echo "Adding Helm repo: $repo_name -> $repo"
+              if ! helm repo add "$repo_name" "$repo"; then
+                echo "::error::Failed to add Helm repository: $repo"
+                exit 1
+              fi
+              repos_added=$((repos_added + 1))
+            fi
+          done
+
+          # Update repo index only if repos were added
+          if [ $repos_added -gt 0 ]; then
+            helm repo update
+          else
+            echo "No Helm repositories to update (chart has no dependencies)"
+          fi
+
+          # Build Helm dependencies
+          echo "Building dependencies for $chart..."
+          helm dependency build "$chart" || {
+            echo "::error::Failed to build Helm dependencies for $chart"
+            exit 1
+          }
+
+      - name: Lint changed chart
+        run: ct lint --charts "charts/${{ needs.detect-changed-chart.outputs.chart }}" --config .github/ct.yaml
+
+      - name: Validate chart templates
+        working-directory: ./charts
+        run: |
+          chart=${{ needs.detect-changed-chart.outputs.chart }}
+          helm template "$chart" > /dev/null || {
+            echo "❌ Failed to render templates for $chart"
+            exit 1
+          }
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+
+      - name: Test install changed chart
+        run: |
+          ct install \
+            --charts "charts/${{ needs.detect-changed-chart.outputs.chart }}" \
+            --config .github/ct.yaml
