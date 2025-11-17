@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
 # classify_commits.sh
 # Determines bump level (major|minor|patch|none) and lists commit messages by type

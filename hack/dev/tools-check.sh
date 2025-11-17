@@ -9,9 +9,11 @@ IFS=$'\n\t'
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PINS_FILE="${ROOT_DIR}/versions.env"
 
+# shellcheck source=../lib/log.sh
+source "${ROOT_DIR}/lib/log.sh"
+
 if [[ ! -f "${PINS_FILE}" ]]; then
-  echo "[error] versions file missing: ${PINS_FILE}" >&2
-  exit 1
+  die "versions file missing: ${PINS_FILE}"
 fi
 
 # SC1090: Dynamic source of version pins; path is validated above
@@ -141,9 +143,8 @@ check_min "${git_ver}" "${GIT_MIN_VERSION:-2.40.0}" GIT
 
 if ((FAIL > 0)); then
   echo
-  echo "Version drift detected. Update hack/versions.env or install matching versions." >&2
-  exit 1
+  die "Version drift detected. Update hack/versions.env or install matching versions."
 fi
 
 echo
-echo "All pinned tool versions match."
+log_ok "All pinned tool versions match."

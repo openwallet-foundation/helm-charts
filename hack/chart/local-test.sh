@@ -9,19 +9,20 @@ IFS=$'\n\t'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
+# shellcheck source=../lib/log.sh
+source "${SCRIPT_DIR}/../lib/log.sh"
+
 CHART_NAME="${1:-}"
 if [[ -z "${CHART_NAME}" ]]; then
-  echo "usage: $0 <chart-name>" >&2
-  exit 2
+  die "usage: $0 <chart-name>"
 fi
 
 CHART_DIR="${ROOT_DIR}/charts/${CHART_NAME}"
 if [[ ! -d "${CHART_DIR}" ]]; then
-  echo "[error] chart directory not found: ${CHART_DIR}" >&2
-  exit 3
+  die "chart directory not found: ${CHART_DIR}"
 fi
 
-echo "[info] Building chart dependencies for ${CHART_NAME}"
+log_info "Building chart dependencies for ${CHART_NAME}"
 (
   cd "${ROOT_DIR}/charts"
   # Add repos from Chart.yaml dependencies deterministically
@@ -37,16 +38,16 @@ echo "[info] Building chart dependencies for ${CHART_NAME}"
 )
 
 if [[ -f "${ROOT_DIR}/.github/ct.yaml" ]]; then
-  echo "[info] ct lint (helm lint + yamllint + maintainers + version)"
+  log_info "ct lint (helm lint + yamllint + maintainers + version)"
   ct lint --charts "${CHART_DIR}" --config "${ROOT_DIR}/.github/ct.yaml"
 else
-  echo "[warn] skipping ct lint (no .github/ct.yaml)"
+  log_warn "skipping ct lint (no .github/ct.yaml)"
 fi
 
-echo "[info] helm template (smoke)"
+log_info "helm template (smoke)"
 helm template "${CHART_DIR}" > /dev/null
 
-echo "[info] ct install in ephemeral kind cluster"
+log_info "ct install in ephemeral kind cluster"
 "${SCRIPT_DIR}/ct-install.sh" "${CHART_NAME}"
 
-echo "[info] local test completed successfully for ${CHART_NAME}"
+log_ok "local test completed successfully for ${CHART_NAME}"

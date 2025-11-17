@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# shellcheck source=../lib/log.sh
+source "${script_dir}/../lib/log.sh"
 
 # next_version.sh <current_version> <bump_override_or_empty> <auto_bump>
 current="${1:-}"
@@ -27,8 +32,7 @@ case "${decide}" in
     patch=$(inc "${patch}")
     ;;
   *)
-    echo "Unknown bump '${decide}'" >&2
-    exit 1
+    die "Unknown bump '${decide}'"
     ;;
 esac
 

@@ -33,7 +33,7 @@ _fmt() { # level msg
     ERR) prefix="${_c_red}✘${_c_reset}" ;;
     *) prefix="${_c_cyan}>${_c_reset}" ;;
   esac
-  printf '%b %s\n' "${prefix}" "$*"
+  printf '%b %s\n' "${prefix}" "$*" >&2
 }
 
 log_info() { _fmt INFO "$@"; }
