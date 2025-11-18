@@ -1,0 +1,47 @@
+# Ensure all text files use LF (Unix) line endings
+# Critical for devcontainer compatibility on Windows
+* text=auto eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# Environment files sourced by bash
+*.env text eol=lf
+
+# YAML files (workflows, charts, configs)
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Makefile requires tabs with LF
+Makefile text eol=lf
+
+# Documentation
+*.md text eol=lf
+
+# JavaScript/JSON
+*.js text eol=lf
+*.json text eol=lf
+
+# Helm chart files
+*.tpl text eol=lf
+*.txt text eol=lf
+.helmignore text eol=lf
+
+# Git files
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Container files
+Dockerfile* text eol=lf
+*.dockerfile text eol=lf
+
+# License files
+LICENSE text eol=lf
+
+# Binary files (do not normalize)
+*.tgz binary
+*.tar.gz binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary

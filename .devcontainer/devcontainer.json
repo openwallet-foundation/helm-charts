@@ -1,0 +1,78 @@
+// Dev Container for OWF Helm charts repository
+// Rationale:
+//  - Mirrors CI toolchain versions (single source in hack/versions.env)
+//  - Provides Docker + kind for chart-testing install tests
+//  - Fast feedback via cached Helm repo data & ct indices under /home/vscode/.cache
+//  - Non-root "vscode" user with passwordless sudo (alignment with GH Codespaces conventions)
+//  - Uses docker-in-docker to isolate builds & allow kind cluster creation without touching host Docker state
+//
+// Update procedure when bumping tooling:
+//   1. Edit hack/versions.env
+//   2. Rebuild container (Dev Containers: Rebuild) – build args propagate automatically
+//   3. Run `make tools-check`
+//
+{
+  "name": "owf-helm-charts-dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..", // Required so COPY hack/versions.env works (needs repo root context)
+    "args": {
+      // Set FORCE_AMD64=1 to force amd64 toolchain for parity (useful if some tools lack arm64 binary)
+      "FORCE_AMD64": "0"
+    }
+  },
+  // If build fails on version drift, inspect the final validation RUN step in Dockerfile.
+  // Common issues:
+  //  - Corporate proxy blocking GitHub release downloads (see curl errors)
+  //  - Chart Releaser version string includes leading 'v' (handled in Dockerfile validation)
+  //  - Node tarball CDN transient 403 (rebuild usually fixes)
+  "features": {
+    // docker-in-docker chosen so local host Docker socket isn't required; reproducible ephemeral daemon.
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest"
+    }
+  },
+  "remoteUser": "vscode",
+  "containerUser": "vscode",
+  "runArgs": [
+  "--privileged" // Needed for Docker-in-Docker & kind; add "--platform=linux/amd64" locally if forcing amd64
+  ],
+  "mounts": [
+    // Read-only kubeconfig from host (if exists)
+    // Note: Commented out by default to avoid mount errors when files don't exist.
+    // Uncomment and adjust path for your OS if needed:
+    // Unix/macOS: "source=${localEnv:HOME}/.kube,target=/home/vscode/.kube,readonly,type=bind,consistency=cached",
+    // Windows:    "source=${localEnv:USERPROFILE}/.kube,target=/home/vscode/.kube,readonly,type=bind,consistency=cached",
+
+    // Git global config (read-only)
+    // Commented out by default to avoid mount errors when file doesn't exist.
+    // Uncomment and adjust path for your OS if needed:
+    // Unix/macOS: "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,readonly,type=bind,consistency=cached",
+    // Windows:    "source=${localEnv:USERPROFILE}/.gitconfig,target=/home/vscode/.gitconfig,readonly,type=bind,consistency=cached"
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "workspaceFolder": "/workspace",
+  "updateContentCommand": "make tools-check || true",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash -lc 'bash .devcontainer/post-create.sh || true'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "redhat.vscode-yaml",
+        "EditorConfig.EditorConfig",
+        "streetsidesoftware.code-spell-checker"
+      ],
+      "settings": {
+        "files.exclude": {
+          "**/.git": true
+        },
+        "yaml.schemas": {
+          "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
+        },
+        "editor.formatOnSave": true,
+        "[yaml]": { "editor.defaultFormatter": "redhat.vscode-yaml" }
+      }
+    }
+  }
+}
