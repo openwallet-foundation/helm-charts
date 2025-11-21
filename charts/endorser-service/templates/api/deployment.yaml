@@ -1,0 +1,152 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "endorser-service.fullname" . }}
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "endorser-service.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "endorser-service.labels" . | nindent 8 }}
+        app.kubernetes.io/component: api
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "endorser-service.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: acapy-endorser-api
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.api.logLevel | quote }}
+            - name: ACAPY_ADMIN_HOST
+              value: {{ include "endorser-service.acapy.adminHost" . | quote }}
+            - name: ACAPY_ADMIN_URL
+              value: {{ include "endorser-service.acapy.adminUrl" . | quote }}
+            - name: ACAPY_API_ADMIN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "endorser-service.acapy.secretName" . }}
+                  key: {{ .Values.acapy.secrets.api.secretKeys.adminApiKey | default "adminApiKey" }}
+            - name: ACAPY_WEBHOOK_URL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "endorser-service.apiSecretName" . }}
+                  key: {{ .Values.secrets.api.keys.webhookApiKey }}
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "endorser-service.jwtSecretName" . }}
+                  key: jwt-secret-key
+            - name: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+              value: {{ .Values.api.jwtAccessTokenExpireMinutes | quote }}
+            - name: CONTROLLER_POSTGRESQL_HOST
+              value: {{ include "endorser-service.db.host" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_PORT
+              value: {{ include "endorser-service.db.port" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_DB
+              value: {{ include "endorser-service.db.database" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_USER
+              value: {{ include "endorser-service.db.username" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "endorser-service.db.secretName" . }}
+                  key: {{ include "endorser-service.db.userPasswordKey" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_ADMIN_USER
+              value: {{ include "endorser-service.db.adminUser" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "endorser-service.db.secretName" . }}
+                  key: {{ include "endorser-service.db.adminPasswordKey" . | quote }}
+            - name: ENDORSER_SERVICE_PORT
+              value: {{ .Values.service.port | quote }}
+            - name: ENDORSER_API_ADMIN_USER
+              value: {{ .Values.api.adminUser | quote }}
+            - name: ENDORSER_API_ADMIN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "endorser-service.apiSecretName" . }}
+                  key: {{ .Values.secrets.api.keys.endorserAdminApiKey }}
+            - name: ENDORSER_ENV
+              value: {{ .Values.api.environment | quote }}
+            - name: ENDORSER_PUBLIC_NAME
+              value: {{ .Values.api.publicName | quote }}
+            - name: ENDORSER_PUBLIC_DESC
+              value: {{ .Values.api.publicDesc | quote }}
+            - name: ENDORSER_AUTO_ACCEPT_CONNECTIONS
+              value: {{ .Values.api.autoAcceptConnections | toString | quote }}
+            - name: ENDORSER_AUTO_ACCEPT_AUTHORS
+              value: {{ .Values.api.autoAcceptAuthors | toString | quote }}
+            - name: ENDORSER_AUTO_ENDORSE_REQUESTS
+              value: {{ .Values.api.autoEndorseRequests | toString | quote }}
+            - name: ENDORSER_AUTO_ENDORSE_TXN_TYPES
+              value: {{ .Values.api.autoEndorseTxnTypes | quote }}
+            - name: ENDORSER_REJECT_BY_DEFAULT
+              value: {{ .Values.api.rejectByDefault | toString | quote }}
+            - name: WEB_CONCURRENCY
+              value: {{ .Values.api.webConcurrency | quote }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

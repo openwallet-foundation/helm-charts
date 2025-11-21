@@ -1,0 +1,37 @@
+{{- if and .Values.proxy.enabled .Values.proxy.ingress.enabled }}
+{{- $fullName := printf "%s-proxy" (include "endorser-service.fullname" .) -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+  {{- with .Values.proxy.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.proxy.ingress.className }}
+  ingressClassName: {{ .Values.proxy.ingress.className }}
+  {{- end }}
+  rules:
+  {{- range .Values.proxy.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  name: {{ .servicePort }}
+          {{- end }}
+  {{- end }}
+  {{- if .Values.proxy.ingress.tls }}
+  tls:
+    {{- toYaml .Values.proxy.ingress.tls | nindent 4 }}
+  {{- end }}
+{{- end }}

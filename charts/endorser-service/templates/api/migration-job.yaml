@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "endorser-service.fullname" . }}-migrate
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        {{- include "endorser-service.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "endorser-service.serviceAccountName" . }}
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.36
+          command: ["/bin/sh","-c"]
+          args:
+            - >-
+              until nc -z {{ include "endorser-service.db.host" . }} {{ include "endorser-service.db.port" . }}; do echo waiting for db; sleep 2; done;
+
+      containers:
+        - name: migrate
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh","-c"]
+          args: ["python3 -m alembic upgrade head"]
+          env:
+            - name: ACAPY_ADMIN_URL
+              value: {{ include "endorser-service.acapy.adminUrl" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_HOST
+              value: {{ include "endorser-service.db.host" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_PORT
+              value: {{ include "endorser-service.db.port" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_DB
+              value: {{ include "endorser-service.db.database" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_USER
+              value: {{ include "endorser-service.db.username" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "endorser-service.db.secretName" . }}
+                  key: {{ include "endorser-service.db.userPasswordKey" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_ADMIN_USER
+              value: {{ include "endorser-service.db.adminUser" . | quote }}
+            - name: CONTROLLER_POSTGRESQL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "endorser-service.db.secretName" . }}
+                  key: {{ include "endorser-service.db.adminPasswordKey" . | quote }}
