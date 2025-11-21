@@ -1,0 +1,40 @@
+{{- if and .Values.networkPolicy.enabled .Values.networkPolicy.api.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "endorser-service.fullname" . }}
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "endorser-service.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow proxy pods if proxy enabled
+    {{- if .Values.proxy.enabled }}
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "endorser-service.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              app.kubernetes.io/component: proxy
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.port }}
+    {{- end }}
+    # User supplied additional ingress rules
+    {{- with .Values.networkPolicy.api.extraIngress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  egress:
+    {{- if .Values.networkPolicy.api.egress | len }}
+    {{- toYaml .Values.networkPolicy.api.egress | nindent 4 }}
+    {{- else }}
+    - {}
+    {{- end }}
+{{- end }}

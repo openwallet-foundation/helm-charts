@@ -1,0 +1,9 @@
+dependencies:
+- name: acapy
+  repository: https://openwallet-foundation.github.io/helm-charts/
+  version: 0.2.3
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 16.3.2
+digest: sha256:222c8decae8529a7bd9407aa7af3d243d1710fd6fb66842ab00a6fab06fe132e
+generated: "2025-09-17T16:13:59.038336-07:00"

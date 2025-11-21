@@ -1,0 +1,111 @@
+{{- if .Values.proxy.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "endorser-service.fullname" . }}-proxy
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+spec:
+  {{- if not .Values.proxy.autoscaling.enabled }}
+  replicas: {{ .Values.proxy.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "endorser-service.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: proxy
+  template:
+    metadata:
+      labels:
+        {{- include "endorser-service.labels" . | nindent 8 }}
+        app.kubernetes.io/component: proxy
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.proxy.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: caddy-proxy
+          {{- with .Values.proxy.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.proxy.image.repository }}:{{ .Values.proxy.image.tag }}"
+          imagePullPolicy: {{ .Values.proxy.image.pullPolicy }}
+          env:
+            # Derived upstreams
+            - name: ACAPY_HTTP_PORT
+              value: {{ .Values.acapy.service.ports.http | quote }}
+            - name: ACAPY_ADMIN_PORT
+              value: {{ .Values.acapy.service.ports.admin | quote }}
+            - name: ACAPY_WS_PORT
+              value: {{ .Values.acapy.service.ports.ws | quote }}
+            - name: ACAPY_AGENT_HOST
+              value: {{ include "endorser-service.acapy.fullname" . | quote }}
+            - name: ENDORSER_SERVICE_HOST
+              value: {{ include "endorser-service.fullname" . | quote }}
+            - name: ENDORSER_SERVICE_PORT
+              value: {{ .Values.service.port | quote }}
+            # Exposed proxy service ports
+            - name: CADDY_AGENT_PORT
+              value: {{ .Values.proxy.service.ports.agent | quote }}
+            - name: CADDY_AGENT_ADMIN_PORT
+              value: {{ .Values.proxy.service.ports.admin | quote }}
+            - name: CADDY_ENDORSER_SERVICE_PORT
+              value: {{ .Values.proxy.service.ports.endorser | quote }}
+          {{- with .Values.proxy.env }}
+          {{- range $k, $v := . }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+          {{- end }}
+          {{- end }}
+          {{- with .Values.proxy.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: admin
+              containerPort: {{ .Values.proxy.service.ports.admin }}
+              protocol: TCP
+            - name: agent
+              containerPort: {{ .Values.proxy.service.ports.agent }}
+              protocol: TCP
+            - name: endorser
+              containerPort: {{ .Values.proxy.service.ports.endorser }}
+              protocol: TCP
+          {{- with .Values.proxy.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.proxy.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.proxy.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: caddy-config
+              mountPath: {{ .Values.proxy.caddyConfig.mountPath }}{{ .Values.proxy.caddyConfig.fileName }}
+              subPath: {{ .Values.proxy.caddyConfig.fileName }}
+            - name: caddy-data
+              mountPath: /data/caddy
+            - name: caddy-config-dir
+              mountPath: /config/caddy
+      volumes:
+        - name: caddy-config
+          configMap:
+            name: {{ if .Values.proxy.caddyConfig.existingConfigMap }}{{ .Values.proxy.caddyConfig.existingConfigMap }}{{ else }}{{ include "endorser-service.fullname" . }}-proxy-caddy-conf{{ end }}
+            items:
+              - key: {{ .Values.proxy.caddyConfig.fileName }}
+                path: {{ .Values.proxy.caddyConfig.fileName }}
+        - name: caddy-data
+          emptyDir: {}
+        - name: caddy-config-dir
+          emptyDir: {}
+{{- end }}

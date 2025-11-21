@@ -1,0 +1,89 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named {{ .Release.Name }}.
+
+COMPONENT OVERVIEW:
+==================
+This chart deploys an ACA-Py Endorser Service with the following components:
+- Endorser API: Transaction endorsement controller
+{{- if .Values.acapy.enabled }}
+- ACA-Py Agent: Hyperledger Aries agent (endorser role)
+{{- end }}
+{{- if .Values.proxy.enabled }}
+- Caddy Proxy: Reverse proxy for routing traffic
+{{- end }}
+{{- if .Values.postgresql.enabled }}
+- PostgreSQL: Database for endorser API
+{{- end }}
+{{- if and .Values.acapy.enabled .Values.acapy.postgresql.enabled }}
+- PostgreSQL (ACA-Py): Database for agent wallet
+{{- end }}
+
+ACCESS INFORMATION:
+===================
+{{- if .Values.proxy.enabled }}
+{{- if .Values.proxy.ingress.enabled }}
+
+The endorser service is accessible through the proxy at:
+{{- range .Values.proxy.ingress.hosts }}
+  {{- $host := .host }}
+  {{- range .paths }}
+  {{- if eq .servicePort "endorser" }}
+  Endorser API:  https://{{ $host }}{{ .path }}
+  {{- else if eq .servicePort "admin" }}
+  ACA-Py Admin:  https://{{ $host }}{{ .path }}
+  {{- else if eq .servicePort "agent" }}
+  ACA-Py Agent:  https://{{ $host }}{{ .path }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+{{- else }}
+
+To access the proxy service:
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "endorser-service.fullname" . }}-proxy {{ .Values.proxy.service.ports.endorser }}:{{ .Values.proxy.service.ports.endorser }}
+
+Then visit:
+  Endorser API: http://127.0.0.1:{{ .Values.proxy.service.ports.endorser }}
+{{- end }}
+{{- else }}
+{{- if .Values.ingress.enabled }}
+
+Endorser API is available at:
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else }}
+
+To access the Endorser API:
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "endorser-service.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+
+Then visit: http://127.0.0.1:{{ .Values.service.port }}
+{{- end }}
+{{- end }}
+
+CREDENTIALS:
+============
+{{- if not .Values.secrets.api.existingSecret }}
+Admin API Key has been auto-generated. Retrieve it with:
+  kubectl get secret --namespace {{ .Release.Namespace }} {{ include "endorser-service.apiSecretName" . }} -o jsonpath="{.data.endorser-admin-api-key}" | base64 --decode
+{{- else }}
+Admin credentials are stored in existing secret: {{ .Values.secrets.api.existingSecret }}
+{{- end }}
+
+CONFIGURATION:
+==============
+Admin User: {{ .Values.api.adminUser }}
+Auto-accept connections: {{ .Values.api.autoAcceptConnections }}
+Auto-accept authors: {{ .Values.api.autoAcceptAuthors }}
+Auto-endorse requests: {{ .Values.api.autoEndorseRequests }}
+
+DOCUMENTATION:
+==============
+For more information, visit:
+- Endorser Service: https://github.com/openwallet-foundation/acapy-endorser-service
+- ACA-Py: https://aca-py.org
+
+To view your chart values:
+  helm get values {{ .Release.Name }} --namespace {{ .Release.Namespace }}
