@@ -3,6 +3,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "endorser-service.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}

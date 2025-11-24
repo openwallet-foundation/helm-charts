@@ -3,6 +3,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: {{ include "endorser-service.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: api
@@ -15,21 +16,21 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow proxy pods if proxy enabled
     {{- if .Values.proxy.enabled }}
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: {{ include "endorser-service.name" . }}
-              app.kubernetes.io/instance: {{ .Release.Name }}
-              app.kubernetes.io/component: proxy
-      ports:
-        - protocol: TCP
-          port: {{ .Values.service.port }}
-    {{- end }}
-    # User supplied additional ingress rules
+    # When proxy is enabled, ingress is handled by separate NetworkPolicies
+    # (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml).
+    # Only include user-supplied additional rules here.
     {{- with .Values.networkPolicy.api.extraIngress }}
     {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- else }}
+    # When proxy is disabled, allow all ingress by default so the API can be
+    # accessed directly (e.g., via ingress controller). Users can restrict
+    # this by providing specific rules via networkPolicy.api.extraIngress.
+    - {}
+    {{- with .Values.networkPolicy.api.extraIngress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
     {{- end }}
   egress:
     {{- if .Values.networkPolicy.api.egress | len }}

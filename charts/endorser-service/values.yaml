@@ -28,12 +28,18 @@ nameOverride: ""
 # -- Override the full release name
 fullnameOverride: ""
 
+# -- Common labels to add to all resources
+commonLabels: {}
+
+# -- Common annotations to add to all resources
+commonAnnotations: {}
+
 # Service account configuration for API pods
 serviceAccount:
   # -- Create a service account
   create: false
   # -- Automatically mount service account credentials
-  automount: true
+  automountServiceAccountToken: true
   # -- Annotations for the service account
   annotations: {}
   # -- Service account name (generated if empty and create is true)
@@ -151,8 +157,9 @@ networkPolicy:
   api:
     # -- Enable network policy for API pods
     enabled: true
-    # -- Additional ingress rules for API (merged with default proxy allowance)
-    # These are "extra" rules because a default ingress rule (allowing traffic from the proxy) is always present; use this to add more sources (e.g., monitoring namespace).
+    # -- Additional ingress rules for API
+    # Note: Proxy and ACA-Py communication is handled by separate network policies (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml).
+    # Use this to add additional ingress sources (e.g., monitoring namespace, external services).
     extraIngress: []
     # -- Egress rules for API (defaults to allow all if empty)
     # Note: There is no "extraEgress" because all egress rules must be specified here; if empty, all outbound traffic is allowed.
@@ -205,6 +212,8 @@ secrets:
   api:
     # -- Use existing secret instead of creating one (must contain keys specified below)
     existingSecret: ""
+    # -- Retain API secret on chart uninstall
+    retainOnUninstall: true
     # Key names within the secret
     keys:
       # -- Key name for endorser admin API key (used to authenticate admin operations)
@@ -215,6 +224,25 @@ secrets:
   jwt:
     # -- Use existing secret for JWT secret key; must contain `jwt-secret-key` key
     existingSecret: ""
+    # -- Retain JWT secret on chart uninstall
+    retainOnUninstall: true
+
+# Database migration job configuration
+migration:
+  # InitContainer image for database connectivity check
+  initContainer:
+    # -- Image repository for init container (database connectivity check)
+    image: busybox
+    # -- Image tag for init container
+    tag: "1.36.1"
+  # -- Resource limits and requests for migration job container
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 50m
+    #   memory: 64Mi
 
 # ACA-Py agent subchart configuration
 acapy:
@@ -225,7 +253,7 @@ acapy:
     registry: ghcr.io
     # -- Container image repository
     repository: openwallet-foundation/acapy-endorser-service/agent
-    # -- Image tag (defaults to Acapy's chart appVersion)
+    # -- Image tag (defaults to ACA-Py's chart appVersion)
     tag: 1.1.1
   # ACA-Py command-line arguments (argfile format)
   argfile.yml:
@@ -262,7 +290,7 @@ acapy:
   # -- Extra environment variables as an array
   extraEnvVars: []
   # -- Name of existing secret containing extra environment variables (webhook URL for endorser)
-  # Template is evaluated by common.tplvalues.render in AcaPy deployment
+  # Template is evaluated by common.tplvalues.render in Aca-Py deployment
   extraEnvVarsSecret: '{{ printf "%s-acapy-webhook" .Release.Name | trunc 63 | trimSuffix "-" }}'
   # -- External agent URL (public endpoint)
   agentUrl: https://endorser-agent.example.com
@@ -296,6 +324,11 @@ acapy:
   # Persistence configuration for ACA-Py
   persistence:
     # -- Enable persistent volume for ACA-Py
+    enabled: false
+  # Network policy configuration for ACA-Py agent
+  # NetworkPolicy for ACA-Py is managed by parent chart (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml)
+  networkPolicy:
+    # -- Disable ACA-Py chart's built-in NetworkPolicy (managed by parent chart instead)
     enabled: false
   # PostgreSQL database for ACA-Py agent
   postgresql:
@@ -369,6 +402,10 @@ proxy:
     tag: 2-alpine
     # -- Image pull policy
     pullPolicy: IfNotPresent
+  # -- Annotations to add to proxy pods
+  podAnnotations: {}
+  # -- Labels to add to proxy pods
+  podLabels: {}
   # -- Security context for proxy pods
   podSecurityContext: {}
     # runAsNonRoot: true
@@ -545,7 +582,7 @@ externalDatabase:
   username: ""
   # -- Database admin username (defaults to username if not set; typically 'postgres' for PostgreSQL)
   adminUsername: ""
-  # -- Existing secret containing database credentials
+  # -- Existing secret containing database credentials (required when externalDatabase.enabled is true)
   existingSecret: ""
   # Secret keys for credentials
   secretKeys:

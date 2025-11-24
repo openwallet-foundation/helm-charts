@@ -2,6 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "endorser-service.fullname" . }}-migrate
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
   annotations:
@@ -13,12 +14,13 @@ spec:
     metadata:
       labels:
         {{- include "endorser-service.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migration
     spec:
       restartPolicy: Never
       serviceAccountName: {{ include "endorser-service.serviceAccountName" . }}
       initContainers:
         - name: wait-for-db
-          image: busybox:1.36
+          image: "{{ .Values.migration.initContainer.image }}:{{ .Values.migration.initContainer.tag }}"
           command: ["/bin/sh","-c"]
           args:
             - >-
@@ -30,6 +32,10 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh","-c"]
           args: ["python3 -m alembic upgrade head"]
+          {{- with .Values.migration.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
             - name: ACAPY_ADMIN_URL
               value: {{ include "endorser-service.acapy.adminUrl" . | quote }}

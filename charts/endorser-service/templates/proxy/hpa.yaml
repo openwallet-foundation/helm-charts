@@ -1,8 +1,12 @@
 {{- if and .Values.proxy.enabled .Values.proxy.autoscaling.enabled }}
+{{- if not (or .Values.proxy.autoscaling.targetCPUUtilizationPercentage .Values.proxy.autoscaling.targetMemoryUtilizationPercentage) }}
+{{- fail "At least one metric (targetCPUUtilizationPercentage or targetMemoryUtilizationPercentage) must be set when proxy autoscaling is enabled" }}
+{{- end }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "endorser-service.fullname" . }}-proxy
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: proxy

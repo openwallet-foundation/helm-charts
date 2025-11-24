@@ -4,6 +4,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: proxy

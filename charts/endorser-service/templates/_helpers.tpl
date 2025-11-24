@@ -109,13 +109,13 @@ Create the name of the webhook secret to use (for acapy)
     {{- printf "%s-acapy-webhook" .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{/* Define AcaPy base name */}}
+{{/* Define Aca-Py base name */}}
 {{- define "endorser-service.acapy.name" -}}
 {{- default "acapy" .Values.acapy.nameOverride -}}
 {{- end -}}
 
 {{/*
-Create a default fully qualified AcaPy name.
+Create a default fully qualified Aca-Py name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "endorser-service.acapy.fullname" -}}
@@ -123,7 +123,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
-Return the AcaPy secret name
+Return the Aca-Py secret name
 */}}
 {{- define "endorser-service.acapy.secretName" -}}
     {{- if .Values.acapy.secrets.api.existingSecret -}}
@@ -159,13 +159,13 @@ generate admin url (internal)
 {{- end -}}
 
 {{/*
-Generate hosts for AcaPy admin if not overriden
+Generate hosts for Aca-Py admin if not overriden
 */}}
 {{- define "endorser-service.acapy.adminHost" -}}
    {{- printf "%s-%s-admin%s" (include "endorser-service.fullname" .) (include "endorser-service.acapy.name" .) .Values.global.ingressSuffix -}}
 {{- end -}}
 
-{{/* AcaPy Postgres service name (uses nameOverride if set) */}}
+{{/* Aca-Py Postgres service name (uses nameOverride if set) */}}
 {{- define "endorser-service.acapy.postgresqlServiceName" -}}
 {{- $pgName := default "postgresql" .Values.acapy.postgresql.nameOverride -}}
 {{- printf "%s-%s" .Release.Name $pgName -}}

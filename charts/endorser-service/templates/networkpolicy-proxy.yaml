@@ -1,0 +1,59 @@
+{{- if and .Values.proxy.enabled .Values.networkPolicy.enabled -}}
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ include "endorser-service.fullname" . }}-proxy-api
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+spec:
+  # Allow traffic from proxy to the API
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "endorser-service.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              app.kubernetes.io/component: proxy
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.port }}
+  podSelector:
+    matchLabels:
+      {{- include "endorser-service.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api
+  policyTypes:
+    - Ingress
+---
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ include "endorser-service.fullname" . }}-proxy-acapy
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+spec:
+  # Allow traffic from proxy to ACA-Py
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "endorser-service.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              app.kubernetes.io/component: proxy
+      ports:
+        - protocol: TCP
+          port: {{ .Values.acapy.service.ports.http }}
+        - protocol: TCP
+          port: {{ .Values.acapy.service.ports.admin }}
+        {{- if .Values.acapy.websockets.enabled }}
+        - protocol: TCP
+          port: {{ .Values.acapy.service.ports.ws }}
+        {{- end }}
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: acapy
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+{{- end }}

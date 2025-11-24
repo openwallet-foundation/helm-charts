@@ -40,14 +40,15 @@ A Helm chart for ACA-Py Endorser Service
 | acapy.agentUrl | string | `"https://endorser-agent.example.com"` | External agent URL (public endpoint) |
 | acapy.enabled | bool | `true` | Enable ACA-Py agent deployment |
 | acapy.extraEnvVars | list | `[]` | Extra environment variables as an array |
-| acapy.extraEnvVarsSecret | string | `"{{ printf \"%s-acapy-webhook\" .Release.Name | trunc 63 | trimSuffix \"-\" }}"` | Name of existing secret containing extra environment variables (webhook URL for endorser) Template is evaluated by common.tplvalues.render in AcaPy deployment |
+| acapy.extraEnvVarsSecret | string | `"{{ printf \"%s-acapy-webhook\" .Release.Name | trunc 63 | trimSuffix \"-\" }}"` | Name of existing secret containing extra environment variables (webhook URL for endorser) Template is evaluated by common.tplvalues.render in Aca-Py deployment |
 | acapy.image.registry | string | `"ghcr.io"` | Container image registry |
 | acapy.image.repository | string | `"openwallet-foundation/acapy-endorser-service/agent"` | Container image repository |
-| acapy.image.tag | string | `"1.1.1"` | Image tag (defaults to Acapy's chart appVersion) |
+| acapy.image.tag | string | `"1.1.1"` | Image tag (defaults to ACA-Py's chart appVersion) |
 | acapy.ingress.admin.enabled | bool | `false` | Enable admin ingress |
 | acapy.ingress.admin.hostname | string | `""` | Admin hostname |
 | acapy.ingress.agent.enabled | bool | `false` | Enable agent ingress |
 | acapy.ingress.agent.hostname | string | `""` | Agent hostname |
+| acapy.networkPolicy.enabled | bool | `false` | Disable ACA-Py chart's built-in NetworkPolicy (managed by parent chart instead) |
 | acapy.persistence.enabled | bool | `false` | Enable persistent volume for ACA-Py |
 | acapy.postgresql.enabled | bool | `true` | Enable PostgreSQL for ACA-Py wallet |
 | acapy.postgresql.nameOverride | string | `"acapy-postgresql"` | Name override to avoid collision with API database |
@@ -73,10 +74,12 @@ A Helm chart for ACA-Py Endorser Service
 | autoscaling.maxReplicas | int | `100` | Maximum replicas |
 | autoscaling.minReplicas | int | `1` | Minimum replicas |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` | Target CPU utilization percentage |
+| commonAnnotations | object | `{}` | Common annotations to add to all resources |
+| commonLabels | object | `{}` | Common labels to add to all resources |
 | externalDatabase.adminUsername | string | `""` | Database admin username (defaults to username if not set; typically 'postgres' for PostgreSQL) |
 | externalDatabase.database | string | `""` | Database name (e.g., endorser) |
 | externalDatabase.enabled | bool | `false` | Enable external database (disables postgresql subchart) |
-| externalDatabase.existingSecret | string | `""` | Existing secret containing database credentials |
+| externalDatabase.existingSecret | string | `""` | Existing secret containing database credentials (required when externalDatabase.enabled is true) |
 | externalDatabase.host | string | `""` | Database hostname (e.g., postgres.example.com) |
 | externalDatabase.port | int | `5432` | Database port |
 | externalDatabase.secretKeys.adminPasswordKey | string | `"postgres-password"` | Key for admin password |
@@ -99,14 +102,17 @@ A Helm chart for ACA-Py Endorser Service
 | ingress.tls | list | `[]` | TLS configuration |
 | livenessProbe.httpGet.path | string | `"/"` |  |
 | livenessProbe.httpGet.port | string | `"http"` |  |
+| migration.initContainer.image | string | `"busybox"` | Image repository for init container (database connectivity check) |
+| migration.initContainer.tag | string | `"1.36.1"` | Image tag for init container |
+| migration.resources | object | `{}` | Resource limits and requests for migration job container |
 | nameOverride | string | `""` | Override the chart name |
-| networkPolicy.api.egress | list | `[]` | Egress rules for API (defaults to allow all if empty) Use to restrict outbound connections (e.g., only to database and ACA-Py) |
+| networkPolicy.api.egress | list | `[]` | Egress rules for API (defaults to allow all if empty) Note: There is no "extraEgress" because all egress rules must be specified here; if empty, all outbound traffic is allowed. Use to restrict outbound connections (e.g., only to database and ACA-Py) |
 | networkPolicy.api.enabled | bool | `true` | Enable network policy for API pods |
-| networkPolicy.api.extraIngress | list | `[]` | Additional ingress rules for API (merged with default proxy allowance) Example: allow from monitoring namespace |
+| networkPolicy.api.extraIngress | list | `[]` | Additional ingress rules for API Note: Proxy and ACA-Py communication is handled by separate network policies (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml). Use this to add additional ingress sources (e.g., monitoring namespace, external services). |
 | networkPolicy.enabled | bool | `true` | Enable network policies (master switch for both API and proxy) |
-| networkPolicy.proxy.egress | list | `[]` | Egress rules for proxy (defaults to allow all if empty) Use to restrict outbound connections (e.g., only to API and ACA-Py) |
+| networkPolicy.proxy.egress | list | `[]` | Egress rules for proxy (defaults to allow all if empty) Note: There is no "extraEgress" because all egress rules must be specified here; if empty, all outbound traffic is allowed. Use to restrict outbound connections (e.g., only to API and ACA-Py) |
 | networkPolicy.proxy.enabled | bool | `true` | Enable network policy for proxy pods |
-| networkPolicy.proxy.extraIngress | list | `[]` | Additional ingress rules for proxy (defaults to allow all if empty) Default allows all cluster traffic; add rules to restrict further |
+| networkPolicy.proxy.extraIngress | list | `[]` | Additional ingress rules for proxy (merged with default allowance) These are "extra" rules because a default ingress rule (allowing all cluster traffic) is always present; use this to add more restrictions. |
 | nodeSelector | object | `{}` | Node selector for API pods |
 | podAnnotations | object | `{}` | Annotations to add to API pods |
 | podLabels | object | `{}` | Labels to add to API pods |
@@ -162,6 +168,8 @@ A Helm chart for ACA-Py Endorser Service
 | proxy.networkPolicy.enabled | bool | `false` | Enable network policy for proxy pods |
 | proxy.networkPolicy.ingress | list | `[]` | Additional ingress rules for proxy (defaults to allow all if empty) |
 | proxy.nodeSelector | object | `{}` | Node selector for proxy pods |
+| proxy.podAnnotations | object | `{}` | Annotations to add to proxy pods |
+| proxy.podLabels | object | `{}` | Labels to add to proxy pods |
 | proxy.podSecurityContext | object | `{}` | Security context for proxy pods |
 | proxy.readinessProbe.failureThreshold | int | `5` |  |
 | proxy.readinessProbe.httpGet.path | string | `"/status/ready"` |  |
@@ -187,12 +195,14 @@ A Helm chart for ACA-Py Endorser Service
 | secrets.api.existingSecret | string | `""` | Use existing secret instead of creating one (must contain keys specified below) |
 | secrets.api.keys.endorserAdminApiKey | string | `"endorser-admin-api-key"` | Key name for endorser admin API key (used to authenticate admin operations) |
 | secrets.api.keys.webhookApiKey | string | `"webhook-api-key"` | Key name for webhook API key (used by ACA-Py to authenticate webhook calls) |
+| secrets.api.retainOnUninstall | bool | `true` | Retain API secret on chart uninstall |
 | secrets.jwt.existingSecret | string | `""` | Use existing secret for JWT secret key; must contain `jwt-secret-key` key |
+| secrets.jwt.retainOnUninstall | bool | `true` | Retain JWT secret on chart uninstall |
 | securityContext | object | `{}` | Security context for API containers |
 | service.port | int | `5000` | Service port for endorser API |
 | service.type | string | `"ClusterIP"` | Service type (ClusterIP, NodePort, LoadBalancer) |
 | serviceAccount.annotations | object | `{}` | Annotations for the service account |
-| serviceAccount.automount | bool | `true` | Automatically mount service account credentials |
+| serviceAccount.automountServiceAccountToken | bool | `true` | Automatically mount service account credentials |
 | serviceAccount.create | bool | `false` | Create a service account |
 | serviceAccount.name | string | `""` | Service account name (generated if empty and create is true) |
 | tolerations | list | `[]` | Tolerations for API pods |

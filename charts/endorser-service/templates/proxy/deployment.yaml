@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "endorser-service.fullname" . }}-proxy
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: proxy
@@ -16,9 +17,16 @@ spec:
       app.kubernetes.io/component: proxy
   template:
     metadata:
+      {{- with .Values.proxy.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "endorser-service.labels" . | nindent 8 }}
         app.kubernetes.io/component: proxy
+        {{- with .Values.proxy.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -91,7 +99,7 @@ spec:
           {{- end }}
           volumeMounts:
             - name: caddy-config
-              mountPath: {{ .Values.proxy.caddyConfig.mountPath }}{{ .Values.proxy.caddyConfig.fileName }}
+              mountPath: {{ trimSuffix "/" .Values.proxy.caddyConfig.mountPath }}/{{ .Values.proxy.caddyConfig.fileName }}
               subPath: {{ .Values.proxy.caddyConfig.fileName }}
             - name: caddy-data
               mountPath: /data/caddy
@@ -108,4 +116,16 @@ spec:
           emptyDir: {}
         - name: caddy-config-dir
           emptyDir: {}
+      {{- with .Values.proxy.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.proxy.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.proxy.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 {{- end }}
