@@ -183,11 +183,7 @@ Generate hosts for AcaPy admin if not overriden
 {{/* Name of the secret containing DB credentials for API */}}
 {{- define "endorser-service.db.secretName" -}}
 {{- if .Values.externalDatabase.enabled -}}
-  {{- if .Values.externalDatabase.existingSecret -}}
-{{- .Values.externalDatabase.existingSecret -}}
-  {{- else -}}
-{{- "" -}}
-  {{- end -}}
+  {{- required "externalDatabase.existingSecret is required when externalDatabase.enabled is true" .Values.externalDatabase.existingSecret -}}
 {{- else -}}
   {{- if .Values.postgresql.auth.existingSecret -}}
 {{- .Values.postgresql.auth.existingSecret -}}
