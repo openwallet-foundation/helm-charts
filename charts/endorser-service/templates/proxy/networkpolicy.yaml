@@ -1,4 +1,4 @@
-{{- if and .Values.proxy.enabled .Values.networkPolicy.enabled }}
+{{- if and .Values.proxy.enabled .Values.proxy.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -18,14 +18,14 @@ spec:
     - Egress
   ingress:
     # Allow all (cluster internal) if no user rules provided
-    {{- if .Values.networkPolicy.proxy.extraIngress | len }}
-    {{- toYaml .Values.networkPolicy.proxy.extraIngress | nindent 4 }}
+    {{- if .Values.proxy.networkPolicy.extraIngress | len }}
+    {{- toYaml .Values.proxy.networkPolicy.extraIngress | nindent 4 }}
     {{- else }}
     - {}
     {{- end }}
   egress:
-    {{- if .Values.networkPolicy.proxy.egress | len }}
-    {{- toYaml .Values.networkPolicy.proxy.egress | nindent 4 }}
+    {{- if .Values.proxy.networkPolicy.egress | len }}
+    {{- toYaml .Values.proxy.networkPolicy.egress | nindent 4 }}
     {{- else }}
     - {}
     {{- end }}
