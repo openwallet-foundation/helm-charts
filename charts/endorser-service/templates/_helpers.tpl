@@ -134,7 +134,7 @@ Return the Aca-Py secret name
 {{- end -}}
 
 {{/*
-generate hosts if not overriden
+generate hosts if not overridden
 */}}
 {{- define "endorser-service.acapy.host" -}}
     {{- printf "%s-%s%s" (include "endorser-service.fullname" .) (include "endorser-service.acapy.name" .) .Values.global.ingressSuffix -}}
@@ -159,7 +159,7 @@ generate admin url (internal)
 {{- end -}}
 
 {{/*
-Generate hosts for Aca-Py admin if not overriden
+Generate hosts for Aca-Py admin if not overridden
 */}}
 {{- define "endorser-service.acapy.adminHost" -}}
    {{- printf "%s-%s-admin%s" (include "endorser-service.fullname" .) (include "endorser-service.acapy.name" .) .Values.global.ingressSuffix -}}

@@ -106,13 +106,9 @@ A Helm chart for ACA-Py Endorser Service
 | migration.initContainer.tag | string | `"1.36.1"` | Image tag for init container |
 | migration.resources | object | `{}` | Resource limits and requests for migration job container |
 | nameOverride | string | `""` | Override the chart name |
-| networkPolicy.api.egress | list | `[]` | Egress rules for API (defaults to allow all if empty) Note: There is no "extraEgress" because all egress rules must be specified here; if empty, all outbound traffic is allowed. Use to restrict outbound connections (e.g., only to database and ACA-Py) |
-| networkPolicy.api.enabled | bool | `true` | Enable network policy for API pods |
-| networkPolicy.api.extraIngress | list | `[]` | Additional ingress rules for API Note: Proxy and ACA-Py communication is handled by separate network policies (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml). Use this to add additional ingress sources (e.g., monitoring namespace, external services). |
-| networkPolicy.enabled | bool | `true` | Enable network policies (master switch for both API and proxy) |
-| networkPolicy.proxy.egress | list | `[]` | Egress rules for proxy (defaults to allow all if empty) Note: There is no "extraEgress" because all egress rules must be specified here; if empty, all outbound traffic is allowed. Use to restrict outbound connections (e.g., only to API and ACA-Py) |
-| networkPolicy.proxy.enabled | bool | `true` | Enable network policy for proxy pods |
-| networkPolicy.proxy.extraIngress | list | `[]` | Additional ingress rules for proxy (merged with default allowance) These are "extra" rules because a default ingress rule (allowing all cluster traffic) is always present; use this to add more restrictions. |
+| networkPolicy.egress | list | `[]` | Egress rules for API (defaults to allow all if empty) Note: There is no "extraEgress" because all egress rules must be specified here; if empty, all outbound traffic is allowed. Use to restrict outbound connections (e.g., only to database and ACA-Py) |
+| networkPolicy.enabled | bool | `true` | Enable network policy for API pods |
+| networkPolicy.extraIngress | list | `[]` | Additional ingress rules for API Note: Proxy and ACA-Py communication is handled by separate network policies (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml). Use this to add additional ingress sources (e.g., monitoring namespace, external services). |
 | nodeSelector | object | `{}` | Node selector for API pods |
 | podAnnotations | object | `{}` | Annotations to add to API pods |
 | podLabels | object | `{}` | Labels to add to API pods |
@@ -165,8 +161,9 @@ A Helm chart for ACA-Py Endorser Service
 | proxy.livenessProbe.initialDelaySeconds | int | `30` |  |
 | proxy.livenessProbe.periodSeconds | int | `60` |  |
 | proxy.livenessProbe.timeoutSeconds | int | `40` |  |
-| proxy.networkPolicy.enabled | bool | `false` | Enable network policy for proxy pods |
-| proxy.networkPolicy.ingress | list | `[]` | Additional ingress rules for proxy (defaults to allow all if empty) |
+| proxy.networkPolicy.egress | list | `[]` | Egress rules for proxy (defaults to allow all if empty) Use to restrict outbound connections (e.g., only to API and ACA-Py) |
+| proxy.networkPolicy.enabled | bool | `true` | Enable network policy for proxy pods |
+| proxy.networkPolicy.extraIngress | list | `[]` | Additional ingress rules for proxy Default allows all cluster traffic; use this to add additional restrictions |
 | proxy.nodeSelector | object | `{}` | Node selector for proxy pods |
 | proxy.podAnnotations | object | `{}` | Annotations to add to proxy pods |
 | proxy.podLabels | object | `{}` | Labels to add to proxy pods |
