@@ -173,8 +173,14 @@ jobs:
               continue
             fi
 
-            next_version="$(hack/release/next_version.sh "$current_version" "" "$final_bump")"
-            echo "Next version: ${next_version} (${final_bump} bump)"
+            # For first release (no prior tag), use Chart.yaml version as-is
+            if [ -z "$last_tag" ]; then
+              next_version="$current_version"
+              echo "Next version: ${next_version} (first release, using Chart.yaml version)"
+            else
+              next_version="$(hack/release/next_version.sh "$current_version" "" "$final_bump")"
+              echo "Next version: ${next_version} (${final_bump} bump)"
+            fi
 
             # Create/switch to release branch
             branch="release/${chart}-v${next_version}"
