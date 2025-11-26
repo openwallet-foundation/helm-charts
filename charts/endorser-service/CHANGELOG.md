@@ -1,3 +1,8 @@
+## 0.2.0 (2025-11-26)
+
+### Features
+
+* **endorser-service:** Add Endorser Service Helm chart ([#48](https://github.com/openwallet-foundation/helm-charts/issues/48)) ([7bfffae](https://github.com/openwallet-foundation/helm-charts/commit/7bfffaea8f308759780bbe2f0e06a3258add8021))
 ##  (2025-11-07)
 
 ### Features
