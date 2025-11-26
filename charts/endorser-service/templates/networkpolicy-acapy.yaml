@@ -1,0 +1,51 @@
+{{- if and .Values.acapy.enabled .Values.networkPolicy.enabled -}}
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ include "endorser-service.fullname" . }}-acapy-webhook
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+spec:
+  # Allow traffic from ACA-Py to the API (webhook)
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: acapy
+              app.kubernetes.io/instance: {{ .Release.Name }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.port }}
+  podSelector:
+    matchLabels:
+      {{- include "endorser-service.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api
+  policyTypes:
+    - Ingress
+---
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ include "endorser-service.fullname" . }}-acapy-admin
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+spec:
+  # Allow traffic from the API to ACA-Py admin
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "endorser-service.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: api
+      ports:
+        - protocol: TCP
+          port: {{ .Values.acapy.service.ports.admin }}
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: acapy
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+{{- end }}

@@ -1,0 +1,582 @@
+# Global configuration shared across components
+global:
+  # -- Ingress hostname suffix for generated hostnames
+  ingressSuffix: ".example.com"
+  # -- Security settings for subcharts
+  security:
+    # -- Allow non-standard/legacy container images (required for PostgreSQL legacy image)
+    allowInsecureImages: true
+
+# -- Number of API deployment replicas
+replicaCount: 1
+
+# Endorser API container image configuration
+image:
+  # -- Container image repository
+  repository: ghcr.io/openwallet-foundation/acapy-endorser-service/endorser
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Image tag (defaults to chart appVersion)
+  tag: ""
+
+# -- Image pull secrets for private registries
+imagePullSecrets: []
+
+# -- Override the chart name
+nameOverride: ""
+
+# -- Override the full release name
+fullnameOverride: ""
+
+# -- Common labels to add to all resources
+commonLabels: {}
+
+# -- Common annotations to add to all resources
+commonAnnotations: {}
+
+# Service account configuration for API pods
+serviceAccount:
+  # -- Create a service account
+  create: false
+  # -- Automatically mount service account credentials
+  automountServiceAccountToken: true
+  # -- Annotations for the service account
+  annotations: {}
+  # -- Service account name (generated if empty and create is true)
+  name: ""
+
+# -- Annotations to add to API pods
+podAnnotations: {}
+
+# -- Labels to add to API pods
+podLabels: {}
+
+# -- Security context for API pods
+podSecurityContext: {}
+  # fsGroup: 2000
+
+# -- Security context for API containers
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# Kubernetes service configuration for API
+service:
+  # -- Service type (ClusterIP, NodePort, LoadBalancer)
+  type: ClusterIP
+  # -- Service port for endorser API
+  port: 5000
+
+# Ingress configuration for direct API access (typically disabled when using proxy)
+ingress:
+  # -- Enable ingress for API
+  enabled: false
+  # -- Ingress class name
+  className: ""
+  # -- Ingress annotations
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  # Ingress host configuration
+  hosts:
+    - host: endorser-api.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  # -- TLS configuration
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+# -- Resource limits and requests for API containers
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+
+# Liveness probe configuration for API (restarts container if unhealthy)
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+
+# Readiness probe configuration for API (removes from service if not ready)
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+# Horizontal pod autoscaler configuration for API
+autoscaling:
+  # -- Enable horizontal pod autoscaling
+  enabled: false
+  # -- Minimum replicas
+  minReplicas: 1
+  # -- Maximum replicas
+  maxReplicas: 100
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 80
+  # -- Target memory utilization percentage
+  # targetMemoryUtilizationPercentage: 80
+
+# -- Additional volumes for API deployment
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# -- Additional volume mounts for API containers
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+# -- Node selector for API pods
+nodeSelector: {}
+
+# -- Tolerations for API pods
+tolerations: []
+
+# -- Affinity rules for API pods
+affinity: {}
+
+# Network policy configuration for API pods
+# Controls network access to/from API pods for enhanced security
+networkPolicy:
+  # -- Enable network policy for API pods
+  enabled: true
+  # -- Additional ingress rules for API
+  # Note: Proxy and ACA-Py communication is handled by separate network policies (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml).
+  # Use this to add additional ingress sources (e.g., monitoring namespace, external services).
+  extraIngress: []
+  # -- Egress rules for API (defaults to allow all if empty)
+  # Note: There is no "extraEgress" because all egress rules must be specified here; if empty, all outbound traffic is allowed.
+  # Use to restrict outbound connections (e.g., only to database and ACA-Py)
+  egress: []
+
+# Endorser API application configuration
+api:
+  # -- Public display name for the endorser service
+  publicName: "Endorser Service"
+  # -- Public description of the endorser service
+  publicDesc: "An endorser service for issuer agents"
+  # -- Admin username for endorser API
+  adminUser: endorser-admin
+  # -- ACA-Py admin URL (external)
+  acapyAdminUrl: https://endorser-agent-admin.example.com
+  # -- Log level (debug, info, warning, error)
+  logLevel: info
+  # -- JWT access token expiration time in minutes
+  jwtAccessTokenExpireMinutes: 300
+  # -- Automatically accept connection requests
+  autoAcceptConnections: false
+  # -- Automatically register new connections as authors
+  autoAcceptAuthors: false
+  # -- Automatically endorse all transaction requests
+  autoEndorseRequests: false
+  # -- Comma-separated list of transaction types to auto-endorse (e.g., "101,102")
+  autoEndorseTxnTypes: ""
+  # -- Reject endorsement requests by default (requires explicit approval)
+  rejectByDefault: false
+  # -- Number of Gunicorn worker processes
+  webConcurrency: "2"
+  # -- Endorser environment (dev, test, prod)
+  environment: dev
+
+# Endorser secrets configuration
+secrets:
+  # API secrets (admin key and webhook key)
+  api:
+    # -- Use existing secret instead of creating one (must contain keys specified below)
+    existingSecret: ""
+    # -- Retain API secret on chart uninstall
+    retainOnUninstall: true
+    # Key names within the secret
+    keys:
+      # -- Key name for endorser admin API key (used to authenticate admin operations)
+      endorserAdminApiKey: endorser-admin-api-key
+      # -- Key name for webhook API key (used by ACA-Py to authenticate webhook calls)
+      webhookApiKey: webhook-api-key
+  # JWT secret for token signing
+  jwt:
+    # -- Use existing secret for JWT secret key; must contain `jwt-secret-key` key
+    existingSecret: ""
+    # -- Retain JWT secret on chart uninstall
+    retainOnUninstall: true
+
+# Database migration job configuration
+migration:
+  # InitContainer image for database connectivity check
+  initContainer:
+    # -- Image repository for init container (database connectivity check)
+    image: busybox
+    # -- Image tag for init container
+    tag: "1.36.1"
+  # -- Resource limits and requests for migration job container
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 50m
+    #   memory: 64Mi
+
+# ACA-Py agent subchart configuration
+acapy:
+  # -- Enable ACA-Py agent deployment
+  enabled: true
+  image:
+    # -- Container image registry
+    registry: ghcr.io
+    # -- Container image repository
+    repository: openwallet-foundation/acapy-endorser-service/agent
+    # -- Image tag (defaults to ACA-Py's chart appVersion)
+    tag: 1.1.1
+  # ACA-Py command-line arguments (argfile format)
+  argfile.yml:
+    # -- Endorser alias in connections
+    endorser-alias: ""
+    # -- Endorser protocol role (must be "endorser")
+    endorser-protocol-role: endorser
+    # -- Allow endorsement requests through public DID
+    requests-through-public-did: true
+    # -- Automatically promote author DIDs
+    auto-promote-author-did: false
+    # -- Enable public connection invitations
+    public-invites: true
+    # -- Send revocation notifications
+    notify-revocation: true
+    # -- Monitor for revocation notifications
+    monitor-revocation-notification: true
+    # -- Wallet name for ACA-Py agent
+    wallet-name: aries-endorser-agent-wallet
+    # -- Ledger read-only mode
+    read-only-ledger: false
+    # -- Disable ledger configuration
+    no-ledger: true
+    # -- Required plugins
+    plugin:
+      - webvh
+  ledgers.yml: []
+  plugin-config.yml:
+    did-webvh:
+      # -- Set WebVH server url
+      server_url: ""
+      # -- Enable witnessing
+      witness: true
+  # -- Extra environment variables as an array
+  extraEnvVars: []
+  # -- Name of existing secret containing extra environment variables (webhook URL for endorser)
+  # Template is evaluated by common.tplvalues.render in Aca-Py deployment
+  extraEnvVarsSecret: '{{ printf "%s-acapy-webhook" .Release.Name | trunc 63 | trimSuffix "-" }}'
+  # -- External agent URL (public endpoint)
+  agentUrl: https://endorser-agent.example.com
+  # -- External admin URL (public endpoint)
+  adminUrl: https://endorser-agent-admin.example.com
+  # Ingress configuration for ACA-Py (typically disabled when using proxy)
+  ingress:
+    agent:
+      # -- Enable agent ingress
+      enabled: false
+      # -- Agent hostname
+      hostname: ""
+    admin:
+      # -- Enable admin ingress
+      enabled: false
+      # -- Admin hostname
+      hostname: ""
+  # WebSocket configuration
+  websockets:
+    # -- Enable WebSocket support
+    enabled: true
+  # Service port configuration
+  service:
+    ports:
+      # -- HTTP port for agent endpoints
+      http: 8050
+      # -- Admin API port
+      admin: 8051
+      # -- WebSocket port
+      ws: 8052
+  # Persistence configuration for ACA-Py
+  persistence:
+    # -- Enable persistent volume for ACA-Py
+    enabled: false
+  # Network policy configuration for ACA-Py agent
+  # NetworkPolicy for ACA-Py is managed by parent chart (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml)
+  networkPolicy:
+    # -- Disable ACA-Py chart's built-in NetworkPolicy (managed by parent chart instead)
+    enabled: false
+  # PostgreSQL database for ACA-Py agent
+  postgresql:
+    # -- Enable PostgreSQL for ACA-Py wallet
+    enabled: true
+    # -- Name override to avoid collision with API database
+    nameOverride: acapy-postgresql
+
+# PostgreSQL database configuration for endorser API (Bitnami subchart)
+postgresql:
+  # -- Enable PostgreSQL deployment for API
+  enabled: true
+  # PostgreSQL container image
+  image:
+    # -- Image registry
+    registry: docker.io
+    # -- Image repository, using Bitnami legacy image.
+    repository: bitnamilegacy/postgresql
+    # -- Image tag
+    tag: 17.2.0-debian-12-r3
+  # Authentication configuration
+  auth:
+    # -- Enable postgres superuser (required for init scripts)
+    enablePostgresUser: true
+    # -- Database username
+    username: endorser
+    # -- Database name
+    database: endorser
+    # -- Use existing secret for credentials
+    # existingSecret: ""
+  # Primary database configuration
+  primary:
+
+    initdb:
+      # Database initialization scripts
+      scripts:
+        # Initialize database permissions and extensions
+        01-init.sh: |
+          #!/bin/bash
+          set -e
+          echo "Initializing database permissions for user: $POSTGRES_USER"
+          export PGPASSWORD="$POSTGRES_POSTGRES_PASSWORD"
+          psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$POSTGRES_DATABASE" <<-EOSQL
+              CREATE EXTENSION IF NOT EXISTS pgcrypto;
+              ALTER DATABASE $POSTGRES_DATABASE OWNER TO $POSTGRES_USER;
+              REVOKE ALL ON SCHEMA public FROM PUBLIC;
+              GRANT ALL ON SCHEMA public TO $POSTGRES_USER;
+              ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $POSTGRES_USER;
+              ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO $POSTGRES_USER;
+              ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO $POSTGRES_USER;
+          EOSQL
+          echo "Database initialization complete for user: $POSTGRES_USER"
+    # Persistence configuration
+    persistence:
+      # -- Enable persistent volume
+      enabled: true
+      # -- Volume size
+      size: 1Gi
+
+# Caddy reverse proxy configuration
+proxy:
+  # -- Enable Caddy proxy deployment
+  enabled: true
+  # -- Number of proxy replicas
+  replicaCount: 1
+  # Proxy container image
+  image:
+    # -- Image repository
+    repository: ghcr.io/i5okie/caddy-rootless
+    # -- Image tag
+    tag: 2-alpine
+    # -- Image pull policy
+    pullPolicy: IfNotPresent
+  # -- Annotations to add to proxy pods
+  podAnnotations: {}
+  # -- Labels to add to proxy pods
+  podLabels: {}
+  # -- Security context for proxy pods
+  podSecurityContext: {}
+    # runAsNonRoot: true
+    # fsGroup: 2000
+    # seccompProfile:
+    #   type: RuntimeDefault
+  # -- Security context for proxy containers
+  securityContext: {}
+    # allowPrivilegeEscalation: false
+    # runAsNonRoot: true
+    # runAsUser: 2000
+    # capabilities:
+    #   drop:
+    #     - ALL
+  # Proxy service configuration
+  service:
+    # -- Service type
+    type: ClusterIP
+    # Service ports mapping to ACA-Py agent, admin, and endorser API
+    ports:
+      # -- Port for ACA-Py agent (HTTP/WebSocket)
+      agent: 8050
+      # -- Port for ACA-Py admin API
+      admin: 8051
+      # -- Port for endorser service API
+      endorser: 5000
+  # Ingress configuration for proxy
+  ingress:
+    # -- Enable ingress for proxy
+    enabled: true
+    # -- Ingress class name
+    className: ""
+    # -- Ingress annotations
+    annotations:
+      route.openshift.io/termination: edge
+    # Ingress hosts (typically three: agent, admin, endorser)
+    hosts:
+      - host: endorser-agent.example.com
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            servicePort: agent
+      - host: endorser-agent-admin.example.com
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            servicePort: admin
+      - host: endorser.example.com
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            servicePort: endorser
+    # -- TLS configuration
+    tls: []
+  # Resource limits and requests for proxy
+  resources:
+    limits:
+      cpu: 300m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi
+  # Liveness probe for proxy (restarts container if unhealthy)
+  livenessProbe:
+    httpGet:
+      path: /status/live
+      port: admin
+    initialDelaySeconds: 30
+    periodSeconds: 60
+    timeoutSeconds: 40
+    failureThreshold: 5
+  # Readiness probe for proxy (removes from service if not ready)
+  readinessProbe:
+    httpGet:
+      path: /status/ready
+      port: admin
+    initialDelaySeconds: 3
+    periodSeconds: 30
+    timeoutSeconds: 40
+    failureThreshold: 5
+  # Horizontal pod autoscaler for proxy
+  autoscaling:
+    # -- Enable autoscaling
+    enabled: false
+    # -- Minimum replicas
+    minReplicas: 3
+    # -- Maximum replicas
+    maxReplicas: 9
+    # -- Target CPU utilization
+    targetCPUUtilizationPercentage: 80
+    # -- Target memory utilization
+    targetMemoryUtilizationPercentage: 75
+  # -- Caddy configuration
+  caddyConfig:
+    # Custom Caddyfile content (auto-generated if empty)
+    caddyfile: |-
+      # ACA-Py Agent endpoint with WebSocket support
+      :{$CADDY_AGENT_PORT} {
+        @websockets {
+          header Connection *Upgrade*
+          header Upgrade websocket
+        }
+
+        handle @websockets {
+          reverse_proxy http://{$ACAPY_AGENT_HOST}:{$ACAPY_WS_PORT}
+        }
+
+        handle {
+          encode gzip
+          reverse_proxy http://{$ACAPY_AGENT_HOST}:{$ACAPY_HTTP_PORT}
+        }
+
+        log {
+          output stdout
+          level INFO
+        }
+      }
+
+      # ACA-Py Admin endpoint
+      :{$CADDY_AGENT_ADMIN_PORT} {
+        encode gzip
+        reverse_proxy http://{$ACAPY_AGENT_HOST}:{$ACAPY_ADMIN_PORT}
+
+        log {
+          output stdout
+          level INFO
+        }
+      }
+
+      # Endorser Service API endpoint
+      :{$CADDY_ENDORSER_SERVICE_PORT} {
+        encode gzip
+        reverse_proxy http://{$ENDORSER_SERVICE_HOST}:{$ENDORSER_SERVICE_PORT}
+
+        log {
+          output stdout
+          level INFO
+        }
+      }
+    # -- Caddyfile filename
+    fileName: Caddyfile
+    # -- Caddy config mount path
+    mountPath: /etc/caddy/
+    # -- Use existing ConfigMap for Caddyfile
+    existingConfigMap: ""
+  # -- Additional environment variables
+  env: {}
+  # -- Additional envFrom sources
+  envFrom: []
+  # -- Node selector for proxy pods
+  nodeSelector: {}
+  # -- Tolerations for proxy pods
+  tolerations: []
+  # -- Affinity rules for proxy pods
+  affinity: {}
+  # Network policy configuration for proxy pods
+  # Controls network access to/from proxy pods for enhanced security
+  networkPolicy:
+    # -- Enable network policy for proxy pods
+    enabled: true
+    # -- Additional ingress rules for proxy
+    # Default allows all cluster traffic; use this to add additional restrictions
+    extraIngress: []
+    # -- Egress rules for proxy (defaults to allow all if empty)
+    # Use to restrict outbound connections (e.g., only to API and ACA-Py)
+    egress: []
+
+# External database configuration (alternative to bundled PostgreSQL)
+externalDatabase:
+  # -- Enable external database (disables postgresql subchart)
+  enabled: false
+  # -- Database hostname (e.g., postgres.example.com)
+  host: ""
+  # -- Database port
+  port: 5432
+  # -- Database name (e.g., endorser)
+  database: ""
+  # -- Database username (e.g., endorser)
+  username: ""
+  # -- Database admin username (defaults to username if not set; typically 'postgres' for PostgreSQL)
+  adminUsername: ""
+  # -- Existing secret containing database credentials (required when externalDatabase.enabled is true)
+  existingSecret: ""
+  # Secret keys for credentials
+  secretKeys:
+    # -- Key for user password
+    userPasswordKey: password
+    # -- Key for admin password
+    adminPasswordKey: postgres-password

@@ -1,0 +1,28 @@
+{{- if .Values.proxy.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "endorser-service.fullname" . }}-proxy
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+spec:
+  type: {{ .Values.proxy.service.type }}
+  selector:
+    {{- include "endorser-service.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+  ports:
+    - name: agent
+      port: {{ .Values.proxy.service.ports.agent }}
+      targetPort: agent
+      protocol: TCP
+    - name: admin
+      port: {{ .Values.proxy.service.ports.admin }}
+      targetPort: admin
+      protocol: TCP
+    - name: endorser
+      port: {{ .Values.proxy.service.ports.endorser }}
+      targetPort: endorser
+      protocol: TCP
+{{- end }}
