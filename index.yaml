@@ -238,6 +238,33 @@ entries:
     urls:
     - https://github.com/openwallet-foundation/helm-charts/releases/download/didcomm-mediator-credo-0.3.3/didcomm-mediator-credo-0.3.3.tgz
     version: 0.3.3
+  endorser-service:
+  - apiVersion: v2
+    appVersion: 1.1.1
+    created: "2025-11-26T22:18:58.494388188Z"
+    dependencies:
+    - condition: acapy.enabled
+      name: acapy
+      repository: https://openwallet-foundation.github.io/helm-charts/
+      version: 0.2.3
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 16.3.2
+    description: A Helm chart for ACA-Py Endorser Service
+    digest: 691e82669975a4ab3d52c1db561753dd28b636e4ab501201a02909bf586ad833
+    maintainers:
+    - email: emiliano.sune@quartech.com
+      name: esune
+      url: https://github.com/esune
+    - email: ivan.polchenko@quartech.com
+      name: i5okie
+      url: https://github.com/i5okie
+    name: endorser-service
+    type: application
+    urls:
+    - https://github.com/openwallet-foundation/helm-charts/releases/download/endorser-service-0.1.0/endorser-service-0.1.0.tgz
+    version: 0.1.0
   mediator:
   - apiVersion: v2
     appVersion: 0.1.0
@@ -387,4 +414,4 @@ entries:
     urls:
     - https://github.com/openwallet-foundation/helm-charts/releases/download/vc-authn-oidc-0.4.3/vc-authn-oidc-0.4.3.tgz
     version: 0.4.3
-generated: "2025-10-23T22:13:48.260184508Z"
+generated: "2025-11-26T22:18:58.494408155Z"
