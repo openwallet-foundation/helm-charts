@@ -340,6 +340,7 @@ acapy:
   ## @param acapy.argfile.yml.auto-provision If the requested profile does not exist, initialize it with the given parameters.
   ## @param acapy.argfile.yml.auto-respond-credential-offer Automatically respond to Indy credential offers with a credential request. Default: false
   ## @param acapy.argfile.yml.auto-respond-messages Automatically respond to basic messages indicating the message was received. Default: false.
+  ## @param acapy.argfile.yml.auto-respond-presentation-request Automatically respond to Indy presentation requests with a constructed presentation if a corresponding credential can be retrieved. Default: false.
   ## @param acapy.argfile.yml.auto-verify-presentation Automatically verify a presentation when it is received. Default: false.
   ## @param acapy.argfile.yml.genesis-transactions-list Load YAML configuration for connecting to multiple HyperLedger Indy ledgers.
   ## @param acapy.argfile.yml.log-level Specifies a custom logging level as one of: ('debug', 'info', 'warning', 'error', 'critical')
@@ -361,6 +362,7 @@ acapy:
     auto-provision: true
     auto-respond-credential-offer: true
     auto-respond-messages: true
+    auto-respond-presentation-request: true
     auto-verify-presentation: true
     genesis-transactions-list: /tmp/ledgers.yml
     log-level: info
