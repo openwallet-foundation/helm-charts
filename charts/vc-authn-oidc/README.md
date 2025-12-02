@@ -11,7 +11,7 @@ Make sure to read the [best practices](/docs/BestPractices.md) to be used when p
 ## TL;DR
 
 ```console
-helm repo add owf	https://openwallet-foundation.github.io/helm-charts/
+helm repo add owf	https://openwallet-foundation.github.io/helm-charts
 helm repo update
 helm install my-release owf/vc-authn-oidc
 ```
@@ -27,8 +27,8 @@ helm install my-release owf/vc-authn-oidc
 To install the chart with the release name `my-release`:
 
 ```console
-helm repo add vc-authn-oidc https://openwallet-foundation.github.io/acapy-vc-authn-oidc
-helm install my-release vc-authn-oidc/vc-authn-oidc
+helm repo add owf https://openwallet-foundation.github.io/helm-charts
+helm install my-release owf/vc-authn-oidc
 ```
 
 The command deploys vc-authn-oidc with AcaPY agent, along with the MongoDB and PostgrSQL prerequisites on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
