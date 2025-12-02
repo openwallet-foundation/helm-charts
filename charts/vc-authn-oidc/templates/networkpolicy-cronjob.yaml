@@ -11,7 +11,7 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              {{ include "vc-authn-oidc.acapy.selectorLabels" . | nindent 14 }}
+              {{ include "vc-authn-oidc.selectorLabels" . | nindent 14 }}
               component: cleanup
       ports:
         - protocol: TCP
