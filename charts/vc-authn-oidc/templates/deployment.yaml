@@ -1,3 +1,4 @@
+{{- include "vc-authn-oidc.validateRedisConfig" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -121,15 +122,25 @@ spec:
               value: {{ printf "/opt/token/%s" .Values.auth.token.privateKey.filename }}
             - name: LOG_LEVEL
               value: {{ .Values.logLevel | quote }}
-            {{- if .Values.redis.enabled }}
-            - name: REDIS_URL
-              value: "redis://{{ include "global.fullname" . }}-redis:6379/0"
+            {{- if or .Values.redis.enabled .Values.externalRedis.host }}
             - name: REDIS_HOST
-              value: "{{ include "global.fullname" . }}-redis"
+              value: {{ if .Values.redis.enabled }}"{{ include "global.fullname" . }}-redis"{{ else }}{{ .Values.externalRedis.host | quote }}{{ end }}
             - name: REDIS_PORT
-              value: "6379"
+              value: {{ if .Values.redis.enabled }}"6379"{{ else }}{{ .Values.externalRedis.port | quote }}{{ end }}
             - name: REDIS_DB
-              value: "0"
+              value: {{ if .Values.redis.enabled }}"0"{{ else }}{{ .Values.externalRedis.database | quote }}{{ end }}
+            {{- if and .Values.externalRedis.host .Values.externalRedis.auth.enabled }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ if .Values.externalRedis.auth.existingSecret }}{{ .Values.externalRedis.auth.existingSecret }}{{ else }}{{ include "global.fullname" . }}-redis-external{{ end }}
+                  key: redis-password
+            - name: REDIS_URL
+              value: "redis://:$(REDIS_PASSWORD)@{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}"
+            {{- else }}
+            - name: REDIS_URL
+              value: {{ if .Values.redis.enabled }}"redis://{{ include "global.fullname" . }}-redis:6379/0"{{ else }}"redis://{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}"{{ end }}
+            {{- end }}
             - name: SESSION_STORAGE_TYPE
               value: "redis"
             - name: USE_REDIS_ADAPTER
