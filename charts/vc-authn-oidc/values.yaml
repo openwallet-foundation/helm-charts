@@ -713,3 +713,43 @@ redis:
     readOnlyRootFilesystem: true
     capabilities:
       drop: ["ALL"]
+
+## @section External Redis Configuration
+##
+## External Redis configuration (alternative to deploying Redis via redis.enabled)
+## Use this when connecting to an existing external Redis instance
+##
+externalRedis:
+  ## @param externalRedis.host External Redis host. When set, the chart will use this instead of the
+  ## internal Redis deployment. Cannot be used together with redis.enabled=true.
+  ##
+  host: ""
+  ## @param externalRedis.port External Redis port
+  ##
+  port: 6379
+  ## @param externalRedis.database Redis database number to use
+  ##
+  database: 0
+  ## External Redis authentication
+  ##
+  auth:
+    ## @param externalRedis.auth.enabled Enable authentication for external Redis
+    ##
+    enabled: false
+    ## @param externalRedis.auth.existingSecret Name of existing secret containing Redis password.
+    ## The secret should contain a key named 'redis-password'.
+    ##
+    existingSecret: ""
+    ## @param externalRedis.auth.password Redis password. Ignored if existingSecret is set.
+    ## A secret will be created automatically if password is provided and existingSecret is empty.
+    ##
+    password: ""
+  ## External Redis TLS configuration
+  ##
+  tls:
+    ## @param externalRedis.tls.enabled Enable TLS connection to external Redis
+    ##
+    enabled: false
+    ## @param externalRedis.tls.existingSecret Name of existing secret containing TLS certificates
+    ##
+    existingSecret: ""
