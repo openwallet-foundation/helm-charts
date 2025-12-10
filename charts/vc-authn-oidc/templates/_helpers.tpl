@@ -276,3 +276,32 @@ Generate hosts for acapy admin if not overriden
 {{- define "vc-authn-oidc.acapy.admin.host" -}}
    {{- printf "%s-%s-admin%s" (include "global.fullname" .) (include "vc-authn-oidc.acapy.name" .) .Values.global.ingressSuffix -}}
 {{- end -}}
+
+{{/*
+Validate Redis configuration - ensure only one Redis source is configured
+*/}}
+{{- define "vc-authn-oidc.validateRedisConfig" -}}
+{{- if and .Values.redis.enabled .Values.externalRedis.host -}}
+{{- fail "ERROR: Cannot use both redis.enabled=true and externalRedis.host. Please choose either internal Redis (redis.enabled=true) or external Redis (externalRedis.host), but not both." -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the external Redis secret name
+*/}}
+{{- define "vc-authn-oidc.externalRedis.secretName" -}}
+{{- if .Values.externalRedis.auth.existingSecret -}}
+{{- .Values.externalRedis.auth.existingSecret -}}
+{{- else -}}
+{{- printf "%s-redis-external" (include "global.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return true if an external Redis secret should be created
+*/}}
+{{- define "vc-authn-oidc.externalRedis.createSecret" -}}
+{{- if and .Values.externalRedis.host .Values.externalRedis.auth.enabled (not .Values.externalRedis.auth.existingSecret) .Values.externalRedis.auth.password -}}
+{{- true -}}
+{{- end -}}
+{{- end -}}
