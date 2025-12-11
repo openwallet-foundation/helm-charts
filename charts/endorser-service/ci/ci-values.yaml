@@ -1,0 +1,22 @@
+# CI test values - disable persistence and autoscaling for faster testing
+autoscaling:
+  enabled: false
+
+proxy:
+  autoscaling:
+    enabled: false
+
+acapy:
+  autoscaling:
+    enabled: false
+  persistence:
+    enabled: false
+  postgresql:
+    primary:
+      persistence:
+        enabled: false
+
+postgresql:
+  primary:
+    persistence:
+      enabled: false

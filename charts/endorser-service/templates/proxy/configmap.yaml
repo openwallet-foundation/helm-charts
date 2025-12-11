@@ -1,0 +1,14 @@
+{{- if and .Values.proxy.enabled (not .Values.proxy.caddyConfig.existingConfigMap) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "endorser-service.fullname" . }}-proxy-caddy-conf
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "endorser-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: proxy
+  annotations: {}
+data:
+  {{ .Values.proxy.caddyConfig.fileName }}: |
+{{ .Values.proxy.caddyConfig.caddyfile | indent 4 }}
+{{- end }}
