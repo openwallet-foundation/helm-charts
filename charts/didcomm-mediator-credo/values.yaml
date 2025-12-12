@@ -188,6 +188,8 @@ environment:
     value: "You have a new message"
   - name: PUSH_NOTIFICATION_BODY
     value: "Open your app to read it"
+  - name: FIREBASE_APPS
+    value: "[]"      # JSON string array of Firebase app configurations for push notifications
   - name: NODE_OPTIONS
     value: null      # Example: --max-old-space-size=512 to limit memory usage to 512MB
   - name: MALLOC_CONF
