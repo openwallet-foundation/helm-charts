@@ -220,6 +220,26 @@ entries:
   didcomm-mediator-credo:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2025-12-12T19:21:51.99131342Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    description: A Helm chart for the Credo DIDComm Mediator Service
+    digest: ec4183647b7ba7e4bffd41f6b0bd9e8afdd5d88b4d09d4df25113170187f3dd2
+    maintainers:
+    - email: emiliano.sune@quartech.com
+      name: esune
+      url: https://github.com/esune
+    name: didcomm-mediator-credo
+    type: application
+    urls:
+    - https://github.com/openwallet-foundation/helm-charts/releases/download/didcomm-mediator-credo-0.4.0/didcomm-mediator-credo-0.4.0.tgz
+    version: 0.4.0
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2025-10-22T17:57:08.551002617Z"
     dependencies:
     - name: common
@@ -443,4 +463,4 @@ entries:
     urls:
     - https://github.com/openwallet-foundation/helm-charts/releases/download/vc-authn-oidc-0.4.3/vc-authn-oidc-0.4.3.tgz
     version: 0.4.3
-generated: "2025-12-04T14:21:07.438276677Z"
+generated: "2025-12-12T19:21:51.991352012Z"
