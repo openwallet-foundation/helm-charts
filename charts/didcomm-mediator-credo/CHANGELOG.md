@@ -1,3 +1,8 @@
+## [0.4.0](https://github.com/openwallet-foundation/helm-charts/compare/didcomm-mediator-credo-0.3.3...didcomm-mediator-credo-0.4.0) (2025-12-12)
+
+### Features
+
+* Upgrade to multi-firebase image and update secrets ([#62](https://github.com/openwallet-foundation/helm-charts/issues/62)) ([335e7c4](https://github.com/openwallet-foundation/helm-charts/commit/335e7c469ea7b0ec3d5f49e6c1a8004bd45d9eb5))
 ##  (2025-10-21)
 
 ### Features
