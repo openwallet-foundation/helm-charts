@@ -31,3 +31,6 @@ rules:
   empty-values:
     forbid-in-block-mappings: false
     forbid-in-flow-mappings: false
+
+  # Disable line length warnings
+  line-length: disable
