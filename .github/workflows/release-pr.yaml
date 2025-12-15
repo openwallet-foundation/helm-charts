@@ -139,24 +139,22 @@ jobs:
             # Check for label overrides on existing PRs
             override=""
             skip="false"
-            if [ "${{ github.event_name }}" != "schedule" ]; then
-              # Query GitHub API for existing release PR
-              existing_pr=$(gh pr list --state open --head "release/${chart}-" --json number,labels --jq '.[0]' || echo "{}")
-              if [ "$existing_pr" != "{}" ] && [ "$existing_pr" != "null" ]; then
-                labels=$(echo "$existing_pr" | jq -r '.labels[].name')
-                if echo "$labels" | grep -q "skip-release"; then
-                  echo "::notice::Found 'skip-release' label, skipping ${chart}"
-                  skip="true"
-                elif echo "$labels" | grep -q "bump:major"; then
-                  override="major"
-                elif echo "$labels" | grep -q "bump:minor"; then
-                  override="minor"
-                elif echo "$labels" | grep -q "bump:patch"; then
-                  override="patch"
-                fi
-                if [ -n "$override" ]; then
-                  echo "::notice::Label override detected: ${override}"
-                fi
+            # Query GitHub API for existing release PR (filter by prefix since --head doesn't support wildcards)
+            existing_pr=$(gh pr list --state open --json number,labels,headRefName | jq -r --arg prefix "release/${chart}-" 'map(select(.headRefName | startswith($prefix))) | .[0] // {}' || echo "{}")
+            if [ "$existing_pr" != "{}" ] && [ "$existing_pr" != "null" ]; then
+              labels=$(echo "$existing_pr" | jq -r '.labels[].name')
+              if echo "$labels" | grep -q "skip-release"; then
+                echo "::notice::Found 'skip-release' label, skipping ${chart}"
+                skip="true"
+              elif echo "$labels" | grep -q "bump:major"; then
+                override="major"
+                echo "::notice::Label override detected: ${override}"
+              elif echo "$labels" | grep -q "bump:minor"; then
+                override="minor"
+                echo "::notice::Label override detected: ${override}"
+              elif echo "$labels" | grep -q "bump:patch"; then
+                override="patch"
+                echo "::notice::Label override detected: ${override}"
               fi
             fi
 
