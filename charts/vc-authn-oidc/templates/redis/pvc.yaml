@@ -1,0 +1,23 @@
+{{- if and .Values.redis.enabled .Values.redis.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "global.fullname" . }}-redis
+  labels:
+    {{- include "vc-authn-oidc.labels" . | nindent 4 }}
+    component: redis
+  annotations:
+    helm.sh/resource-policy: keep
+    {{- with .Values.redis.persistence.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  accessModes:
+  {{- range .Values.redis.persistence.accessModes }}
+    - {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.redis.persistence.size | quote }}
+  {{- include "common.storage.class" (dict "persistence" .Values.redis.persistence "global" .Values.global) | nindent 2 }}
+{{- end }}

@@ -704,6 +704,30 @@ redis:
     readOnlyRootFilesystem: true
     capabilities:
       drop: ["ALL"]
+  ## Redis Persistence Configuration
+  ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+  ##
+  persistence:
+    ## @param redis.persistence.enabled Enable Redis data persistence using PVC. If disabled, an emptyDir volume will be used.
+    ##
+    enabled: false
+    ## @param redis.persistence.storageClass PVC Storage Class for Redis data volume
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ## set, choosing the default provisioner.
+    ##
+    storageClass: ""
+    ## @param redis.persistence.accessModes PVC Access Mode for Redis volume
+    ##
+    accessModes:
+      - ReadWriteOnce
+    ## @param redis.persistence.size PVC Storage Request for Redis volume
+    ##
+    size: 8Gi
+    ## @param redis.persistence.annotations Annotations for the PVC
+    ##
+    annotations: {}
 
 ## @section External Redis Configuration
 ##

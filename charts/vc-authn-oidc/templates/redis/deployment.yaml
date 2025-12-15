@@ -47,6 +47,17 @@ spec:
         {{- if .Values.redis.containerSecurityContext.enabled }}
         securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.redis.containerSecurityContext "context" $) | nindent 10 }}
         {{- end }}
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+      {{- if .Values.redis.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "global.fullname" . }}-redis
+      {{- else }}
+        emptyDir: {}
+      {{- end }}
       {{- with .Values.redis.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
