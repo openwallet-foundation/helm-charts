@@ -4,8 +4,7 @@ apiVersion: {{ include "common.capabilities.networkPolicy.apiVersion" . }}
 metadata:
   name: {{ include "global.fullname" . }}-redis
   labels:
-    {{- include "vc-authn-oidc.labels" . | nindent 4 }}
-    component: redis
+    {{- include "vc-authn-oidc.redis.labels" . | nindent 4 }}
 spec:
   # Allow traffic from the controller to Redis
   ingress:
@@ -18,6 +17,5 @@ spec:
           port: 6379
   podSelector:
     matchLabels:
-      {{- include "vc-authn-oidc.selectorLabels" . | nindent 6 }}
-      component: redis
+      {{- include "vc-authn-oidc.redis.selectorLabels" . | nindent 6 }}
 {{- end }}

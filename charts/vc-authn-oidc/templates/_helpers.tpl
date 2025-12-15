@@ -73,6 +73,14 @@ component: redis
 {{- end -}}
 
 {{/*
+Redis labels
+*/}}
+{{- define "vc-authn-oidc.redis.labels" -}}
+{{ include "common.labels" . }}
+{{ include "vc-authn-oidc.redis.selectorLabels" . }}
+{{- end }}
+
+{{/*
 vc-authn-oidc labels
 */}}
 {{- define "vc-authn-oidc.labels" -}}

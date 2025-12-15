@@ -4,8 +4,7 @@ kind: Deployment
 metadata:
   name: {{ include "global.fullname" . }}-redis
   labels:
-    {{- include "vc-authn-oidc.labels" . | nindent 4 }}
-    component: redis
+    {{- include "vc-authn-oidc.redis.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
