@@ -64,7 +64,7 @@ useOobLocalDIDService: false
 walletDeepLinkPrefix: bcwallet://aries_proof-request
 ## @param controller.cameraRedirectUrl The redirect url can be a web link or the name of a template
 ## @param controller.presentationExpireTime The number of time in seconds a proof request will be valid for
-## @param controller.sessionTimeout.duration The number of seconds an auth_sessions in the states defined incontrollerSessionTimeoutConfig is kept for
+## @param controller.sessionTimeout.duration The number of seconds an auth_sessions in the states defined in controllerSessionTimeoutConfig is kept for
 ## @param controller.sessionTimeout.config The json list of auth session states that are safe for deletion
 ## @param controller.templateDirectory The directory where the controller templates are stored
 ## @param controller.userVariableSubsitution The placeholder for the user variable substitution file that can be used to add substitution variables
@@ -173,7 +173,7 @@ networkPolicy:
   enabled: true
   ## @param networkPolicy.ingress.enabled Enable ingress rules
   ## @param networkPolicy.ingress.namespaceSelector [object] Namespace selector label that is allowed to access the Tenant proxy pods.
-  ## @param networkPolicy.ingress.podSelector [object] Pod selector label that is allowed to access the Tenant proxypods.
+  ## @param networkPolicy.ingress.podSelector [object] Pod selector label that is allowed to access the Tenant proxy pods.
   ingress:
     enabled: true
     namespaceSelector: {}
