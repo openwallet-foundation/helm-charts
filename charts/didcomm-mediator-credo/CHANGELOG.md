@@ -1,3 +1,8 @@
+## [0.5.0](https://github.com/openwallet-foundation/helm-charts/compare/didcomm-mediator-credo-0.4.0...didcomm-mediator-credo-0.5.0) (2026-01-05)
+
+### Features
+
+* Update mediator version to 0c5db35 ([#73](https://github.com/openwallet-foundation/helm-charts/issues/73)) ([7135dd4](https://github.com/openwallet-foundation/helm-charts/commit/7135dd4bae13390f596f66e797db8828e2d36e2b))
 ## [0.4.0](https://github.com/openwallet-foundation/helm-charts/compare/didcomm-mediator-credo-0.3.3...didcomm-mediator-credo-0.4.0) (2025-12-12)
 
 ### Features
