@@ -4,8 +4,7 @@ kind: CronJob
 metadata:
   name: {{ include "global.fullname" . }}-cleanup
   labels:
-    {{- include "vc-authn-oidc.labels" . | nindent 4 }}
-    component: cleanup
+    {{- include "vc-authn-oidc.cleanup.labels" . | nindent 4 }}
 spec:
   schedule: {{ .Values.cleanup.cronjob.schedule | quote }}
   concurrencyPolicy: Forbid
@@ -16,8 +15,7 @@ spec:
       template:
         metadata:
           labels:
-            {{- include "vc-authn-oidc.selectorLabels" . | nindent 12 }}
-            component: cleanup
+            {{- include "vc-authn-oidc.cleanup.selectorLabels" . | nindent 12 }}
         spec:
           restartPolicy: OnFailure
           containers:
