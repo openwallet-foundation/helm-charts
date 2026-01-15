@@ -6,13 +6,12 @@ metadata:
   labels:
     {{- include "vc-authn-oidc.labels" . | nindent 4 }}
 spec:
-  # Allow traffic from the agent to the controller
+  # Allow traffic from the cleanup cronjob to the controller
   ingress:
     - from:
         - podSelector:
             matchLabels:
-              {{ include "vc-authn-oidc.selectorLabels" . | nindent 14 }}
-              component: cleanup
+              {{- include "vc-authn-oidc.cleanup.selectorLabels" . | nindent 14 }}
       ports:
         - protocol: TCP
           port: {{ .Values.service.port }}
