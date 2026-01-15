@@ -65,6 +65,22 @@ component: controller
 {{- end }}
 
 {{/*
+Selector cleanup labels
+*/}}
+{{- define "vc-authn-oidc.cleanup.selectorLabels" -}}
+{{ include "common.selectorLabels" . }}
+component: cleanup
+{{- end }}
+
+{{/*
+Cleanup labels
+*/}}
+{{- define "vc-authn-oidc.cleanup.labels" -}}
+{{ include "common.labels" . }}
+{{ include "vc-authn-oidc.cleanup.selectorLabels" . }}
+{{- end }}
+
+{{/*
 Selector redis labels
 */}}
 {{- define "vc-authn-oidc.redis.selectorLabels" -}}
