@@ -419,6 +419,17 @@ Return the MongoDB password secret key
 {{- end -}}
 
 {{/*
+Return true if MongoDB authentication is enabled
+*/}}
+{{- define "vc-authn-oidc.mongodb.authEnabled" -}}
+{{- if .Values.externalMongodb.enabled -}}
+{{- .Values.externalMongodb.auth.enabled -}}
+{{- else -}}
+{{- .Values.mongodb.auth.enabled -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return true if an external MongoDB secret should be created
 */}}
 {{- define "vc-authn-oidc.externalMongodb.createSecret" -}}
