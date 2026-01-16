@@ -329,3 +329,91 @@ Return true if an external Redis secret should be created
 {{- true -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Validate MongoDB configuration - ensure only one MongoDB source is configured
+*/}}
+{{- define "vc-authn-oidc.validateMongoConfig" -}}
+{{- if and .Values.externalMongodb.enabled (not .Values.externalMongodb.host) -}}
+{{- fail "ERROR: externalMongodb.enabled is true but externalMongodb.host is not set. Please provide the external MongoDB host." -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB host
+*/}}
+{{- define "vc-authn-oidc.mongodb.host" -}}
+{{- if .Values.externalMongodb.enabled -}}
+{{- .Values.externalMongodb.host -}}
+{{- else -}}
+{{- printf "%s-mongodb-headless.%s.svc.cluster.local" .Release.Name .Release.Namespace -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB port
+*/}}
+{{- define "vc-authn-oidc.mongodb.port" -}}
+{{- if .Values.externalMongodb.enabled -}}
+{{- .Values.externalMongodb.port | default 27017 -}}
+{{- else -}}
+{{- .Values.mongodb.service.ports.mongodb | default 27017 -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB database name
+*/}}
+{{- define "vc-authn-oidc.mongodb.database" -}}
+{{- if .Values.externalMongodb.enabled -}}
+{{- .Values.externalMongodb.database | default "vcauthn" -}}
+{{- else -}}
+{{- first .Values.mongodb.auth.databases | default "vcauthn" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB username
+*/}}
+{{- define "vc-authn-oidc.mongodb.username" -}}
+{{- if .Values.externalMongodb.enabled -}}
+{{- .Values.externalMongodb.auth.username | default "vcauthn" -}}
+{{- else -}}
+{{- first .Values.mongodb.auth.usernames | default "vcauthn" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB password secret name
+*/}}
+{{- define "vc-authn-oidc.mongodb.secretName" -}}
+{{- if .Values.externalMongodb.enabled -}}
+{{- if .Values.externalMongodb.auth.existingSecret -}}
+{{- .Values.externalMongodb.auth.existingSecret -}}
+{{- else -}}
+{{- printf "%s-mongodb-external" (include "global.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- else -}}
+{{- include "vc-authn-oidc.databaseSecretName" . -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB password secret key
+*/}}
+{{- define "vc-authn-oidc.mongodb.secretKey" -}}
+{{- if .Values.externalMongodb.enabled -}}
+{{- .Values.externalMongodb.auth.existingSecretPasswordKey | default "mongodb-password" -}}
+{{- else -}}
+{{- "mongodb-passwords" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return true if an external MongoDB secret should be created
+*/}}
+{{- define "vc-authn-oidc.externalMongodb.createSecret" -}}
+{{- if and .Values.externalMongodb.enabled .Values.externalMongodb.auth.enabled (not .Values.externalMongodb.auth.existingSecret) .Values.externalMongodb.auth.password -}}
+{{- true -}}
+{{- end -}}
+{{- end -}}
