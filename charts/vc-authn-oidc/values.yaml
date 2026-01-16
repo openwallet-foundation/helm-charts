@@ -604,6 +604,43 @@ mongodb:
     ##
     enabled: false
 
+## @section External MongoDB Configuration
+##
+## External MongoDB configuration (alternative to deploying MongoDB via mongodb subchart)
+## Use this when connecting to an existing external MongoDB instance (Atlas, Percona, self-managed, etc.)
+##
+externalMongodb:
+  ## @param externalMongodb.enabled Enable external MongoDB. When true, the bundled MongoDB subchart is disabled and the chart connects to the specified external MongoDB instance. Cannot be used together with mongodb subchart (mutually exclusive).
+  ##
+  enabled: false
+  ## @param externalMongodb.host External MongoDB host (e.g., "mongodb.example.com" or "mongodb-0.mongodb-headless.namespace.svc.cluster.local")
+  ##
+  host: ""
+  ## @param externalMongodb.port External MongoDB port
+  ##
+  port: 27017
+  ## @param externalMongodb.database Database name to use
+  ##
+  database: "vcauthn"
+  ## External MongoDB authentication
+  ##
+  auth:
+    ## @param externalMongodb.auth.enabled Enable authentication for external MongoDB
+    ##
+    enabled: true
+    ## @param externalMongodb.auth.username MongoDB username
+    ##
+    username: "vcauthn"
+    ## @param externalMongodb.auth.password MongoDB password. Ignored if existingSecret is set. Use existingSecret for production deployments.
+    ##
+    password: ""
+    ## @param externalMongodb.auth.existingSecret Name of existing secret containing MongoDB password. The secret should contain a key specified by existingSecretPasswordKey.
+    ##
+    existingSecret: ""
+    ## @param externalMongodb.auth.existingSecretPasswordKey Key in the existing secret containing the MongoDB password
+    ##
+    existingSecretPasswordKey: "mongodb-password"
+
 ## @section Redis Configuration
 ##
 ## @param redis.enabled Enable Redis deployment
