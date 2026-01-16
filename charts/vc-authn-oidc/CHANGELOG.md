@@ -1,3 +1,8 @@
+## [0.5.2](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-0.5.1...vc-authn-oidc-0.5.2) (2026-01-16)
+
+### Bug Fixes
+
+* **vc-authn-oidc:** cronjob selector labels ([#81](https://github.com/openwallet-foundation/helm-charts/issues/81)) ([0c9235b](https://github.com/openwallet-foundation/helm-charts/commit/0c9235b8c5bebc53d452adde55909ca1e74064a2))
 ## [0.5.1](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-0.5.0...vc-authn-oidc-0.5.1) (2025-12-15)
 
 ### Features
