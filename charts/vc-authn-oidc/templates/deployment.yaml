@@ -1,4 +1,5 @@
 {{- include "vc-authn-oidc.validateRedisConfig" . -}}
+{{- include "vc-authn-oidc.validateMongoConfig" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -56,18 +57,18 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: DB_HOST
-              value: "{{ .Release.Name }}-mongodb-headless.{{ .Release.Namespace }}.svc.cluster.local"
+              value: {{ include "vc-authn-oidc.mongodb.host" . | quote }}
             - name: DB_PORT
-              value: {{ .Values.mongodb.service.ports.mongodb | quote }}
+              value: {{ include "vc-authn-oidc.mongodb.port" . | quote }}
             - name: DB_NAME
-              value: {{ first .Values.mongodb.auth.databases }}
+              value: {{ include "vc-authn-oidc.mongodb.database" . | quote }}
             - name: OIDC_CONTROLLER_DB_USER
-              value: {{ first .Values.mongodb.auth.usernames }}
+              value: {{ include "vc-authn-oidc.mongodb.username" . | quote }}
             - name: OIDC_CONTROLLER_DB_USER_PWD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "vc-authn-oidc.databaseSecretName" . }}
-                  key: mongodb-passwords
+                  name: {{ include "vc-authn-oidc.mongodb.secretName" . }}
+                  key: {{ include "vc-authn-oidc.mongodb.secretKey" . }}
             - name: CONTROLLER_URL
               value: {{ include "vc-authn-oidc.url" . }}
             - name: CONTROLLER_API_KEY
