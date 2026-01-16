@@ -533,6 +533,9 @@ cleanup:
 
 ##  Overrides for bitnami/mongodb chart - https://github.com/bitnami/charts/tree/main/bitnami/mongodb
 mongodb:
+  ## @param mongodb.enabled Enable bundled MongoDB subchart. Set to false when using externalMongodb.
+  ##
+  enabled: true
   ## @param mongodb.image [object] Pin image tag, and use bitnamilegacy repo.
   image:
     registry: docker.io
