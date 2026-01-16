@@ -1,3 +1,4 @@
+## [0.6.1](https://github.com/openwallet-foundation/helm-charts/compare/didcomm-mediator-credo-0.6.0...didcomm-mediator-credo-0.6.1) (2026-01-16)
 ## [0.6.0](https://github.com/openwallet-foundation/helm-charts/compare/didcomm-mediator-credo-0.5.0...didcomm-mediator-credo-0.6.0) (2026-01-08)
 
 ### Features
