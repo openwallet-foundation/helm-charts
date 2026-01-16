@@ -334,6 +334,9 @@ Return true if an external Redis secret should be created
 Validate MongoDB configuration - ensure only one MongoDB source is configured
 */}}
 {{- define "vc-authn-oidc.validateMongoConfig" -}}
+{{- if and .Values.mongodb.enabled .Values.externalMongodb.enabled -}}
+{{- fail "ERROR: Both the bundled MongoDB (mongodb.enabled) and external MongoDB (externalMongodb.enabled) are enabled. Please enable only one MongoDB source." -}}
+{{- end -}}
 {{- if and .Values.externalMongodb.enabled (not .Values.externalMongodb.host) -}}
 {{- fail "ERROR: externalMongodb.enabled is true but externalMongodb.host is not set. Please provide the external MongoDB host." -}}
 {{- end -}}
