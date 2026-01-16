@@ -107,19 +107,25 @@ useHTTPS: true
 logLevel: INFO
 
 ## @param auth.api.existingSecret Specify the name of the secret containing `controllerApiKey` key.
+## @param auth.api.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated API secret
 ## @param auth.token.privateKey.filename Specify the name of the signing key file
 ## @param auth.token.privateKey.existingSecret Specify the name of the secret containing the signing key to be mounted, if not specified, a new secret will be created.
+## @param auth.token.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated JWT token secret
 auth:
   api:
     existingSecret: ""
+    retainOnUninstall: true
   token:
+    retainOnUninstall: true
     privateKey:
       filename: jwt-token.pem
       existingSecret: ""
 
 ## @param database.existingSecret Specify existing secret containing the keys `mongodb-root-password`, `mongodb-replica-set-key`, and `mongodb-passwords`. `database.secret.create` must be set to `false` when using existing secret.
+## @param database.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated database secret
 database:
   existingSecret: ""
+  retainOnUninstall: true
 
 ## @param podAnnotations Map of annotations to add to the acapy pods
 ##
@@ -640,6 +646,9 @@ externalMongodb:
     ## @param externalMongodb.auth.existingSecretPasswordKey Key in the existing secret containing the MongoDB password
     ##
     existingSecretPasswordKey: "mongodb-password"
+    ## @param externalMongodb.auth.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated external MongoDB secret
+    ##
+    retainOnUninstall: true
 
 ## @section Redis Configuration
 ##
@@ -758,6 +767,9 @@ externalRedis:
     ## @param externalRedis.auth.password Redis password. Ignored if existingSecret is set. A secret will be created automatically if password is provided and existingSecret is empty.
     ##
     password: ""
+    ## @param externalRedis.auth.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated external Redis secret
+    ##
+    retainOnUninstall: true
   ## External Redis TLS configuration
   ##
   tls:
