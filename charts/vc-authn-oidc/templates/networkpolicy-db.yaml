@@ -1,6 +1,6 @@
-{{- if and .Values.networkPolicy.enabled (not .Values.externalMongodb.enabled) -}}
+{{- if and .Values.networkPolicy.enabled .Values.mongodb.enabled -}}
 # This policy only applies when using the bundled MongoDB subchart.
-# When using external MongoDB (externalMongodb.enabled=true), this policy is skipped.
+# When using external MongoDB (mongodb.enabled=false), this policy is skipped.
 kind: NetworkPolicy
 apiVersion: {{ include "common.capabilities.networkPolicy.apiVersion" . }}
 metadata:
