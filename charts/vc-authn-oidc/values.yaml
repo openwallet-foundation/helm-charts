@@ -617,12 +617,10 @@ mongodb:
 ##
 ## External MongoDB configuration (alternative to deploying MongoDB via mongodb subchart)
 ## Use this when connecting to an existing external MongoDB instance (Atlas, Percona, self-managed, etc.)
+## To use external MongoDB, set mongodb.enabled=false and configure the options below.
 ##
 externalMongodb:
-  ## @param externalMongodb.enabled Enable external MongoDB. When true, the bundled MongoDB subchart is disabled and the chart connects to the specified external MongoDB instance. Cannot be used together with mongodb subchart (mutually exclusive).
-  ##
-  enabled: false
-  ## @param externalMongodb.host External MongoDB host (e.g., "mongodb.example.com" or "mongodb-0.mongodb-headless.namespace.svc.cluster.local")
+  ## @param externalMongodb.host External MongoDB host (e.g., "mongodb.example.com" or "mongodb-0.mongodb-headless.namespace.svc.cluster.local"). Required when mongodb.enabled=false.
   ##
   host: ""
   ## @param externalMongodb.port External MongoDB port
