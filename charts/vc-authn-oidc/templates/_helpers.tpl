@@ -329,3 +329,105 @@ Return true if an external Redis secret should be created
 {{- true -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Validate MongoDB configuration - ensure external MongoDB is properly configured when bundled MongoDB is disabled
+*/}}
+{{- define "vc-authn-oidc.validateMongoConfig" -}}
+{{- if and (not .Values.mongodb.enabled) (not .Values.externalMongodb.host) -}}
+{{- fail "ERROR: mongodb.enabled is false but externalMongodb.host is not set. Please provide the external MongoDB host or enable the bundled MongoDB." -}}
+{{- end -}}
+{{- if and (not .Values.mongodb.enabled) .Values.externalMongodb.auth.enabled (not .Values.externalMongodb.auth.password) (not .Values.externalMongodb.auth.existingSecret) -}}
+{{- fail "ERROR: externalMongodb.auth.enabled is true but neither externalMongodb.auth.password nor externalMongodb.auth.existingSecret is set. Please provide a password or an existing secret for external MongoDB authentication." -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB host
+*/}}
+{{- define "vc-authn-oidc.mongodb.host" -}}
+{{- if not .Values.mongodb.enabled -}}
+{{- .Values.externalMongodb.host -}}
+{{- else -}}
+{{- printf "%s-mongodb-headless.%s.svc.cluster.local" .Release.Name .Release.Namespace -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB port
+*/}}
+{{- define "vc-authn-oidc.mongodb.port" -}}
+{{- if not .Values.mongodb.enabled -}}
+{{- .Values.externalMongodb.port | default 27017 -}}
+{{- else -}}
+{{- .Values.mongodb.service.ports.mongodb | default 27017 -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB database name
+*/}}
+{{- define "vc-authn-oidc.mongodb.database" -}}
+{{- if not .Values.mongodb.enabled -}}
+{{- .Values.externalMongodb.database | default "vcauthn" -}}
+{{- else -}}
+{{- first .Values.mongodb.auth.databases | default "vcauthn" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB username
+*/}}
+{{- define "vc-authn-oidc.mongodb.username" -}}
+{{- if not .Values.mongodb.enabled -}}
+{{- .Values.externalMongodb.auth.username | default "vcauthn" -}}
+{{- else -}}
+{{- first .Values.mongodb.auth.usernames | default "vcauthn" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB password secret name
+*/}}
+{{- define "vc-authn-oidc.mongodb.secretName" -}}
+{{- if not .Values.mongodb.enabled -}}
+{{- if .Values.externalMongodb.auth.existingSecret -}}
+{{- .Values.externalMongodb.auth.existingSecret -}}
+{{- else -}}
+{{- printf "%s-mongodb-external" (include "global.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- else -}}
+{{- include "vc-authn-oidc.databaseSecretName" . -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the MongoDB password secret key
+*/}}
+{{- define "vc-authn-oidc.mongodb.secretKey" -}}
+{{- if not .Values.mongodb.enabled -}}
+{{- .Values.externalMongodb.auth.existingSecretPasswordKey | default "mongodb-password" -}}
+{{- else -}}
+{{- "mongodb-passwords" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return true if MongoDB authentication is enabled
+*/}}
+{{- define "vc-authn-oidc.mongodb.authEnabled" -}}
+{{- if not .Values.mongodb.enabled -}}
+{{- .Values.externalMongodb.auth.enabled -}}
+{{- else -}}
+{{- .Values.mongodb.auth.enabled -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return true if an external MongoDB secret should be created
+*/}}
+{{- define "vc-authn-oidc.externalMongodb.createSecret" -}}
+{{- if and (not .Values.mongodb.enabled) .Values.externalMongodb.auth.enabled (not .Values.externalMongodb.auth.existingSecret) .Values.externalMongodb.auth.password -}}
+{{- true -}}
+{{- end -}}
+{{- end -}}

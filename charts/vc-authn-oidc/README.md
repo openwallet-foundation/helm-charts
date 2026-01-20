@@ -1,6 +1,6 @@
 # VC-AuthN OIDC
 
-![Version: 0.4.4](https://img.shields.io/badge/Version-0.4.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.3.0](https://img.shields.io/badge/AppVersion-2.3.0-informational?style=flat-square)
+![Version: 0.5.2](https://img.shields.io/badge/Version-0.5.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.3.4](https://img.shields.io/badge/AppVersion-2.3.4-informational?style=flat-square)
 
 A Helm chart to deploy Verifiable Credential Identity Provider for OpenID Connect.
 
@@ -107,9 +107,12 @@ kubectl delete secret,pvc --selector "app.kubernetes.io/instance"=my-release
 | `useHTTPS`                                          | Prepend Agent and Admin URLs with `https`                                                                                                                                                            | `true`                             |
 | `logLevel`                                          | Accepts one of the following values: CRITICAL, ERROR, WARNING, INFO, DEBUG                                                                                                                           | `INFO`                             |
 | `auth.api.existingSecret`                           | Specify the name of the secret containing `controllerApiKey` key.                                                                                                                                    | `""`                               |
+| `auth.api.retainOnUninstall`                        | When true, adds helm.sh/resource-policy: keep to generated API secret                                                                                                                                | `true`                             |
 | `auth.token.privateKey.filename`                    | Specify the name of the signing key file                                                                                                                                                             | `jwt-token.pem`                    |
 | `auth.token.privateKey.existingSecret`              | Specify the name of the secret containing the signing key to be mounted, if not specified, a new secret will be created.                                                                             | `""`                               |
+| `auth.token.retainOnUninstall`                      | When true, adds helm.sh/resource-policy: keep to generated JWT token secret                                                                                                                          | `true`                             |
 | `database.existingSecret`                           | Specify existing secret containing the keys `mongodb-root-password`, `mongodb-replica-set-key`, and `mongodb-passwords`. `database.secret.create` must be set to `false` when using existing secret. | `""`                               |
+| `database.retainOnUninstall`                        | When true, adds helm.sh/resource-policy: keep to generated database secret                                                                                                                           | `true`                             |
 | `podAnnotations`                                    | Map of annotations to add to the acapy pods                                                                                                                                                          | `{}`                               |
 | `podSecurityContext.enabled`                        | Enable Pod securityContext                                                                                                                                                                           | `false`                            |
 | `podSecurityContext.fsGroupChangePolicy`            | Set filesystem group change policy                                                                                                                                                                   | `Always`                           |
@@ -257,6 +260,7 @@ Note: Secure values of the configuration are passed via equivalent environment v
 | `cleanup.cronjob.resources.requests.memory`  | Memory request for cleanup job containers                                                                                                                   | `64Mi`                              |
 | `cleanup.cronjob.nodeSelector`               | Node labels for cleanup job pod assignment                                                                                                                  | `{}`                                |
 | `cleanup.cronjob.tolerations`                | Tolerations for cleanup job pod assignment                                                                                                                  | `[]`                                |
+| `mongodb.enabled`                            | Enable bundled MongoDB subchart. Set to false when using externalMongodb.                                                                                   | `true`                              |
 | `mongodb.image`                              | Pin image tag, and use bitnamilegacy repo.                                                                                                                  | `{}`                                |
 | `mongodb.auth.enabled`                       | Enable authentication                                                                                                                                       | `true`                              |
 | `mongodb.auth.existingSecret`                | Existing secret with MongoDB(&reg;) credentials (keys: `mongodb-passwords`, `mongodb-root-password`, `mongodb-metrics-password`, `mongodb-replica-set-key`) | `{{ include "global.fullname" . }}` |
@@ -272,6 +276,20 @@ Note: Secure values of the configuration are passed via equivalent environment v
 | `mongodb.arbiter.enabled`                    | Enable deploying the arbiter                                                                                                                                | `false`                             |
 | `mongodb.hidden.enabled`                     | Enable deploying the hidden nodes                                                                                                                           | `false`                             |
 | `mongodb.metrics.enabled`                    | Enable using a sidecar Prometheus exporter                                                                                                                  | `false`                             |
+
+### External MongoDB Configuration
+
+| Name                                             | Description                                                                                                                                           | Value              |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `externalMongodb.host`                           | External MongoDB host (e.g., "mongodb.example.com" or "mongodb-0.mongodb-headless.namespace.svc.cluster.local"). Required when mongodb.enabled=false. | `""`               |
+| `externalMongodb.port`                           | External MongoDB port                                                                                                                                 | `27017`            |
+| `externalMongodb.database`                       | Database name to use                                                                                                                                  | `vcauthn`          |
+| `externalMongodb.auth.enabled`                   | Enable authentication for external MongoDB                                                                                                            | `true`             |
+| `externalMongodb.auth.username`                  | MongoDB username                                                                                                                                      | `vcauthn`          |
+| `externalMongodb.auth.password`                  | MongoDB password. Ignored if existingSecret is set. Use existingSecret for production deployments.                                                    | `""`               |
+| `externalMongodb.auth.existingSecret`            | Name of existing secret containing MongoDB password. The secret should contain a key specified by existingSecretPasswordKey.                          | `""`               |
+| `externalMongodb.auth.existingSecretPasswordKey` | Key in the existing secret containing the MongoDB password                                                                                            | `mongodb-password` |
+| `externalMongodb.auth.retainOnUninstall`         | When true, adds helm.sh/resource-policy: keep to generated external MongoDB secret                                                                    | `true`             |
 
 ### Redis Configuration
 
@@ -306,13 +324,14 @@ Note: Secure values of the configuration are passed via equivalent environment v
 
 ### External Redis Configuration
 
-| Name                                | Description                                                                                                                                       | Value   |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `externalRedis.host`                | External Redis host. When set, the chart will use this instead of the internal Redis deployment. Cannot be used together with redis.enabled=true. | `""`    |
-| `externalRedis.port`                | External Redis port                                                                                                                               | `6379`  |
-| `externalRedis.database`            | Redis database number to use                                                                                                                      | `0`     |
-| `externalRedis.auth.enabled`        | Enable authentication for external Redis                                                                                                          | `false` |
-| `externalRedis.auth.existingSecret` | Name of existing secret containing Redis password. The secret should contain a key named 'redis-password'.                                        | `""`    |
-| `externalRedis.auth.password`       | Redis password. Ignored if existingSecret is set. A secret will be created automatically if password is provided and existingSecret is empty.     | `""`    |
-| `externalRedis.tls.enabled`         | Enable TLS connection to external Redis                                                                                                           | `false` |
-| `externalRedis.tls.existingSecret`  | Name of existing secret containing TLS certificates                                                                                               | `""`    |
+| Name                                   | Description                                                                                                                                       | Value   |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `externalRedis.host`                   | External Redis host. When set, the chart will use this instead of the internal Redis deployment. Cannot be used together with redis.enabled=true. | `""`    |
+| `externalRedis.port`                   | External Redis port                                                                                                                               | `6379`  |
+| `externalRedis.database`               | Redis database number to use                                                                                                                      | `0`     |
+| `externalRedis.auth.enabled`           | Enable authentication for external Redis                                                                                                          | `false` |
+| `externalRedis.auth.existingSecret`    | Name of existing secret containing Redis password. The secret should contain a key named 'redis-password'.                                        | `""`    |
+| `externalRedis.auth.password`          | Redis password. Ignored if existingSecret is set. A secret will be created automatically if password is provided and existingSecret is empty.     | `""`    |
+| `externalRedis.auth.retainOnUninstall` | When true, adds helm.sh/resource-policy: keep to generated external Redis secret                                                                  | `true`  |
+| `externalRedis.tls.enabled`            | Enable TLS connection to external Redis                                                                                                           | `false` |
+| `externalRedis.tls.existingSecret`     | Name of existing secret containing TLS certificates                                                                                               | `""`    |
