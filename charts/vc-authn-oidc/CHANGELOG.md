@@ -1,3 +1,4 @@
+## [0.6.1](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-0.6.0...vc-authn-oidc-0.6.1) (2026-01-22)
 ## [0.6.0](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-0.5.2...vc-authn-oidc-0.6.0) (2026-01-20)
 
 ### Features
