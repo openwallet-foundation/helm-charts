@@ -8,6 +8,11 @@ on:
         required: false
         default: ""
         type: string
+      force_bump:
+        description: "Force a patch release even if no releasable commits found (requires chart input)"
+        required: false
+        default: false
+        type: boolean
   schedule:
     # Daily at 2:00 AM UTC
     - cron: '0 2 * * *'
@@ -24,39 +29,25 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CHART_INPUT: ${{ github.event.inputs.chart || '' }}
+      FORCE_BUMP: ${{ github.event.inputs.force_bump || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check if release commit
-        id: check-release-commit
-        run: |
-          last_commit_msg=$(git log -1 --pretty=%B)
-          if echo "$last_commit_msg" | grep -q "^chore(.*): prepare release"; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Last commit is a release preparation commit, skipping workflow"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Load version pins
-        if: steps.check-release-commit.outputs.skip != 'true'
         uses: ./.github/actions/load-pins
 
       - name: Install generators (pinned)
-        if: steps.check-release-commit.outputs.skip != 'true'
         uses: ./.github/actions/install-generators
 
       - name: Configure git
-        if: steps.check-release-commit.outputs.skip != 'true'
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
       - name: Discover charts needing release
-        if: steps.check-release-commit.outputs.skip != 'true'
         id: discover
         shell: bash
         run: |
@@ -79,6 +70,15 @@ jobs:
             [ -z "$chart" ] && continue
             echo "::group::Checking ${chart}"
 
+            # Skip if the last commit to THIS chart is a release prep commit
+            # This prevents re-triggering immediately after a release PR is merged
+            last_commit_for_chart=$(git log -1 --pretty=%s -- "charts/${chart}/")
+            if echo "$last_commit_for_chart" | grep -q "^chore(${chart}): prepare release"; then
+              echo "⏭️  ${chart}: last commit is a release prep, skipping"
+              echo "::endgroup::"
+              continue
+            fi
+
             last_tag="$(git tag --list "${chart}-*" | sort -V | tail -1 || true)"
             echo "Last tag for ${chart}: ${last_tag:-none}"
 
@@ -89,6 +89,12 @@ jobs:
               continue
             }
             eval "$classify_output"
+
+            # Check if force_bump should override BUMP_LEVEL=none
+            if [ "${BUMP_LEVEL}" = "none" ] && [ "${FORCE_BUMP}" = "true" ] && [ -n "${CHART_INPUT}" ]; then
+              echo "⚠️  ${chart}: forcing patch bump (no releasable commits, but force_bump=true)"
+              BUMP_LEVEL="patch"
+            fi
 
             if [ "${BUMP_LEVEL}" != "none" ] && [ -n "${BUMP_LEVEL}" ]; then
               echo "✅ ${chart} needs ${BUMP_LEVEL} bump"
@@ -109,11 +115,13 @@ jobs:
           fi
 
       - name: Process release PRs
-        if: steps.check-release-commit.outputs.skip != 'true' && steps.discover.outputs.charts_json != '[]'
+        if: steps.discover.outputs.charts_json != '[]'
         shell: bash
         env:
           CHARTS_JSON: ${{ steps.discover.outputs.charts_json }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE_BUMP: ${{ github.event.inputs.force_bump || 'false' }}
+          CHART_INPUT: ${{ github.event.inputs.chart || '' }}
         run: |
           charts=$(echo "$CHARTS_JSON" | jq -r '.[]')
 
@@ -164,6 +172,11 @@ jobs:
             fi
 
             # Calculate next version
+            # Apply force_bump if auto_bump is none and force was requested
+            if [ "$auto_bump" = "none" ] && [ "${FORCE_BUMP}" = "true" ] && [ -n "${CHART_INPUT}" ]; then
+              auto_bump="patch"
+              echo "::notice::Forcing patch bump for ${chart}"
+            fi
             final_bump="${override:-$auto_bump}"
             if [ "$final_bump" = "none" ]; then
               echo "::warning::No bump needed for ${chart}, skipping"
