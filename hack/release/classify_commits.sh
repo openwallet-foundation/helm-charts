@@ -40,7 +40,9 @@ docs_msgs=()
 other_msgs=()
 
 while IFS=$'\t' read -r sha subject body; do
+  # Extract type and full scope for more granular matching
   type_scope=$(echo "${subject}" | sed -E 's/^(feat|fix|perf|refactor|chore|docs)(\([^)]*\))?!.*/\1!/' | sed -E 's/^(feat|fix|perf|refactor|chore|docs)(\([^)]*\))?:.*/\1/')
+  full_scope=$(echo "${subject}" | sed -E 's/^(feat|fix|perf|refactor|chore|docs)\(([^)]*)\).*/\2/' | sed -E 's/^(feat|fix|perf|refactor|chore|docs):.*//')
   breaking=false
   if echo "${subject}" | grep -q '!:'; then breaking=true; fi
   if echo "${body}" | grep -q 'BREAKING CHANGE:'; then breaking=true; fi
@@ -64,6 +66,11 @@ while IFS=$'\t' read -r sha subject body; do
       ;;
     chore*)
       chore_msgs+=("${msg}")
+      # chore(deps): triggers patch for dependency/image updates
+      # Other chore commits don't trigger releases
+      if [[ "${full_scope}" == "deps" ]]; then
+        patch=true
+      fi
       ;;
     docs*)
       docs_msgs+=("${msg}")
