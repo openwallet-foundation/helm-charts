@@ -348,6 +348,8 @@ Return the MongoDB host
 {{- define "vc-authn-oidc.mongodb.host" -}}
 {{- if not .Values.mongodb.enabled -}}
 {{- .Values.externalMongodb.host -}}
+{{- else if .Values.mongodb.replicaSet.enabled -}}
+{{- printf "%s-mongodb-headless.%s.svc.cluster.local" .Release.Name .Release.Namespace -}}
 {{- else -}}
 {{- printf "%s-mongodb.%s.svc.cluster.local" .Release.Name .Release.Namespace -}}
 {{- end -}}
