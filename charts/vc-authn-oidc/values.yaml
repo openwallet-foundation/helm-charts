@@ -531,87 +531,97 @@ cleanup:
     ##
     tolerations: []
 
-##  Overrides for bitnami/mongodb chart - https://github.com/bitnami/charts/tree/main/bitnami/mongodb
+## Overrides for CloudPirates MongoDB chart - https://github.com/CloudPirates-io/helm-charts/tree/main/charts/mongodb
 mongodb:
   ## @param mongodb.enabled Enable bundled MongoDB subchart. Set to false when using externalMongodb.
   ##
   enabled: true
-  ## @param mongodb.image [object] Pin image tag, and use bitnamilegacy repo.
+  ## @param mongodb.image.registry MongoDB image registry
+  ## @param mongodb.image.repository MongoDB image repository
+  ## @param mongodb.image.tag MongoDB image tag
+  ## @param mongodb.image.pullPolicy MongoDB image pull policy
+  ##
   image:
     registry: docker.io
-    repository: bitnamilegacy/mongodb
-    tag: 8.0.4-debian-12-r4
+    repository: mongo
+    tag: "8.0"
     pullPolicy: IfNotPresent
+
+  ## @param mongodb.targetPlatform Target platform for MongoDB deployment. Set to "openshift" for OpenShift compatibility, leave empty for standard Kubernetes.
+  ##
+  targetPlatform: ""
+
   auth:
-    ## @param mongodb.auth.enabled Enable authentication
-    ## ref: https://docs.mongodb.com/manual/tutorial/enable-authentication/
+    ## @param mongodb.auth.enabled Enable MongoDB authentication
     ##
     enabled: true
-    ## @param mongodb.auth.existingSecret Existing secret with MongoDB(&reg;) credentials (keys: `mongodb-passwords`, `mongodb-root-password`, `mongodb-metrics-password`, `mongodb-replica-set-key`)
-    ## NOTE: When it's set the previous parameters are ignored.
+    ## @param mongodb.auth.rootUsername MongoDB root username
+    ##
+    rootUsername: "admin"
+    ## @param mongodb.auth.existingSecret Existing secret with MongoDB credentials (key: `mongodb-root-password`)
     ##
     existingSecret: '{{ include "global.fullname" . }}'
-    ## MongoDB(&reg;) custom users and databases
-    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/mongodb#creating-a-user-and-database-on-first-run
-    ## @param mongodb.auth.usernames List of custom users to be created during the initialization
-    ## @param mongodb.auth.databases List of custom databases to be created during the initialization
-    ##
-    usernames: ["vcauthn"]
-    databases: ["vcauthn"]
-  ## @param mongodb.commonLabels [object] Add labels to all the deployed resources (sub-charts are not considered). Evaluated as a template
+
+  customUser:
+    ## @param mongodb.customUser.name Name of the custom user to be created
+    name: "vcauthn"
+    ## @param mongodb.customUser.database Name of the database to be created
+    database: "vcauthn"
+    ## @param mongodb.customUser.password Password to be used for the custom user
+    # password: ""
+    ## @param mongodb.customUser.existingSecret Existing secret, in which username, password and database name are saved
+    # existingSecret: ""
+    ## @param mongodb.customUser.secretKeys Name of keys in existing secret to use the custom user name, password and database
+    # secretKeys:
+    #   name: ""
+    #   password: ""
+    #   database: ""
+
+  ## @param mongodb.commonLabels [object] Add labels to all the deployed resources
   ##
   commonLabels:
     app.kubernetes.io/role: database
-
-  ## @param mongodb.architecture MongoDB(&reg;) architecture (`standalone` or `replicaset`)
+  ## @param mongodb.podLabels [object] Add labels to the MongoDB pods (required for network policy)
   ##
-  architecture: replicaset
-  ## MongoDB(&reg;) containers' Security Context (main and metrics container).
+  podLabels:
+    app.kubernetes.io/role: database
+  ## @param mongodb.replicaSet.enabled Enable MongoDB replica set mode (standalone if false)
+  ##
+  replicaSet:
+    enabled: false
+  ## MongoDB service configuration
+  ##
+  service:
+    ## @param mongodb.service.type MongoDB service type
+    ##
+    type: ClusterIP
+    ## @param mongodb.service.port MongoDB service port
+    ##
+    port: 27017
+  ## MongoDB containers' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-  ## @param mongodb.containerSecurityContext.enabled Enable MongoDB(&reg;) container(s)' Security Context
+  ## @param mongodb.containerSecurityContext.runAsUser Set MongoDB container runAsUser
+  ## @param mongodb.containerSecurityContext.runAsNonRoot Set MongoDB container runAsNonRoot
+  ## @param mongodb.containerSecurityContext.allowPrivilegeEscalation Set MongoDB container allowPrivilegeEscalation
   ##
-  containerSecurityContext:
-    enabled: false
-  ## MongoDB(&reg;) pods' Security Context.
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
-  ## @param mongodb.podSecurityContext.enabled Enable MongoDB(&reg;) pod(s)' Security Context
-  podSecurityContext:
-    enabled: false
+  containerSecurityContext: {}
+  ## MongoDB pods' Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  ## @param mongodb.podSecurityContext.fsGroup Set MongoDB pod fsGroup
+  ##
+  podSecurityContext: {}
   ## Enable persistence using Persistent Volume Claims
-  ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
   ##
   persistence:
-    ## @param mongodb.persistence.enabled Enable MongoDB(&reg;) data persistence using PVC
+    ## @param mongodb.persistence.enabled Enable MongoDB data persistence using PVC
     ##
     enabled: true
-    ## @param mongodb.persistence.storageClass PVC Storage Class for MongoDB(&reg;) data volume
-    ## If defined, storageClassName: <storageClass>
-    ## If set to "-", storageClassName: "", which disables dynamic provisioning
-    ## If undefined (the default) or set to null, no storageClassName spec is
-    ## set, choosing the default provisioner.
+    ## @param mongodb.persistence.storageClass PVC Storage Class for MongoDB data volume
     ##
-    storageClass: default
-  ## ServiceAccount
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  ##
-  serviceAccount:
-    ## @param mongodb.serviceAccount.create Enable creation of ServiceAccount for MongoDB(&reg;) pods
+    storageClass: ""
+    ## @param mongodb.persistence.size PVC Storage size for MongoDB data volume
     ##
-    create: false
-  arbiter:
-    ## @param mongodb.arbiter.enabled Enable deploying the arbiter
-    ##   https://docs.mongodb.com/manual/tutorial/add-replica-set-arbiter/
-    ##
-    enabled: false
-  hidden:
-    ## @param mongodb.hidden.enabled Enable deploying the hidden nodes
-    ##   https://docs.mongodb.com/manual/tutorial/configure-a-hidden-replica-set-member/
-    ##
-    enabled: false
-  metrics:
-    ## @param mongodb.metrics.enabled Enable using a sidecar Prometheus exporter
-    ##
-    enabled: false
+    size: 8Gi
 
 ## @section External MongoDB Configuration
 ##
