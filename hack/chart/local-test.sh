@@ -29,6 +29,11 @@ log_info "Building chart dependencies for ${CHART_NAME}"
   repo_list=$(yq '.dependencies // [] | .[] | .repository' "${CHART_NAME}/Chart.yaml" | sed '/^null$/d' | sort -u)
   mapfile -t repos <<< "${repo_list}"
   for repo in "${repos[@]:-}"; do
+    # Skip OCI registries - they don't use helm repo add
+    if [[ "${repo}" == oci://* ]]; then
+      echo "  - skipping OCI registry: ${repo}"
+      continue
+    fi
     name="$(sed -E 's|https?://||;s|/|_|g;s|[^a-zA-Z0-9_-]||g' <<< "${repo}")"
     echo "  - helm repo add ${name} ${repo}"
     helm repo add "${name}" "${repo}" > /dev/null 2>&1 || true
