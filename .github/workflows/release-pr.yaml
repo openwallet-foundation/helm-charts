@@ -39,6 +39,12 @@ jobs:
       - name: Load version pins
         uses: ./.github/actions/load-pins
 
+      - name: Validate inputs
+        if: ${{ github.event.inputs.force_bump == 'true' && github.event.inputs.chart == '' }}
+        run: |
+          echo "::error::force_bump=true requires a specific chart to be specified"
+          exit 1
+
       - name: Install generators (pinned)
         uses: ./.github/actions/install-generators
 
@@ -73,7 +79,7 @@ jobs:
             # Skip if the last commit to THIS chart is a release prep commit
             # This prevents re-triggering immediately after a release PR is merged
             last_commit_for_chart=$(git log -1 --pretty=%s -- "charts/${chart}/")
-            if echo "$last_commit_for_chart" | grep -q "^chore(${chart}): prepare release"; then
+            if [[ "$last_commit_for_chart" == "chore(${chart}): prepare release"* ]]; then
               echo "⏭️  ${chart}: last commit is a release prep, skipping"
               echo "::endgroup::"
               continue
