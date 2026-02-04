@@ -559,7 +559,6 @@ mongodb:
     ##
     rootUsername: "admin"
     ## @param mongodb.auth.existingSecret Existing secret with MongoDB credentials (key: `mongodb-root-password`)
-    ## NOTE: Must match the secret name created by vc-authn-oidc.databaseSecretName (<release>-mongodb)
     ##
     existingSecret: '{{ printf "%s-mongodb" .Release.Name }}'
 
@@ -568,15 +567,16 @@ mongodb:
     name: "vcauthn"
     ## @param mongodb.customUser.database Name of the database to be created
     database: "vcauthn"
-    ## @param mongodb.customUser.password Password to be used for the custom user
-    # password: ""
-    ## @param mongodb.customUser.existingSecret Existing secret, in which username, password and database name are saved
-    # existingSecret: ""
-    ## @param mongodb.customUser.secretKeys Name of keys in existing secret to use the custom user name, password and database
-    # secretKeys:
-    #   name: ""
-    #   password: ""
-    #   database: ""
+    ## @param mongodb.customUser.existingSecret Existing secret containing the custom user password
+    ## Uses the same secret as auth.existingSecret for simplicity
+    existingSecret: '{{ printf "%s-mongodb" .Release.Name }}'
+    ## @param mongodb.customUser.secretKeys.name Key name for username in existing secret
+    ## @param mongodb.customUser.secretKeys.password Key name for password in existing secret
+    ## @param mongodb.customUser.secretKeys.database Key name for database in existing secret
+    secretKeys:
+      name: "mongodb-user"
+      password: "mongodb-password"
+      database: "mongodb-database"
 
   ## @param mongodb.commonLabels [object] Add labels to all the deployed resources
   ##
@@ -601,14 +601,12 @@ mongodb:
     port: 27017
   ## MongoDB containers' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-  ## @param mongodb.containerSecurityContext.runAsUser Set MongoDB container runAsUser
-  ## @param mongodb.containerSecurityContext.runAsNonRoot Set MongoDB container runAsNonRoot
-  ## @param mongodb.containerSecurityContext.allowPrivilegeEscalation Set MongoDB container allowPrivilegeEscalation
+  ## @param mongodb.containerSecurityContext [object] Set MongoDB container security context
   ##
   containerSecurityContext: {}
   ## MongoDB pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-  ## @param mongodb.podSecurityContext.fsGroup Set MongoDB pod fsGroup
+  ## @param mongodb.podSecurityContext [object] Set MongoDB pod security context
   ##
   podSecurityContext: {}
   ## Enable persistence using Persistent Volume Claims

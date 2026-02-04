@@ -403,9 +403,9 @@ Return the MongoDB password secret name
 {{- printf "%s-mongodb-external" (include "global.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- else if .Values.mongodb.customUser.existingSecret -}}
-{{- .Values.mongodb.customUser.existingSecret -}}
+{{- tpl .Values.mongodb.customUser.existingSecret . -}}
 {{- else if .Values.mongodb.customUser.name -}}
-{{- printf "%s-mongodb-custom-user-secret" .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- include "vc-authn-oidc.databaseSecretName" . -}}
 {{- else -}}
 {{- include "vc-authn-oidc.databaseSecretName" . -}}
 {{- end -}}
