@@ -72,6 +72,12 @@ jobs:
           repos_added=0
           for repo in $repos; do
             if [ -n "$repo" ] && [ "$repo" != "null" ]; then
+              # Skip OCI registries - they don't use helm repo add
+              if [[ "$repo" == oci://* ]]; then
+                echo "Skipping OCI registry (handled by helm dependency build): $repo"
+                continue
+              fi
+
               # Generate deterministic name from URL hash (first 8 chars of sha256)
               repo_hash=$(echo -n "$repo" | sha256sum | cut -c1-8)
               repo_name="repo-${repo_hash}"
