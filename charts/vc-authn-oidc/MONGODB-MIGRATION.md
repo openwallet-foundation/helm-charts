@@ -6,11 +6,11 @@ This guide covers migrating vc-authn-oidc deployments from the Bitnami MongoDB s
 
 | Change | Before (Bitnami) | After (CloudPirates) |
 |--------|------------------|----------------------|
-| Service name | `{release}-mongodb-headless` | `{release}-mongodb` |
-| Secret key | `mongodb-passwords` | `mongodb-root-password` |
-| Database user | `vcauthn` (dedicated) | `admin` (root) |
+| Service name | `{release}-mongodb-headless` | `{release}-mongodb` (standalone) or `{release}-mongodb-headless` (replicaSet) |
+| Secret key | `mongodb-passwords` | `mongodb-password` (in `{release}-mongodb`) |
+| Database user | `vcauthn` (dedicated) | `vcauthn` (via `customUser.name`) |
 | Default architecture | `replicaset` | `standalone` |
-| User creation | Automatic via `auth.usernames[]` | Manual or use root |
+| User creation | Automatic via `auth.usernames[]` | Automatic via `mongodb.customUser.*` |
 
 ## Migration Paths
 
@@ -115,7 +115,7 @@ mongodb:
     enabled: true
     rootUsername: "admin"
     # Use existingSecret to preserve password, or set rootPassword directly
-    # existingSecret: "<release-name>-vc-authn-oidc"
+    # existingSecret: "<release-name>-mongodb"
     rootPassword: "<root-password-from-step-1>"
 
   # Match your previous persistence settings
