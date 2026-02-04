@@ -37,7 +37,11 @@ If you're new to GitHub collaboration, see [GitHub's guide on forking and pull r
 4. Test locally (see [Testing & Validation](#testing--validation) section below)
 5. Commit with DCO sign-off: `git commit -s -m "fix(acapy): resolve health probe timeout"`
    - The `-s` flag is required for Linux Foundation projects ([DCO](https://developercertificate.org/))
-   - Use Conventional Commits format: `feat:`, `fix:`, `docs:`, `chore:`
+   - Use Conventional Commits format with version bump semantics:
+     - `feat:` → minor bump (new features)
+     - `fix:`, `perf:`, `refactor:` → patch bump
+     - `chore(deps):` → patch bump (for dependency/image updates)
+     - `chore:`, `docs:` → no release (internal maintenance)
    - Scope is optional in commits, but include the chart name in PR titles: `feat(acapy): add health probe`
 6. Open a Pull Request from your fork to `main`
    - Provide a clear description of what changed and why
@@ -64,6 +68,8 @@ If you're new to GitHub collaboration, see [GitHub's guide on forking and pull r
 After a feature PR merges, the Release-PR workflow runs (2 AM UTC or on push to main) and opens a Release PR with bumped version and generated changelog.
 
 **To defer release:** Add `skip-release` label to the Release PR (not the feature PR). More changes can accumulate. When ready, remove the label or close the PR to create a new one with all accumulated commits.
+
+**To force a release:** When only `chore:` or `docs:` commits exist but a release is still needed (e.g., image updates without `chore(deps):` scope), use the manual workflow trigger with `force_bump=true` and specify the chart name. This forces a patch release even when no releasable commits are detected.
 
 **To release immediately:** Review and merge the Release PR. Publishing triggers automatically.
 </details>
