@@ -559,8 +559,9 @@ mongodb:
     ##
     rootUsername: "admin"
     ## @param mongodb.auth.existingSecret Existing secret with MongoDB credentials (key: `mongodb-root-password`)
+    ## NOTE: Must match the secret name created by vc-authn-oidc.databaseSecretName (<release>-mongodb)
     ##
-    existingSecret: '{{ include "global.fullname" . }}'
+    existingSecret: '{{ printf "%s-mongodb" .Release.Name }}'
 
   customUser:
     ## @param mongodb.customUser.name Name of the custom user to be created

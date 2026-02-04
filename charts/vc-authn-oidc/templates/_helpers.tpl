@@ -388,7 +388,7 @@ Return the MongoDB username
 {{- else if .Values.mongodb.customUser.name -}}
 {{- .Values.mongodb.customUser.name -}}
 {{- else -}}
-{{- .Values.mongodb.auth.rootUsername | default "admin" -}}
+{{- "vcauthn" -}}
 {{- end -}}
 {{- end -}}
 
@@ -405,7 +405,7 @@ Return the MongoDB password secret name
 {{- else if .Values.mongodb.customUser.existingSecret -}}
 {{- .Values.mongodb.customUser.existingSecret -}}
 {{- else if .Values.mongodb.customUser.name -}}
-{{- printf "%s-mongodb-custom-user-secret" .Release.Name -}}
+{{- printf "%s-mongodb-custom-user-secret" .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
 {{- include "vc-authn-oidc.databaseSecretName" . -}}
 {{- end -}}
