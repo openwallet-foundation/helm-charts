@@ -348,8 +348,10 @@ Return the MongoDB host
 {{- define "vc-authn-oidc.mongodb.host" -}}
 {{- if not .Values.mongodb.enabled -}}
 {{- .Values.externalMongodb.host -}}
-{{- else -}}
+{{- else if .Values.mongodb.replicaSet.enabled -}}
 {{- printf "%s-mongodb-headless.%s.svc.cluster.local" .Release.Name .Release.Namespace -}}
+{{- else -}}
+{{- printf "%s-mongodb.%s.svc.cluster.local" .Release.Name .Release.Namespace -}}
 {{- end -}}
 {{- end -}}
 
@@ -360,7 +362,7 @@ Return the MongoDB port
 {{- if not .Values.mongodb.enabled -}}
 {{- .Values.externalMongodb.port | default 27017 -}}
 {{- else -}}
-{{- .Values.mongodb.service.ports.mongodb | default 27017 -}}
+{{- .Values.mongodb.service.port | default 27017 -}}
 {{- end -}}
 {{- end -}}
 
@@ -370,8 +372,10 @@ Return the MongoDB database name
 {{- define "vc-authn-oidc.mongodb.database" -}}
 {{- if not .Values.mongodb.enabled -}}
 {{- .Values.externalMongodb.database | default "vcauthn" -}}
+{{- else if .Values.mongodb.customUser.database -}}
+{{- .Values.mongodb.customUser.database -}}
 {{- else -}}
-{{- first .Values.mongodb.auth.databases | default "vcauthn" -}}
+{{- "vcauthn" -}}
 {{- end -}}
 {{- end -}}
 
@@ -381,8 +385,10 @@ Return the MongoDB username
 {{- define "vc-authn-oidc.mongodb.username" -}}
 {{- if not .Values.mongodb.enabled -}}
 {{- .Values.externalMongodb.auth.username | default "vcauthn" -}}
+{{- else if .Values.mongodb.customUser.name -}}
+{{- .Values.mongodb.customUser.name -}}
 {{- else -}}
-{{- first .Values.mongodb.auth.usernames | default "vcauthn" -}}
+{{- "vcauthn" -}}
 {{- end -}}
 {{- end -}}
 
@@ -396,6 +402,10 @@ Return the MongoDB password secret name
 {{- else -}}
 {{- printf "%s-mongodb-external" (include "global.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+{{- else if .Values.mongodb.customUser.existingSecret -}}
+{{- tpl .Values.mongodb.customUser.existingSecret . -}}
+{{- else if .Values.mongodb.customUser.name -}}
+{{- include "vc-authn-oidc.databaseSecretName" . -}}
 {{- else -}}
 {{- include "vc-authn-oidc.databaseSecretName" . -}}
 {{- end -}}
@@ -407,8 +417,12 @@ Return the MongoDB password secret key
 {{- define "vc-authn-oidc.mongodb.secretKey" -}}
 {{- if not .Values.mongodb.enabled -}}
 {{- .Values.externalMongodb.auth.existingSecretPasswordKey | default "mongodb-password" -}}
+{{- else if and .Values.mongodb.customUser.secretKeys (index .Values.mongodb.customUser.secretKeys "password") -}}
+{{- index .Values.mongodb.customUser.secretKeys "password" -}}
+{{- else if .Values.mongodb.customUser.name -}}
+{{- "mongodb-password" -}}
 {{- else -}}
-{{- "mongodb-passwords" -}}
+{{- "mongodb-root-password" -}}
 {{- end -}}
 {{- end -}}
 

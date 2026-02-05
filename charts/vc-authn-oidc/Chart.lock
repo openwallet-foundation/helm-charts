@@ -3,10 +3,10 @@ dependencies:
   repository: https://openwallet-foundation.github.io/helm-charts/
   version: 0.2.3
 - name: mongodb
-  repository: https://charts.bitnami.com/bitnami
-  version: 16.4.1
+  repository: oci://registry-1.docker.io/cloudpirates
+  version: 0.10.3
 - name: common
   repository: https://charts.bitnami.com/bitnami
-  version: 2.31.4
-digest: sha256:4bfbbabc405ea5bef1bb8e2f21918724c78fecf3c57c40d60194177a4c76eb88
-generated: "2026-01-16T13:27:04.934192-08:00"
+  version: 2.34.0
+digest: sha256:b9cacf78a3b69d39637aa6461f323d01623a93b428650252f1c9d8ca9dfd1225
+generated: "2026-02-04T10:46:49.134215-08:00"

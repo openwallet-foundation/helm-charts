@@ -15,15 +15,15 @@ spec:
             matchLabels:
               {{- include "vc-authn-oidc.selectorLabels" . | nindent 14 }}
         - podSelector:
-            {{- with .Values.mongodb.commonLabels }}
+            {{- with .Values.mongodb.podLabels }}
             matchLabels:
               {{- toYaml . | nindent 14 }}
             {{- end }}
       ports:
         - protocol: TCP
-          port: {{ .Values.mongodb.service.ports.mongodb }}
+          port: {{ .Values.mongodb.service.port | default 27017 }}
   podSelector:
-    {{- with .Values.mongodb.commonLabels }}
+    {{- with .Values.mongodb.podLabels }}
     matchLabels:
       {{- toYaml . | nindent 6 }}
     {{- end }}

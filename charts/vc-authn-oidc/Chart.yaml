@@ -20,8 +20,8 @@ dependencies:
     version: 0.2.3
     repository: https://openwallet-foundation.github.io/helm-charts/
   - name: mongodb
-    version: 16.4.1
-    repository: "https://charts.bitnami.com/bitnami"
+    version: 0.10.3
+    repository: "oci://registry-1.docker.io/cloudpirates"
     condition: mongodb.enabled
   - name: common
     repository: "https://charts.bitnami.com/bitnami"
