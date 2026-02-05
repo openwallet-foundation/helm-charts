@@ -420,7 +420,7 @@ Return the MongoDB password secret key
 {{- else if and .Values.mongodb.customUser.secretKeys (index .Values.mongodb.customUser.secretKeys "password") -}}
 {{- index .Values.mongodb.customUser.secretKeys "password" -}}
 {{- else if .Values.mongodb.customUser.name -}}
-{{- "CUSTOM_PASSWORD" -}}
+{{- "mongodb-password" -}}
 {{- else -}}
 {{- "mongodb-root-password" -}}
 {{- end -}}
