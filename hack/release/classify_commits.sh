@@ -40,10 +40,28 @@ docs_msgs=()
 other_msgs=()
 
 while IFS=$'\t' read -r sha subject body; do
-  type_scope=$(echo "${subject}" | sed -E 's/^(feat|fix|perf|refactor|chore|docs)(\([^)]*\))?!.*/\1!/' | sed -E 's/^(feat|fix|perf|refactor|chore|docs)(\([^)]*\))?:.*/\1/')
+  # Extract type and full scope for more granular matching.
+  # Only treat headers matching type(scope)!?: as having a scope; otherwise scope is empty.
+  type_scope=""
+  full_scope=""
+  # Store regex in variable to satisfy shellcheck
+  commit_regex='^(feat|fix|perf|refactor|chore|docs)(\([^)]*\))?(!)?: '
+  if [[ "${subject}" =~ ${commit_regex} ]]; then
+    type="${BASH_REMATCH[1]}"
+    scope_with_parens="${BASH_REMATCH[2]}"
+    bang="${BASH_REMATCH[3]}"
+    type_scope="${type}"
+    if [[ -n "${bang}" ]]; then
+      type_scope+="!"
+    fi
+    if [[ -n "${scope_with_parens}" ]]; then
+      # Strip surrounding parentheses from the captured scope.
+      full_scope="${scope_with_parens:1:${#scope_with_parens}-2}"
+    fi
+  fi
   breaking=false
-  if echo "${subject}" | grep -q '!:'; then breaking=true; fi
-  if echo "${body}" | grep -q 'BREAKING CHANGE:'; then breaking=true; fi
+  if printf '%s\n' "${subject}" | grep -q '!:'; then breaking=true; fi
+  if printf '%s\n' "${body}" | grep -q 'BREAKING CHANGE:'; then breaking=true; fi
   msg="- ${subject} (${sha:0:7})"
   case "${type_scope}" in
     feat*)
@@ -64,6 +82,11 @@ while IFS=$'\t' read -r sha subject body; do
       ;;
     chore*)
       chore_msgs+=("${msg}")
+      # chore(deps): triggers patch for dependency/image updates
+      # Other chore commits don't trigger releases
+      if [[ "${full_scope}" == "deps" ]]; then
+        patch=true
+      fi
       ;;
     docs*)
       docs_msgs+=("${msg}")
