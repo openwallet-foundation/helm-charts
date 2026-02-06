@@ -1,3 +1,12 @@
+## [1.0.0](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-0.6.1...vc-authn-oidc-1.0.0) (2026-02-06)
+
+### ⚠ BREAKING CHANGES
+
+* **vc-authn-oidc:** replace Bitnami MongoDB with CloudPirates MongoDB (#90)
+
+### Features
+
+* **vc-authn-oidc:** replace Bitnami MongoDB with CloudPirates MongoDB ([#90](https://github.com/openwallet-foundation/helm-charts/issues/90)) ([eccfa3d](https://github.com/openwallet-foundation/helm-charts/commit/eccfa3dddb010deeef70c0042643376ddc2cc006))
 ## [0.6.1](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-0.6.0...vc-authn-oidc-0.6.1) (2026-01-22)
 ## [0.6.0](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-0.5.2...vc-authn-oidc-0.6.0) (2026-01-20)
 
