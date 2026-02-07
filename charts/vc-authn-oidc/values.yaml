@@ -293,14 +293,15 @@ acapy:
   ## @param acapy.image.repository
   ## @param acapy.image.pullPolicy
   ## @param acapy.image.pullSecrets [array]
-  ## @param acapy.image.tag
+  ## @param acapy.image.tag Overrides the image tag which defaults to the chart appVersion.
   ##
   image:
     registry: ghcr.io
-    repository: openwallet-foundation/acapy-agent
+    repository: openwallet-foundation/acapy-vc-authn-oidc-agent
     pullPolicy: IfNotPresent
     pullSecrets: []
-    tag: py3.12-1.4.0
+    ## Note: Image tag should match vc-authn-oidc appVersion (published by PR #958)
+    tag: "2.3.6"
 
   ## ServiceAccount configuration
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
@@ -362,7 +363,7 @@ acapy:
   ## @param acapy.argfile.yml.wallet-local-did If this parameter is set, provisions the wallet with a local DID from the '--seed' parameter, instead of a public DID to use with a Hyperledger Indy ledger. Default: false.
   ## @param acapy.argfile.yml.wallet-name Specifies the wallet name to be used by the agent. This is useful if your deployment has multiple wallets.
   ## @param acapy.argfile.yml.wallet-storage-type Specifies the type of Indy wallet backend to use. Supported internal storage types are 'basic' (memory), 'default' (sqlite), and 'postgres_storage'.  The default, if not specified, is 'default'.
-  ## @param acapy.argfile.yml.wallet-type Specifies the type of Indy wallet provider to use. Supported internal storage types are 'basic' (memory) and 'indy'. The default (if not specified) is 'basic'.
+  ## @param acapy.argfile.yml.wallet-type Specifies the type of wallet provider to use. Supported types are 'askar' and 'askar-anoncreds'. Use 'askar-anoncreds' for WebVH support.
   ##
   argfile.yml:
     admin-insecure-mode: false
@@ -384,7 +385,21 @@ acapy:
     wallet-local-did: true
     wallet-name: askar-wallet
     wallet-storage-type: postgres_storage
-    wallet-type: askar
+    wallet-type: askar-anoncreds
+
+  ## @param acapy.extraArgs [array] Array containing extra command line arguments for ACA-Py
+  ## For WebVH support, the webvh plugin must be enabled
+  ##
+  extraArgs:
+    - "--plugin"
+    - "webvh"
+
+  ## @param acapy.plugin-config.yml [object] Plugin configuration file for ACA-Py plugins
+  ## Configuration for the WebVH plugin
+  ##
+  plugin-config.yml:
+    webvh:
+      server_url: "https://sandbox.bcvh.vonx.io"
 
   ## @param acapy.ledgers.yml [object]
   ledgers.yml: |-

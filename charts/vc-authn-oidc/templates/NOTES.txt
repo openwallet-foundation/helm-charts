@@ -25,3 +25,43 @@ https://{{ template "vc-authn-oidc.host" . }}/webhooks
 2. Run the following command to set the API key for the Webhooks:
   export CONTROLLER_API_KEY=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ include "vc-authn-oidc.apiSecretName" . }} -o jsonpath="{.data.controllerApiKey}" | base64 --decode; echo)
   echo $CONTROLLER_API_KEY
+
+{{- if .Release.IsUpgrade }}
+
+================================================================================
+⚠️  IMPORTANT: Wallet Migration Required for WebVH Support
+================================================================================
+
+If you upgraded from a previous version that used wallet-type: askar,
+you must migrate your wallet to askar-anoncreds format.
+
+NOTE: This migration should have been run BEFORE upgrading. If you are seeing
+agent pods failing to start, follow the recovery steps below.
+
+RECOVERY STEPS (if pods are failing):
+
+1. Scale down the agent deployment:
+   kubectl scale deployment -n {{ .Release.Namespace }} {{ include "global.fullname" . }}-agent --replicas=0
+
+2. Rollback to the previous release to restore the old agent:
+   helm rollback {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+3. Run the wallet migration command against the running (old) agent:
+   export ACAPY_POD=$(kubectl get pods -n {{ .Release.Namespace }} -l "app.kubernetes.io/component=agent" -o jsonpath="{.items[0].metadata.name}")
+   export ADMIN_API_KEY=$(kubectl get secret -n {{ .Release.Namespace }} {{ include "vc-authn-oidc.acapy.secretName" . }} -o jsonpath="{.data.{{ .Values.acapy.secrets.api.secretKeys.adminApiKey }}}" | base64 -d)
+
+   kubectl exec -n {{ .Release.Namespace }} $ACAPY_POD -- \
+     curl -X POST "http://localhost:{{ .Values.acapy.service.ports.admin }}/anoncreds/wallet/upgrade?wallet_name={{ index .Values.acapy "argfile.yml" "wallet-name" }}" \
+     -H "accept: application/json" \
+     -H "X-API-Key: $ADMIN_API_KEY"
+
+4. Re-run the upgrade:
+   helm upgrade {{ .Release.Name }} -n {{ .Release.Namespace }} <your-values>
+
+VERIFICATION (after successful migration):
+   kubectl exec -n {{ .Release.Namespace }} $ACAPY_POD -- \
+     curl -s "http://localhost:{{ .Values.acapy.service.ports.admin }}/anoncreds/schema" -H "X-API-Key: $ADMIN_API_KEY"
+
+For more information, see the WebVH migration documentation.
+================================================================================
+{{- end }}
