@@ -364,6 +364,7 @@ acapy:
   ## @param acapy.argfile.yml.wallet-name Specifies the wallet name to be used by the agent. This is useful if your deployment has multiple wallets.
   ## @param acapy.argfile.yml.wallet-storage-type Specifies the type of Indy wallet backend to use. Supported internal storage types are 'basic' (memory), 'default' (sqlite), and 'postgres_storage'.  The default, if not specified, is 'default'.
   ## @param acapy.argfile.yml.wallet-type Specifies the type of wallet provider to use. Supported types are 'askar' and 'askar-anoncreds'. Use 'askar-anoncreds' for WebVH support.
+  ## @param acapy.argfile.yml.plugin [array] List of ACA-Py plugins to load
   ##
   argfile.yml:
     admin-insecure-mode: false
@@ -386,13 +387,8 @@ acapy:
     wallet-name: askar-wallet
     wallet-storage-type: postgres_storage
     wallet-type: askar-anoncreds
-
-  ## @param acapy.extraArgs [array] Array containing extra command line arguments for ACA-Py
-  ## For WebVH support, the webvh plugin must be enabled
-  ##
-  extraArgs:
-    - "--plugin"
-    - "webvh"
+    plugin:
+      - webvh
 
   ## @param acapy.plugin-config.yml [object] Plugin configuration file for ACA-Py plugins
   ## Configuration for the WebVH plugin
