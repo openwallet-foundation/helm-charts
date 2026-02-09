@@ -356,7 +356,7 @@ Note: When using multitenant mode, a seed should generally NOT be specified for 
 
 ## Upgrading
 <details>
-<summary><strong 0.x → 1.0.0 (⚠️ breaking: PostgreSQL subchart)</strong></summary>
+<summary><strong> 0.x → 1.0.0 (⚠️ breaking: PostgreSQL subchart)</strong></summary>
 
 This chart switched its bundled PostgreSQL dependency from the Bitnami `postgresql` subchart to the CloudPirates-io `postgres` subchart.
 
