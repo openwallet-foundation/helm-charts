@@ -74,7 +74,7 @@ updateStrategy:
 image:
   registry: ghcr.io
   repository: openwallet-foundation/acapy-agent
-  tag: py3.12-1.3.1
+  tag: py3.12-1.4.0
   ## For production, prefer setting image.digest to an immutable sha256:... to guarantee supply chain integrity over mutable tags.
   digest: ""
   pullPolicy: IfNotPresent
@@ -236,6 +236,7 @@ websockets:
 ## @param secrets.seed.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated seed secret
 ## @param secrets.seed.existingSecret Name of an existing Secret providing the wallet seed. If set, the chart will NOT create the seed secret.
 ## @param secrets.seed.secretKeys.seed Key in the seed secret holding the wallet seed value.
+## @param secrets.database.retainOnUninstall When true, adds helm.sh/resource-policy: keep to the consolidated database secret
 secrets:
   api:
     retainOnUninstall: true
@@ -251,6 +252,8 @@ secrets:
     existingSecret: ""
     secretKeys:
       seed: seed
+  database:
+    retainOnUninstall: true
 
 ## @section Wallet Storage configuration
 ## @descriptionStart
@@ -306,6 +309,8 @@ persistence:
   ## @param persistence.enabled Enable persistence using PVC
   ##
   enabled: true
+  ## @param persistence.retainOnUninstall When true, adds helm.sh/resource-policy: keep to the PVC
+  retainOnUninstall: true
   ## @param persistence.existingClaim Name of an existing PVC to use
   ##
   existingClaim: ""
@@ -939,67 +944,81 @@ containerSecurityContext:
     type: "RuntimeDefault"
 
 ## @section PostgreSQL Parameters
-## PostgreSQL chart configuration
-## ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
-## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
-## @param postgresql.image [object] Set image parameters. Default to Bitnami Legacy repository.
-## @param postgresql.auth.username Name for a custom user to create
-## @param postgresql.auth.database Name for a custom database to create
-## @param postgresql.auth.enablePostgresUser Assign a password to the "postgres" admin user. Otherwise, remote access will be blocked for this user. Not recommended for production deployments.
-## @param postgresql.auth.existingSecret Name of existing secret to use for PostgreSQL credentials
-## @param postgresql.architecture PostgreSQL architecture (`standalone` or `replication`)
+## PostgreSQL chart configuration (CloudPirates-io postgres chart)
+## ref: https://github.com/CloudPirates-io/helm-charts/tree/main/charts/postgres
+## @param postgres.enabled Switch to enable or disable the PostgreSQL helm chart
+## @param postgres.targetPlatform Target platform for deployment. Set to "openshift" for OpenShift compatibility (auto-detected if not set)
+## @param postgres.image.registry PostgreSQL image registry
+## @param postgres.image.repository PostgreSQL image repository
+## @param postgres.image.tag PostgreSQL image tag
+## @param postgres.auth.existingSecret Name of existing secret to use for PostgreSQL admin credentials. Points to chart-managed consolidated secret by default.
+## @param postgres.auth.secretKeys.adminPasswordKey Key in the secret containing the admin password
+## @param postgres.customUser.name Name for a custom application user to create (used by ACA-Py)
+## @param postgres.customUser.database Database for the custom user
+## @param postgres.customUser.existingSecret Existing secret for custom user credentials. Points to chart-managed consolidated secret by default.
+## @param postgres.customUser.secretKeys.name Key in the secret containing the custom username
+## @param postgres.customUser.secretKeys.database Key in the secret containing the custom database name
+## @param postgres.customUser.secretKeys.password Key in the secret containing the custom user password
+## @param postgres.service.port PostgreSQL service port
+## @param postgres.persistence.enabled Enable PostgreSQL data persistence using PVC
+## @param postgres.persistence.size PVC Storage Request for PostgreSQL volume
+## @param postgres.podSecurityContext.fsGroup Group ID for the pod's volumes
+## @param postgres.containerSecurityContext.runAsUser User ID for the container
+## @param postgres.containerSecurityContext.runAsGroup Group ID for the container
+## @param postgres.config.postgresql.max_connections Maximum number of PostgreSQL connections
+## @param postgres.resources Resource requests and limits for PostgreSQL
+## @param postgres.initdb.scripts [object] Init scripts to run on PostgreSQL initialization. Evaluated as a template.
 ##
-postgresql:
+postgres:
   enabled: true
+  ## Target platform: leave empty for auto-detection, or set to "openshift" for OpenShift
+  targetPlatform: ""
   image:
     registry: docker.io
-    repository: bitnamilegacy/postgresql
-    tag: 16.4.0-debian-12-r14
+    repository: postgres
+    tag: "18.1"
+  ## Authentication (superuser) — existingSecret points to chart-managed consolidated secret
   auth:
-    username: acapy
-    database: ""
-    enablePostgresUser: true
-    existingSecret: ""
-  architecture: standalone
-  primary:
-    persistence:
-      ## @param postgresql.primary.persistence.enabled Enable PostgreSQL Primary data persistence using PVC
-      ##
-      enabled: true
-      ## @param postgresql.primary.persistence.size PVC Storage Request for PostgreSQL volume
-      ##
-      size: 1Gi
-    ## Container Security Context
-    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-    ## @param postgresql.primary.containerSecurityContext.enabled Enable container security context
-    ##
-    containerSecurityContext:
-      enabled: false
-    ## Pod Security Context
-    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-    ## @param postgresql.primary.podSecurityContext.enabled Enable security context
-    ##
-    podSecurityContext:
-      enabled: false
-    ## PostgreSQL Primary resource requests and limits
-    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
-    ## @param postgresql.primary.resourcesPreset Set container resources according to one common preset (allowed values: none, nano, small, medium, large, xlarge, 2xlarge). This is ignored if primary.resources is set (primary.resources is recommended for production).
-    ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
-    ##
-    resourcesPreset: "nano"
-    ## @param postgresql.primary.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
-    ## Example:
-    ## resources:
-    ##   requests:
-    ##     cpu: 2
-    ##     memory: 512Mi
-    ##   limits:
-    ##     cpu: 3
-    ##     memory: 1024Mi
-    ##
-    resources: {}
-    ## @param postgresql.primary.extendedConfiguration Extended PostgreSQL Primary configuration (appended to main or default configuration)
-    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#allow-settings-to-be-loaded-from-files-other-than-the-default-postgresqlconf
-    ##
-    extendedConfiguration: |
-      max_connections = 500
+    existingSecret: '{{ printf "%s-postgres" .Release.Name }}'
+    secretKeys:
+      adminPasswordKey: postgres-password
+  ## Custom user (application user for ACA-Py) — same consolidated secret
+  customUser:
+    name: acapy
+    database: acapy
+    existingSecret: '{{ printf "%s-postgres" .Release.Name }}'
+    secretKeys:
+      name: user
+      database: database
+      password: password
+  service:
+    port: 5432
+  persistence:
+    enabled: true
+    size: 1Gi
+  ## Pod Security Context
+  ## Note: When targetPlatform is "openshift", these are automatically omitted
+  podSecurityContext:
+    fsGroup: 999
+  ## Container Security Context
+  ## Note: When targetPlatform is "openshift", runAsUser/runAsGroup are automatically omitted
+  containerSecurityContext:
+    runAsUser: 999
+    runAsGroup: 999
+  ## PostgreSQL configuration
+  config:
+    postgresql:
+      max_connections: 500
+  resources: {}
+  ## Init scripts — Askar uses the custom database as its base, then creates
+  ## separate per-wallet databases (e.g. "askar-wallet"). Grant CREATEDB so
+  ## Askar can provision wallet databases on first startup.
+  initdb:
+    scripts:
+      99-grant-createdb.sh: |
+        #!/bin/sh
+        set -e
+        if [ -n "$CUSTOM_USER" ]; then
+          echo "Granting CREATEDB to user '$CUSTOM_USER' for Askar wallet provisioning..."
+          psql -U postgres -c "ALTER USER \"$CUSTOM_USER\" CREATEDB;"
+        fi

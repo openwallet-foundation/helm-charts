@@ -125,6 +125,7 @@ Note: When using multitenant mode, a seed should generally NOT be specified for 
 | `secrets.seed.retainOnUninstall`       | When true, adds helm.sh/resource-policy: keep to generated seed secret                                   | `true`        |
 | `secrets.seed.existingSecret`          | Name of an existing Secret providing the wallet seed. If set, the chart will NOT create the seed secret. | `""`          |
 | `secrets.seed.secretKeys.seed`         | Key in the seed secret holding the wallet seed value.                                                    | `seed`        |
+| `secrets.database.retainOnUninstall`   | When true, adds helm.sh/resource-policy: keep to the consolidated database secret                        | `true`        |
 
 ### Wallet Storage configuration
 
@@ -160,14 +161,15 @@ Note: When using multitenant mode, a seed should generally NOT be specified for 
 
 ### Persistence
 
-| Name                        | Description                                                                                    | Value               |
-| --------------------------- | ---------------------------------------------------------------------------------------------- | ------------------- |
-| `persistence.enabled`       | Enable persistence using PVC                                                                   | `true`              |
-| `persistence.existingClaim` | Name of an existing PVC to use                                                                 | `""`                |
-| `persistence.storageClass`  | PVC Storage Class for Tails volume                                                             | `""`                |
-| `persistence.accessModes`   | PVC Access Mode for Tails volume. Must be ReadWriteMany for deployment with multiple replicas. | `["ReadWriteMany"]` |
-| `persistence.size`          | PVC Storage Request for Tails volume                                                           | `1Gi`               |
-| `persistence.annotations`   | Persistent Volume Claim annotations                                                            | `{}`                |
+| Name                            | Description                                                                                    | Value               |
+| ------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------- |
+| `persistence.enabled`           | Enable persistence using PVC                                                                   | `true`              |
+| `persistence.retainOnUninstall` | When true, adds helm.sh/resource-policy: keep to the PVC                                       | `true`              |
+| `persistence.existingClaim`     | Name of an existing PVC to use                                                                 | `""`                |
+| `persistence.storageClass`      | PVC Storage Class for Tails volume                                                             | `""`                |
+| `persistence.accessModes`       | PVC Access Mode for Tails volume. Must be ReadWriteMany for deployment with multiple replicas. | `["ReadWriteMany"]` |
+| `persistence.size`              | PVC Storage Request for Tails volume                                                           | `1Gi`               |
+| `persistence.annotations`       | Persistent Volume Claim annotations                                                            | `{}`                |
 
 ### Service and Ports
 
@@ -325,22 +327,104 @@ Note: When using multitenant mode, a seed should generally NOT be specified for 
 
 ### PostgreSQL Parameters
 
-| Name                                                  | Description                                                                                                                                                                                                                | Value                    |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `postgresql.enabled`                                  | Switch to enable or disable the PostgreSQL helm chart                                                                                                                                                                      | `true`                   |
-| `postgresql.image`                                    | Set image parameters. Default to Bitnami Legacy repository.                                                                                                                                                                | `{}`                     |
-| `postgresql.auth.username`                            | Name for a custom user to create                                                                                                                                                                                           | `acapy`                  |
-| `postgresql.auth.database`                            | Name for a custom database to create                                                                                                                                                                                       | `""`                     |
-| `postgresql.auth.enablePostgresUser`                  | Assign a password to the "postgres" admin user. Otherwise, remote access will be blocked for this user. Not recommended for production deployments.                                                                        | `true`                   |
-| `postgresql.auth.existingSecret`                      | Name of existing secret to use for PostgreSQL credentials                                                                                                                                                                  | `""`                     |
-| `postgresql.architecture`                             | PostgreSQL architecture (`standalone` or `replication`)                                                                                                                                                                    | `standalone`             |
-| `postgresql.primary.persistence.enabled`              | Enable PostgreSQL Primary data persistence using PVC                                                                                                                                                                       | `true`                   |
-| `postgresql.primary.persistence.size`                 | PVC Storage Request for PostgreSQL volume                                                                                                                                                                                  | `1Gi`                    |
-| `postgresql.primary.containerSecurityContext.enabled` | Enable container security context                                                                                                                                                                                          | `false`                  |
-| `postgresql.primary.podSecurityContext.enabled`       | Enable security context                                                                                                                                                                                                    | `false`                  |
-| `postgresql.primary.resourcesPreset`                  | Set container resources according to one common preset (allowed values: none, nano, small, medium, large, xlarge, 2xlarge). This is ignored if primary.resources is set (primary.resources is recommended for production). | `nano`                   |
-| `postgresql.primary.resources`                        | Set container requests and limits for different resources like CPU or memory (essential for production workloads)                                                                                                          | `{}`                     |
-| `postgresql.primary.extendedConfiguration`            | Extended PostgreSQL Primary configuration (appended to main or default configuration)                                                                                                                                      | `max_connections = 500
-` |
+| Name                                           | Description                                                                                                              | Value                                      |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| `postgres.enabled`                             | Switch to enable or disable the PostgreSQL helm chart                                                                    | `true`                                     |
+| `postgres.targetPlatform`                      | Target platform for deployment. Set to "openshift" for OpenShift compatibility (auto-detected if not set)                | `""`                                       |
+| `postgres.image.registry`                      | PostgreSQL image registry                                                                                                | `docker.io`                                |
+| `postgres.image.repository`                    | PostgreSQL image repository                                                                                              | `postgres`                                 |
+| `postgres.image.tag`                           | PostgreSQL image tag                                                                                                     | `18.1`                                     |
+| `postgres.auth.existingSecret`                 | Name of existing secret to use for PostgreSQL admin credentials. Points to chart-managed consolidated secret by default. | `{{ printf "%s-postgres" .Release.Name }}` |
+| `postgres.auth.secretKeys.adminPasswordKey`    | Key in the secret containing the admin password                                                                          | `postgres-password`                        |
+| `postgres.customUser.name`                     | Name for a custom application user to create (used by ACA-Py)                                                            | `acapy`                                    |
+| `postgres.customUser.database`                 | Database for the custom user                                                                                             | `acapy`                                    |
+| `postgres.customUser.existingSecret`           | Existing secret for custom user credentials. Points to chart-managed consolidated secret by default.                     | `{{ printf "%s-postgres" .Release.Name }}` |
+| `postgres.customUser.secretKeys.name`          | Key in the secret containing the custom username                                                                         | `user`                                     |
+| `postgres.customUser.secretKeys.database`      | Key in the secret containing the custom database name                                                                    | `database`                                 |
+| `postgres.customUser.secretKeys.password`      | Key in the secret containing the custom user password                                                                    | `password`                                 |
+| `postgres.service.port`                        | PostgreSQL service port                                                                                                  | `5432`                                     |
+| `postgres.persistence.enabled`                 | Enable PostgreSQL data persistence using PVC                                                                             | `true`                                     |
+| `postgres.persistence.size`                    | PVC Storage Request for PostgreSQL volume                                                                                | `1Gi`                                      |
+| `postgres.podSecurityContext.fsGroup`          | Group ID for the pod's volumes                                                                                           | `999`                                      |
+| `postgres.containerSecurityContext.runAsUser`  | User ID for the container                                                                                                | `999`                                      |
+| `postgres.containerSecurityContext.runAsGroup` | Group ID for the container                                                                                               | `999`                                      |
+| `postgres.config.postgresql.max_connections`   | Maximum number of PostgreSQL connections                                                                                 | `500`                                      |
+| `postgres.resources`                           | Resource requests and limits for PostgreSQL                                                                              | `{}`                                       |
+| `postgres.initdb.scripts`                      | Init scripts to run on PostgreSQL initialization. Evaluated as a template.                                               | `{}`                                       |
 
-...
+
+
+## Upgrading
+<details>
+<summary><strong> 0.x → 1.0.0 (⚠️ breaking: PostgreSQL subchart)</strong></summary>
+
+This chart switched its bundled PostgreSQL dependency from the Bitnami `postgresql` subchart to the CloudPirates-io `postgres` subchart.
+
+Why this matters for existing users:
+
+- Values moved from `postgresql.*` to `postgres.*`.
+- The underlying image/filesystem layout changed, so **in-place reuse of the old data directory is not supported**.
+- You must migrate via **backup + restore**.
+
+#### Migration steps (existing installations)
+
+1) Freeze writes by scaling ACA-Py to 0:
+
+```bash
+kubectl -n <namespace> get deploy -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=acapy
+kubectl -n <namespace> scale deploy/<deployment-name> --replicas=0
+kubectl -n <namespace> rollout status deploy/<deployment-name>
+```
+
+2) Dump the old Bitnami PostgreSQL data (recommended: full dump):
+
+```bash
+# Identify the Bitnami Postgres service/pod and secret name in your cluster
+kubectl -n <namespace> get svc,pod -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=postgresql
+
+# Example: stream a full SQL dump from inside the old Postgres pod
+export OLD_POD=<bitnami-postgres-pod>
+export PGPASSWORD="$(kubectl -n <namespace> get secret <bitnami-secret> -o jsonpath='{.data.postgres-password}' | base64 -d)"
+kubectl -n <namespace> exec -i "$OLD_POD" -- sh -lc 'pg_dumpall -U postgres' > pg.dump.sql
+```
+
+3) Upgrade your Helm release using `postgres.*` values.
+
+At minimum, ensure `postgres.enabled=true` and set the custom user/database (used by ACA-Py):
+
+```yaml
+# values.migration.yaml
+postgres:
+  enabled: true
+  customUser:
+    name: acapy
+    database: acapy
+```
+
+```bash
+helm get values <release> -n <namespace> -o yaml > values.before.yaml
+helm upgrade <release> owf/acapy -n <namespace> -f values.before.yaml -f values.migration.yaml
+```
+
+4) Restore into the new Postgres:
+
+```bash
+kubectl -n <namespace> get pod -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=postgres
+export NEW_POD=<cloudpirates-postgres-pod>
+export PGPASSWORD="$(kubectl -n <namespace> get secret <release>-postgres -o jsonpath='{.data.postgres-password}' | base64 -d)"
+cat pg.dump.sql | kubectl -n <namespace> exec -i "$NEW_POD" -- sh -lc 'psql -U postgres -f -'
+```
+
+5) Scale ACA-Py back up and verify logs:
+
+```bash
+kubectl -n <namespace> scale deploy/<deployment-name> --replicas=<previous-replicas>
+kubectl -n <namespace> rollout status deploy/<deployment-name>
+kubectl -n <namespace> logs deploy/<deployment-name> --tail=200
+```
+
+#### GitOps note (Argo CD / Flux)
+
+If your GitOps renderer can’t perform `lookup` during dry-runs, generated secrets may drift.
+In that case, provide an existing Secret and set `walletStorageCredentials.existingSecret` (and keep `postgres.auth.existingSecret` / `postgres.customUser.existingSecret` aligned).
+</details>

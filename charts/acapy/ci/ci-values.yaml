@@ -1,3 +1,9 @@
 persistence:
   accessModes:
     - ReadWriteOnce
+postgres:
+  persistence:
+    storageClass: ""
+    size: 1Gi
+  podSecurityContext: {}
+  containerSecurityContext: {}

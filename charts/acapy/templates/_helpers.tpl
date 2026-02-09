@@ -62,7 +62,7 @@ Returns a secret if it already in Kubernetes, otherwise it creates
 it randomly.
 
 Usage:
-{{ include "getOrGeneratePass" (dict "Namespace" .Release.Namespace "Kind" "Secret" "Name" (include "acapy.databaseSecretName" .) "Key" "postgres-password" "Length" 32) }}
+{{ include "getOrGeneratePass" (dict "Namespace" .Release.Namespace "Kind" "Secret" "Name" (include "acapy.database.secretName" .) "Key" "postgres-password" "Length" 32) }}
 
 */}}
 {{- define "getOrGeneratePass" }}
@@ -91,14 +91,24 @@ Multitenancy config (Legacy support)
 {{/*
 Create a default fully qualified app name for the postgres requirement.
 */}}
-{{- define "global.postgresql.fullname" -}}
-{{- if .Values.postgresql.fullnameOverride }}
-{{- .Values.postgresql.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- define "global.postgres.fullname" -}}
+{{- if .Values.postgres.fullnameOverride }}
+{{- .Values.postgres.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $postgresContext := dict "Values" .Values.postgresql "Release" .Release "Chart" (dict "Name" "postgresql") -}}
-{{ template "postgresql.v1.primary.fullname" $postgresContext }}
+{{- $postgresContext := dict "Values" .Values.postgres "Release" .Release "Chart" (dict "Name" "postgres") -}}
+{{ template "postgres.fullname" $postgresContext }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Return "true" if the chart should create the database secret.
+Returns empty string when the user provides their own existing secret.
+*/}}
+{{- define "acapy.database.createSecret" -}}
+{{- if (empty .Values.walletStorageCredentials.existingSecret) -}}
+true
+{{- end -}}
+{{- end }}
 
 {{/*
 Return the Secret that holds the Postgres credentials.
@@ -113,7 +123,7 @@ Return the Secret that holds the Postgres credentials.
 {{- if .Values.walletStorageCredentials.existingSecret -}}
 {{ tpl .Values.walletStorageCredentials.existingSecret . }}
 {{- else -}}
-{{ include "global.postgresql.fullname" . }}
+{{ include "global.postgres.fullname" . }}
 {{- end -}}
 {{- end -}}
 
@@ -147,8 +157,8 @@ Generate ACA-Py wallet storage config
     {{- .Values.walletStorageConfig.json -}}
 {{- else if .Values.walletStorageConfig.url -}}
     '{"url":"{{ .Values.walletStorageConfig.url }}","max_connections":"{{ .Values.walletStorageConfig.max_connection | default 10 }}", "wallet_scheme":"{{ .Values.walletStorageConfig.wallet_scheme }}"}'
-{{- else if .Values.postgresql.enabled -}}
-    '{"url":"{{ include "global.postgresql.fullname" . }}:{{ .Values.postgresql.primary.service.ports.postgresql }}","max_connections":"{{ .Values.walletStorageConfig.max_connections }}","wallet_scheme":"{{ .Values.walletStorageConfig.wallet_scheme }}"}'
+{{- else if .Values.postgres.enabled -}}
+    '{"url":"{{ include "global.postgres.fullname" . }}:{{ .Values.postgres.service.port | default 5432 }}","max_connections":"{{ .Values.walletStorageConfig.max_connections }}","wallet_scheme":"{{ .Values.walletStorageConfig.wallet_scheme }}"}'
 {{- else -}}
     ''
 {{ end }}
@@ -160,8 +170,9 @@ Generate ACA-Py wallet storage credentials
 {{- define "acapy.walletStorageCredentials" -}}
 {{- if .Values.walletStorageCredentials.json -}}
     {{- .Values.walletStorageCredentials.json -}}
-{{- else if .Values.postgresql.enabled -}}
-    '{"account":"{{ .Values.postgresql.auth.username }}","password":"$(POSTGRES_PASSWORD)","admin_account":"{{ .Values.walletStorageCredentials.admin_account }}","admin_password":"$(POSTGRES_POSTGRES_PASSWORD)"}'
+{{- else if .Values.postgres.enabled -}}
+    {{- $username := .Values.postgres.customUser.name | default .Values.postgres.auth.username | default "postgres" -}}
+    '{"account":"{{ $username }}","password":"$(POSTGRES_PASSWORD)","admin_account":"{{ .Values.walletStorageCredentials.admin_account }}","admin_password":"$(POSTGRES_POSTGRES_PASSWORD)"}'
 {{- else -}}
     '{"account":"{{ .Values.walletStorageCredentials.account | default "acapy" }}","password":"$(POSTGRES_PASSWORD)","admin_account":"{{ .Values.walletStorageCredentials.admin_account }}","admin_password":"$(POSTGRES_POSTGRES_PASSWORD)"}'
 {{- end -}}
