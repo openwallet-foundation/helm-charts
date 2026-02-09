@@ -74,7 +74,7 @@ updateStrategy:
 image:
   registry: ghcr.io
   repository: openwallet-foundation/acapy-agent
-  tag: py3.12-1.3.1
+  tag: py3.12-1.4.0
   ## For production, prefer setting image.digest to an immutable sha256:... to guarantee supply chain integrity over mutable tags.
   digest: ""
   pullPolicy: IfNotPresent
