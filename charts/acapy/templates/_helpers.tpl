@@ -91,7 +91,7 @@ Multitenancy config (Legacy support)
 {{/*
 Create a default fully qualified app name for the postgres requirement.
 */}}
-{{- define "global.postgresql.fullname" -}}
+{{- define "global.postgres.fullname" -}}
 {{- if .Values.postgres.fullnameOverride }}
 {{- .Values.postgres.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -101,8 +101,8 @@ Create a default fully qualified app name for the postgres requirement.
 {{- end -}}
 
 {{/*
-Return true if the chart should create the database secret.
-Returns false when the user provides their own existing secret.
+Return "true" if the chart should create the database secret.
+Returns empty string when the user provides their own existing secret.
 */}}
 {{- define "acapy.database.createSecret" -}}
 {{- if (empty .Values.walletStorageCredentials.existingSecret) -}}
@@ -123,7 +123,7 @@ Return the Secret that holds the Postgres credentials.
 {{- if .Values.walletStorageCredentials.existingSecret -}}
 {{ tpl .Values.walletStorageCredentials.existingSecret . }}
 {{- else -}}
-{{ include "global.postgresql.fullname" . }}
+{{ include "global.postgres.fullname" . }}
 {{- end -}}
 {{- end -}}
 
@@ -158,7 +158,7 @@ Generate ACA-Py wallet storage config
 {{- else if .Values.walletStorageConfig.url -}}
     '{"url":"{{ .Values.walletStorageConfig.url }}","max_connections":"{{ .Values.walletStorageConfig.max_connection | default 10 }}", "wallet_scheme":"{{ .Values.walletStorageConfig.wallet_scheme }}"}'
 {{- else if .Values.postgres.enabled -}}
-    '{"url":"{{ include "global.postgresql.fullname" . }}:{{ .Values.postgres.service.port | default 5432 }}","max_connections":"{{ .Values.walletStorageConfig.max_connections }}","wallet_scheme":"{{ .Values.walletStorageConfig.wallet_scheme }}"}'
+    '{"url":"{{ include "global.postgres.fullname" . }}:{{ .Values.postgres.service.port | default 5432 }}","max_connections":"{{ .Values.walletStorageConfig.max_connections }}","wallet_scheme":"{{ .Values.walletStorageConfig.wallet_scheme }}"}'
 {{- else -}}
     ''
 {{ end }}
