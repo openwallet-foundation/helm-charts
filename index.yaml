@@ -2,6 +2,33 @@ apiVersion: v1
 entries:
   acapy:
   - apiVersion: v2
+    appVersion: 1.4.0
+    created: "2026-02-10T15:47:36.184485639Z"
+    dependencies:
+    - condition: postgres.enabled
+      name: postgres
+      repository: oci://registry-1.docker.io/cloudpirates
+      version: 0.15.5
+    - name: common
+      repository: https://charts.bitnami.com/bitnami/
+      tags:
+      - bitnami-common
+      version: 2.31.3
+    description: A Helm chart for ACA-Py - A Cloud Agent - Python
+    digest: 7d5f52877bd65f3ea202cc75461bf4d8ed7ab1e80409817ca554deab16058480
+    maintainers:
+    - email: emiliano.sune@quartech.com
+      name: esune
+      url: https://github.com/esune
+    - email: ivan.polchenko@quartech.com
+      name: i5okie
+      url: https://github.com/i5okie
+    name: acapy
+    type: application
+    urls:
+    - https://github.com/openwallet-foundation/helm-charts/releases/download/acapy-1.0.0/acapy-1.0.0.tgz
+    version: 1.0.0
+  - apiVersion: v2
     appVersion: 1.3.1
     created: "2025-09-16T17:22:24.288905402Z"
     dependencies:
@@ -691,4 +718,4 @@ entries:
     urls:
     - https://github.com/openwallet-foundation/helm-charts/releases/download/vc-authn-oidc-0.4.3/vc-authn-oidc-0.4.3.tgz
     version: 0.4.3
-generated: "2026-02-06T19:06:15.964120417Z"
+generated: "2026-02-10T15:47:36.184557033Z"
