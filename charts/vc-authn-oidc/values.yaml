@@ -196,6 +196,15 @@ service:
   ## @param service.port
   ##
   port: 5000
+  ## @param service.sessionAffinity Control where client requests go, to the same pod or round-robin. Enables sticky sessions for websocket support.
+  ## Options: None, ClientIP
+  ##
+  sessionAffinity: ClientIP
+  ## @param service.sessionAffinityConfig.clientIP.timeoutSeconds Timeout in seconds for the session affinity
+  ##
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
 
 ## Configure the ingress resource that allows you to access the controller installation
 ## ref: https://kubernetes.io/docs/user-guide/ingress/
