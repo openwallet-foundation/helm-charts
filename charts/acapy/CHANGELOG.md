@@ -1,3 +1,12 @@
+## [1.0.0](https://github.com/openwallet-foundation/helm-charts/compare/acapy-0.2.3...acapy-1.0.0) (2026-02-10)
+
+### ⚠ BREAKING CHANGES
+
+* **acapy:** replace Bitnami PostgreSQL with CloudPirates Postgres (#95)
+
+### Features
+
+* **acapy:** replace Bitnami PostgreSQL with CloudPirates Postgres ([#95](https://github.com/openwallet-foundation/helm-charts/issues/95)) ([6aa80a7](https://github.com/openwallet-foundation/helm-charts/commit/6aa80a753336218e803ee68f3e0a7301ce2c0677))
 ##  (2025-09-15)
 
 ### Features
