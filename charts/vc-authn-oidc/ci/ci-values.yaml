@@ -2,6 +2,9 @@ autoscaling:
   enabled: false
 
 acapy:
+  image:
+    # Use dev tag until release tag is published
+    tag: "dev"
   autoscaling:
     enabled: false
   persistence:
