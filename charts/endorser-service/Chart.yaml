@@ -14,10 +14,10 @@ maintainers:
     url: https://github.com/i5okie
 dependencies:
   - name: acapy
-    version: "0.2.3"
+    version: "1.0.0"
     repository: "https://openwallet-foundation.github.io/helm-charts/"
     condition: acapy.enabled
-  - name: postgresql
-    version: "16.3.2"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: postgresql.enabled
+  - name: postgres
+    version: 0.15.5
+    repository: oci://registry-1.docker.io/cloudpirates
+    condition: postgres.enabled
