@@ -24,6 +24,20 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
+Create a default fully qualified name for the postgres subchart.
+Delegates to the postgres subchart's own fullname template, respecting fullnameOverride.
+Produces "<release>-postgres" by default.
+*/}}
+{{- define "endorser-service.postgres.fullname" -}}
+{{- if .Values.postgres.fullnameOverride }}
+{{- .Values.postgres.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $postgresContext := dict "Values" .Values.postgres "Release" .Release "Chart" (dict "Name" "postgres") -}}
+{{ template "postgres.fullname" $postgresContext }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "endorser-service.chart" -}}
@@ -31,7 +45,7 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Common labels
+Common labels.
 */}}
 {{- define "endorser-service.labels" -}}
 helm.sh/chart: {{ include "endorser-service.chart" . }}
@@ -43,7 +57,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Selector labels
+Selector labels.
 */}}
 {{- define "endorser-service.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "endorser-service.name" . }}
@@ -51,11 +65,12 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Returns a secret value from an existing Kubernetes secret, or generates a random value if the secret doesn't exist.
+Return an existing secret value, or generate a random one if the secret does not yet exist.
+Uses lookup to preserve values across upgrades (lookup-then-retain pattern for GitOps idempotency).
+For Secrets the returned value is base64-encoded; for other kinds it is plain text.
 
 Usage:
-{{ include "getOrGeneratePass" (dict "Namespace" .Release.Namespace "Kind" "Secret" "Name" (include "endorser-service.apiSecretName" .) "Key" "webhook-api-key" "Length" 32) }}
-
+{{ include "getOrGeneratePass" (dict "Namespace" .Release.Namespace "Kind" "Secret" "Name" "my-secret" "Key" "my-key" "Length" 32) }}
 */}}
 {{- define "getOrGeneratePass" }}
 {{- $len := (default 16 .Length) | int -}}
@@ -70,7 +85,7 @@ Usage:
 {{- end }}
 
 {{/*
-Create the name of the service account to use
+Return the name of the service account to use.
 */}}
 {{- define "endorser-service.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
@@ -81,7 +96,8 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Create the name of the api secret to use
+Return the name of the API secret.
+Uses an existing secret name if provided, otherwise generates "<release>-api".
 */}}
 {{- define "endorser-service.apiSecretName" -}}
 {{- if (empty .Values.secrets.api.existingSecret) }}
@@ -92,7 +108,8 @@ Create the name of the api secret to use
 {{- end }}
 
 {{/*
-Create the name of the jwt secret to use
+Return the name of the JWT secret.
+Uses an existing secret name if provided, otherwise generates "<release>-jwt".
 */}}
 {{- define "endorser-service.jwtSecretName" -}}
 {{- if (empty .Values.secrets.jwt.existingSecret) }}
@@ -103,19 +120,22 @@ Create the name of the jwt secret to use
 {{- end }}
 
 {{/*
-Create the name of the webhook secret to use (for acapy)
+Return the name of the webhook secret used by ACA-Py.
+Contains the ACAPY_WEBHOOK_URL with embedded API key.
 */}}
 {{- define "endorser-service.webhookSecretName" -}}
     {{- printf "%s-acapy-webhook" .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{/* Define Aca-Py base name */}}
+{{/*
+Return the ACA-Py subchart base name.
+*/}}
 {{- define "endorser-service.acapy.name" -}}
 {{- default "acapy" .Values.acapy.nameOverride -}}
 {{- end -}}
 
 {{/*
-Create a default fully qualified Aca-Py name.
+Create a default fully qualified ACA-Py name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "endorser-service.acapy.fullname" -}}
@@ -123,7 +143,8 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
-Return the Aca-Py secret name
+Return the ACA-Py API secret name.
+Uses an existing secret name if provided, otherwise generates "<fullname>-acapy-api".
 */}}
 {{- define "endorser-service.acapy.secretName" -}}
     {{- if .Values.acapy.secrets.api.existingSecret -}}
@@ -134,14 +155,14 @@ Return the Aca-Py secret name
 {{- end -}}
 
 {{/*
-generate hosts if not overridden
+Generate the ACA-Py agent hostname from release name and ingress suffix.
 */}}
 {{- define "endorser-service.acapy.host" -}}
     {{- printf "%s-%s%s" (include "endorser-service.fullname" .) (include "endorser-service.acapy.name" .) .Values.global.ingressSuffix -}}
 {{- end -}}
 
 {{/*
-Create URL based on hostname and TLS status
+Create the ACA-Py agent URL based on hostname and TLS status.
 */}}
 {{- define "endorser-service.acapy.agentUrl" -}}
 {{- if .Values.useHTTPS -}}
@@ -152,48 +173,56 @@ Create URL based on hostname and TLS status
 {{- end }}
 
 {{/*
-generate admin url (internal)
+Return the internal ACA-Py admin API URL (cluster-local).
 */}}
 {{- define "endorser-service.acapy.adminUrl" -}}
     http://{{ include "endorser-service.acapy.fullname" . }}:{{ .Values.acapy.service.ports.admin }}
 {{- end -}}
 
 {{/*
-Generate hosts for Aca-Py admin if not overridden
+Generate the ACA-Py admin hostname from release name and ingress suffix.
 */}}
 {{- define "endorser-service.acapy.adminHost" -}}
    {{- printf "%s-%s-admin%s" (include "endorser-service.fullname" .) (include "endorser-service.acapy.name" .) .Values.global.ingressSuffix -}}
 {{- end -}}
 
-{{/* Aca-Py Postgres service name (uses nameOverride if set) */}}
+{{/*
+Return the ACA-Py subchart's PostgreSQL service name.
+Uses acapy.postgres.nameOverride if set, otherwise defaults to "postgres".
+*/}}
 {{- define "endorser-service.acapy.postgresqlServiceName" -}}
-{{- $pgName := default "postgresql" .Values.acapy.postgresql.nameOverride -}}
+{{- $pgName := default "postgres" .Values.acapy.postgres.nameOverride -}}
 {{- printf "%s-%s" .Release.Name $pgName -}}
 {{- end -}}
 
-{{/* API DB host/port from bitnami postgresql subchart or external */}}
+{{/*
+Return the database hostname.
+Uses the postgres subchart service name, or externalDatabase.host when an external database is configured.
+*/}}
 {{- define "endorser-service.db.host" -}}
 {{- if .Values.externalDatabase.enabled -}}
 {{- .Values.externalDatabase.host -}}
 {{- else -}}
-{{- printf "%s-postgresql" .Release.Name -}}
+{{ include "endorser-service.postgres.fullname" . }}
 {{- end -}}
 {{- end -}}
 
-{{/* Name of the secret containing DB credentials for API */}}
+{{/*
+Return the name of the secret containing database credentials.
+For bundled postgres this is the consolidated secret (created by database-secret.yaml).
+For external databases this requires externalDatabase.existingSecret to be set.
+*/}}
 {{- define "endorser-service.db.secretName" -}}
 {{- if .Values.externalDatabase.enabled -}}
   {{- required "externalDatabase.existingSecret is required when externalDatabase.enabled is true" .Values.externalDatabase.existingSecret -}}
 {{- else -}}
-  {{- if .Values.postgresql.auth.existingSecret -}}
-{{- .Values.postgresql.auth.existingSecret -}}
-  {{- else -}}
-{{- printf "%s-postgresql" .Release.Name -}}
-  {{- end -}}
+  {{- include "endorser-service.postgres.fullname" . -}}
 {{- end -}}
 {{- end -}}
 
-{{/* Keys for user/admin password within the DB secret */}}
+{{/*
+Return the secret key name for the application user password.
+*/}}
 {{- define "endorser-service.db.userPasswordKey" -}}
 {{- if .Values.externalDatabase.enabled -}}
 {{- default "password" .Values.externalDatabase.secretKeys.userPasswordKey -}}
@@ -202,6 +231,9 @@ password
 {{- end -}}
 {{- end -}}
 
+{{/*
+Return the secret key name for the admin (postgres) password.
+*/}}
 {{- define "endorser-service.db.adminPasswordKey" -}}
 {{- if .Values.externalDatabase.enabled -}}
 {{- default "postgres-password" .Values.externalDatabase.secretKeys.adminPasswordKey -}}
@@ -210,33 +242,44 @@ postgres-password
 {{- end -}}
 {{- end -}}
 
+{{/*
+Return the database port.
+*/}}
 {{- define "endorser-service.db.port" -}}
 {{- if .Values.externalDatabase.enabled -}}
 {{- .Values.externalDatabase.port -}}
 {{- else -}}
-5432
+{{- .Values.postgres.service.port | default 5432 -}}
 {{- end -}}
 {{- end -}}
 
-{{/* Database name */}}
+{{/*
+Return the database name.
+*/}}
 {{- define "endorser-service.db.database" -}}
 {{- if .Values.externalDatabase.enabled -}}
 {{- .Values.externalDatabase.database | default "endorser" -}}
 {{- else -}}
-{{- .Values.postgresql.auth.database | default "endorser" -}}
+{{- .Values.postgres.customUser.database | default .Values.postgres.customUser.name | default "endorser" -}}
 {{- end -}}
 {{- end -}}
 
-{{/* Database username */}}
+{{/*
+Return the database application username.
+*/}}
 {{- define "endorser-service.db.username" -}}
 {{- if .Values.externalDatabase.enabled -}}
 {{- .Values.externalDatabase.username | default "endorser" -}}
 {{- else -}}
-{{- .Values.postgresql.auth.username | default "endorser" -}}
+{{- .Values.postgres.customUser.name | default "endorser" -}}
 {{- end -}}
 {{- end -}}
 
-{{/* Determine DB admin username */}}
+{{/*
+Return the database admin username.
+For bundled postgres the superuser is always "postgres".
+For external databases uses adminUsername, falling back to username.
+*/}}
 {{- define "endorser-service.db.adminUser" -}}
 {{- if .Values.externalDatabase.enabled -}}
   {{- if .Values.externalDatabase.adminUsername -}}
@@ -245,14 +288,6 @@ postgres-password
 {{- .Values.externalDatabase.username | default "postgres" -}}
   {{- end -}}
 {{- else -}}
-  {{- if hasKey .Values.postgresql.auth "enablePostgresUser" -}}
-    {{- if .Values.postgresql.auth.enablePostgresUser -}}
 postgres
-    {{- else -}}
-{{- .Values.postgresql.auth.username | default "endorser" -}}
-    {{- end -}}
-  {{- else -}}
-postgres
-  {{- end -}}
 {{- end -}}
 {{- end -}}
