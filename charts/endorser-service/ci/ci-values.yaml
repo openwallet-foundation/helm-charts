@@ -11,12 +11,10 @@ acapy:
     enabled: false
   persistence:
     enabled: false
-  postgresql:
-    primary:
-      persistence:
-        enabled: false
-
-postgresql:
-  primary:
+  postgres:
     persistence:
       enabled: false
+
+postgres:
+  persistence:
+    enabled: false
