@@ -20,21 +20,21 @@ spec:
     # When proxy is enabled, ingress is handled by separate NetworkPolicies
     # (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml).
     # Only include user-supplied additional rules here.
-    {{- with .Values.networkPolicy.extraIngress }}
+    {{- with .Values.networkPolicy.api.extraIngress }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
     {{- else }}
     # When proxy is disabled, allow all ingress by default so the API can be
     # accessed directly (e.g., via ingress controller). Users can restrict
-    # this by providing specific rules via networkPolicy.extraIngress.
+    # this by providing specific rules via networkPolicy.api.extraIngress.
     - {}
-    {{- with .Values.networkPolicy.extraIngress }}
+    {{- with .Values.networkPolicy.api.extraIngress }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
     {{- end }}
   egress:
-    {{- if .Values.networkPolicy.egress | len }}
-    {{- toYaml .Values.networkPolicy.egress | nindent 4 }}
+    {{- if .Values.networkPolicy.api.egress | len }}
+    {{- toYaml .Values.networkPolicy.api.egress | nindent 4 }}
     {{- else }}
     - {}
     {{- end }}
