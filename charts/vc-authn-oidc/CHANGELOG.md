@@ -1,3 +1,8 @@
+## [1.1.0](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-1.0.0...vc-authn-oidc-1.1.0) (2026-02-16)
+
+### Features
+
+* **vc-authn-oidc:** add WebVH plugin support ([#97](https://github.com/openwallet-foundation/helm-charts/issues/97)) ([985bf33](https://github.com/openwallet-foundation/helm-charts/commit/985bf332c4fe2b6b7160227e0abf016d49eb154e))
 ## [1.0.0](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-0.6.1...vc-authn-oidc-1.0.0) (2026-02-06)
 
 ### ⚠ BREAKING CHANGES
