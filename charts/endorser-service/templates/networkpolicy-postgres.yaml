@@ -6,6 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
 spec:
   # Allow traffic from the API and migration job to PostgreSQL
   ingress:
