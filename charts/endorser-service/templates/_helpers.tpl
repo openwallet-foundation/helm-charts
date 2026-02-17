@@ -139,18 +139,23 @@ Create a default fully qualified ACA-Py name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "endorser-service.acapy.fullname" -}}
-{{- printf "%s-%s" (include "endorser-service.fullname" .) (include "endorser-service.acapy.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- $name := include "endorser-service.acapy.name" . -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
 Return the ACA-Py API secret name.
-Uses an existing secret name if provided, otherwise generates "<fullname>-acapy-api".
+Uses an existing secret name if provided, otherwise derives from acapy fullname.
 */}}
 {{- define "endorser-service.acapy.secretName" -}}
     {{- if .Values.acapy.secrets.api.existingSecret -}}
         {{- .Values.acapy.secrets.api.existingSecret -}}
     {{- else -}}
-          {{- printf "%s-%s-api" (include "endorser-service.fullname" .) (include "endorser-service.acapy.name" .) | trunc 63 | trimSuffix "-" -}}
+        {{- printf "%s-api" (include "endorser-service.acapy.fullname" .) | trunc 63 | trimSuffix "-" -}}
     {{- end -}}
 {{- end -}}
 
@@ -158,7 +163,7 @@ Uses an existing secret name if provided, otherwise generates "<fullname>-acapy-
 Generate the ACA-Py agent hostname from release name and ingress suffix.
 */}}
 {{- define "endorser-service.acapy.host" -}}
-    {{- printf "%s-%s%s" (include "endorser-service.fullname" .) (include "endorser-service.acapy.name" .) .Values.global.ingressSuffix -}}
+    {{- printf "%s%s" (include "endorser-service.acapy.fullname" .) .Values.global.ingressSuffix -}}
 {{- end -}}
 
 {{/*
@@ -183,7 +188,7 @@ Return the internal ACA-Py admin API URL (cluster-local).
 Generate the ACA-Py admin hostname from release name and ingress suffix.
 */}}
 {{- define "endorser-service.acapy.adminHost" -}}
-   {{- printf "%s-%s-admin%s" (include "endorser-service.fullname" .) (include "endorser-service.acapy.name" .) .Values.global.ingressSuffix -}}
+   {{- printf "%s-admin%s" (include "endorser-service.acapy.fullname" .) .Values.global.ingressSuffix -}}
 {{- end -}}
 
 {{/*
