@@ -366,9 +366,9 @@ postgres:
     secretKeys:
       # -- Key in the secret containing the admin password
       adminPasswordKey: postgres-password
-  # Custom user (application user for ACA-Py) — same consolidated secret
+  # Custom user (application user for Endorser API) — same consolidated secret
   customUser:
-    # -- Name for a custom application user to create (used by ACA-Py)
+    # -- Name for a custom application user to create (used by Endorser API)
     name: endorser
     # -- Database for the custom user
     database: endorser
