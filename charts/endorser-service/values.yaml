@@ -607,11 +607,12 @@ proxy:
   # -- Affinity rules for proxy pods
   affinity: {}
 
-# External database configuration (alternative to bundled PostgreSQL)
+# External database configuration (used when postgres.enabled is false)
+# When the bundled PostgreSQL is disabled, these values configure the connection
+# to an external database. externalDatabase.host and externalDatabase.existingSecret
+# are required when postgres.enabled is false.
 externalDatabase:
-  # -- Enable external database (disables postgresql subchart)
-  enabled: false
-  # -- Database hostname (e.g., postgres.example.com)
+  # -- Database hostname (e.g., postgres.example.com). Required when postgres.enabled is false.
   host: ""
   # -- Database port
   port: 5432
@@ -621,7 +622,7 @@ externalDatabase:
   username: ""
   # -- Database admin username (defaults to username if not set; typically 'postgres' for PostgreSQL)
   adminUsername: ""
-  # -- Existing secret containing database credentials (required when externalDatabase.enabled is true)
+  # -- Existing secret containing database credentials. Required when postgres.enabled is false.
   existingSecret: ""
   # Secret keys for credentials
   secretKeys:

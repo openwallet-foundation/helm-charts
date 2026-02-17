@@ -197,13 +197,14 @@ Uses acapy.postgres.nameOverride if set, otherwise defaults to "postgres".
 
 {{/*
 Return the database hostname.
-Uses the postgres subchart service name, or externalDatabase.host when an external database is configured.
+Uses the postgres subchart service name when bundled postgres is enabled,
+or externalDatabase.host when postgres is disabled (external database).
 */}}
 {{- define "endorser-service.db.host" -}}
-{{- if .Values.externalDatabase.enabled -}}
-{{- .Values.externalDatabase.host -}}
-{{- else -}}
+{{- if .Values.postgres.enabled -}}
 {{ include "endorser-service.postgres.fullname" . }}
+{{- else -}}
+{{- required "externalDatabase.host is required when postgres.enabled is false" .Values.externalDatabase.host -}}
 {{- end -}}
 {{- end -}}
 
@@ -213,10 +214,10 @@ For bundled postgres this is the consolidated secret (created by database-secret
 For external databases this requires externalDatabase.existingSecret to be set.
 */}}
 {{- define "endorser-service.db.secretName" -}}
-{{- if .Values.externalDatabase.enabled -}}
-  {{- required "externalDatabase.existingSecret is required when externalDatabase.enabled is true" .Values.externalDatabase.existingSecret -}}
-{{- else -}}
+{{- if .Values.postgres.enabled -}}
   {{- include "endorser-service.postgres.fullname" . -}}
+{{- else -}}
+  {{- required "externalDatabase.existingSecret is required when postgres.enabled is false" .Values.externalDatabase.existingSecret -}}
 {{- end -}}
 {{- end -}}
 
@@ -224,10 +225,10 @@ For external databases this requires externalDatabase.existingSecret to be set.
 Return the secret key name for the application user password.
 */}}
 {{- define "endorser-service.db.userPasswordKey" -}}
-{{- if .Values.externalDatabase.enabled -}}
-{{- default "password" .Values.externalDatabase.secretKeys.userPasswordKey -}}
-{{- else -}}
+{{- if .Values.postgres.enabled -}}
 password
+{{- else -}}
+{{- default "password" .Values.externalDatabase.secretKeys.userPasswordKey -}}
 {{- end -}}
 {{- end -}}
 
@@ -235,10 +236,10 @@ password
 Return the secret key name for the admin (postgres) password.
 */}}
 {{- define "endorser-service.db.adminPasswordKey" -}}
-{{- if .Values.externalDatabase.enabled -}}
-{{- default "postgres-password" .Values.externalDatabase.secretKeys.adminPasswordKey -}}
-{{- else -}}
+{{- if .Values.postgres.enabled -}}
 postgres-password
+{{- else -}}
+{{- default "postgres-password" .Values.externalDatabase.secretKeys.adminPasswordKey -}}
 {{- end -}}
 {{- end -}}
 
@@ -246,10 +247,10 @@ postgres-password
 Return the database port.
 */}}
 {{- define "endorser-service.db.port" -}}
-{{- if .Values.externalDatabase.enabled -}}
-{{- .Values.externalDatabase.port -}}
-{{- else -}}
+{{- if .Values.postgres.enabled -}}
 {{- .Values.postgres.service.port | default 5432 -}}
+{{- else -}}
+{{- .Values.externalDatabase.port | default 5432 -}}
 {{- end -}}
 {{- end -}}
 
@@ -257,10 +258,10 @@ Return the database port.
 Return the database name.
 */}}
 {{- define "endorser-service.db.database" -}}
-{{- if .Values.externalDatabase.enabled -}}
-{{- .Values.externalDatabase.database | default "endorser" -}}
-{{- else -}}
+{{- if .Values.postgres.enabled -}}
 {{- .Values.postgres.customUser.database | default .Values.postgres.customUser.name | default "endorser" -}}
+{{- else -}}
+{{- .Values.externalDatabase.database | default "endorser" -}}
 {{- end -}}
 {{- end -}}
 
@@ -268,10 +269,10 @@ Return the database name.
 Return the database application username.
 */}}
 {{- define "endorser-service.db.username" -}}
-{{- if .Values.externalDatabase.enabled -}}
-{{- .Values.externalDatabase.username | default "endorser" -}}
-{{- else -}}
+{{- if .Values.postgres.enabled -}}
 {{- .Values.postgres.customUser.name | default "endorser" -}}
+{{- else -}}
+{{- .Values.externalDatabase.username | default "endorser" -}}
 {{- end -}}
 {{- end -}}
 
@@ -281,13 +282,13 @@ For bundled postgres the superuser is always "postgres".
 For external databases uses adminUsername, falling back to username.
 */}}
 {{- define "endorser-service.db.adminUser" -}}
-{{- if .Values.externalDatabase.enabled -}}
+{{- if .Values.postgres.enabled -}}
+postgres
+{{- else -}}
   {{- if .Values.externalDatabase.adminUsername -}}
 {{- .Values.externalDatabase.adminUsername -}}
   {{- else -}}
 {{- .Values.externalDatabase.username | default "postgres" -}}
   {{- end -}}
-{{- else -}}
-postgres
 {{- end -}}
 {{- end -}}
