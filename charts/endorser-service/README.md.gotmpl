@@ -1,0 +1,169 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+{{ template "chart.badgesSection" . }}
+{{ template "chart.description" . }}
+
+## Prerequisites
+
+- Kubernetes 1.19+
+- Helm 3.2.0+
+- PV provisioner support in the underlying infrastructure
+
+## Installing the Chart
+
+To install the chart with the release name `my-release`:
+
+```console
+helm repo add owf https://openwallet-foundation.github.io/helm-charts/
+helm install my-release owf/endorser-service
+```
+
+The command deploys the ACA-Py Endorser Service along with PostgreSQL on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
+
+> **Tip**: List all releases using `helm list`
+
+## Architecture
+
+This chart deploys an endorser service with the following components:
+
+- **Endorser API** - Transaction endorsement controller
+- **ACA-Py Agent** - Hyperledger Aries agent (endorser role)
+- **Caddy Proxy** - Reverse proxy for routing traffic to agent and API endpoints
+- **PostgreSQL** (x2) - Databases for endorser API and ACA-Py agent wallet
+
+```
+                  +---------+
+  ingress ------->|  Caddy  |
+                  |  Proxy  |
+                  +----+----+
+                       |
+          +------------+------------+
+          |                         |
+     +----v----+             +------v------+
+     | Endorser|  webhook    |   ACA-Py    |
+     |   API   |<------------|   Agent     |
+     +----+----+  admin API  +------+------+
+          |       --------->        |
+     +----v----+             +------v------+
+     |Postgres |             |  Postgres   |
+     |  (API)  |             |  (wallet)   |
+     +---------+             +-------------+
+```
+
+{{ template "chart.maintainersSection" . }}
+{{ template "chart.requirementsSection" . }}
+
+## Parameters
+
+{{ template "chart.valuesTable" . }}
+
+## Upgrading
+
+<details>
+<summary><strong>0.x &rarr; 1.0.0 (breaking: PostgreSQL subchart + ACA-Py subchart + NetworkPolicy)</strong></summary>
+
+This release contains three breaking changes:
+
+1. **PostgreSQL subchart** switched from Bitnami `postgresql` to CloudPirates `postgres`
+2. **ACA-Py subchart** upgraded from `0.2.3` to `1.0.0` (which also migrated its own PostgreSQL)
+3. **NetworkPolicy values** restructured under `networkPolicy.{api,proxy,postgres}`
+
+### Values migration
+
+| Old path | New path |
+|----------|----------|
+| `postgresql.enabled` | `postgres.enabled` |
+| `postgresql.auth.username` | `postgres.customUser.name` |
+| `postgresql.auth.database` | `postgres.customUser.database` |
+| `postgresql.auth.enablePostgresUser` | _(removed, always enabled)_ |
+| `postgresql.primary.persistence.enabled` | `postgres.persistence.enabled` |
+| `postgresql.primary.persistence.size` | `postgres.persistence.size` |
+| `postgresql.image.*` | `postgres.image.*` |
+| `acapy.postgresql.enabled` | `acapy.postgres.enabled` |
+| `acapy.postgresql.nameOverride` | `acapy.postgres.nameOverride` |
+| `networkPolicy.extraIngress` | `networkPolicy.api.extraIngress` |
+| `networkPolicy.egress` | `networkPolicy.api.egress` |
+| `proxy.networkPolicy.enabled` | `networkPolicy.enabled` _(single toggle)_ |
+| `proxy.networkPolicy.extraIngress` | `networkPolicy.proxy.extraIngress` |
+| `proxy.networkPolicy.egress` | `networkPolicy.proxy.egress` |
+
+### Database migration steps (existing installations)
+
+Both PostgreSQL instances (endorser API and ACA-Py wallet) need to be migrated via **backup + restore**. In-place reuse of the old Bitnami data directory is not supported.
+
+1) Freeze writes by scaling the API and ACA-Py to 0:
+
+```bash
+kubectl -n <namespace> scale deploy -l app.kubernetes.io/instance=<release> --replicas=0
+```
+
+2) Dump both databases from the old Bitnami PostgreSQL pods:
+
+```bash
+# Endorser API database
+export OLD_DB_POD=$(kubectl -n <namespace> get pod -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=postgresql -o jsonpath='{.items[0].metadata.name}')
+export PGPASSWORD="$(kubectl -n <namespace> get secret <release>-postgresql -o jsonpath='{.data.postgres-password}' | base64 -d)"
+kubectl -n <namespace> exec -i "$OLD_DB_POD" -- sh -lc 'pg_dumpall -U postgres' > endorser-api.dump.sql
+
+# ACA-Py wallet database
+export OLD_WALLET_POD=$(kubectl -n <namespace> get pod -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=acapy-postgresql -o jsonpath='{.items[0].metadata.name}')
+export PGPASSWORD="$(kubectl -n <namespace> get secret <release>-acapy-postgresql -o jsonpath='{.data.postgres-password}' | base64 -d)"
+kubectl -n <namespace> exec -i "$OLD_WALLET_POD" -- sh -lc 'pg_dumpall -U postgres' > acapy-wallet.dump.sql
+```
+
+3) Upgrade your Helm release with the new values structure:
+
+```yaml
+# values.migration.yaml
+postgres:
+  enabled: true
+  customUser:
+    name: endorser
+    database: endorser
+
+acapy:
+  postgres:
+    enabled: true
+    nameOverride: acapy-postgres
+```
+
+```bash
+helm get values <release> -n <namespace> -o yaml > values.before.yaml
+# Review values.before.yaml and update paths per the migration table above
+helm upgrade <release> owf/endorser-service -n <namespace> -f values.before.yaml -f values.migration.yaml
+```
+
+4) Restore into the new Postgres instances:
+
+```bash
+# Endorser API database
+export NEW_DB_POD=$(kubectl -n <namespace> get pod -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=postgres -o jsonpath='{.items[0].metadata.name}')
+export PGPASSWORD="$(kubectl -n <namespace> get secret <release>-postgres -o jsonpath='{.data.postgres-password}' | base64 -d)"
+cat endorser-api.dump.sql | kubectl -n <namespace> exec -i "$NEW_DB_POD" -- sh -lc 'psql -U postgres -f -'
+
+# ACA-Py wallet database
+export NEW_WALLET_POD=$(kubectl -n <namespace> get pod -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=acapy-postgres -o jsonpath='{.items[0].metadata.name}')
+export PGPASSWORD="$(kubectl -n <namespace> get secret <release>-acapy-postgres -o jsonpath='{.data.postgres-password}' | base64 -d)"
+cat acapy-wallet.dump.sql | kubectl -n <namespace> exec -i "$NEW_WALLET_POD" -- sh -lc 'psql -U postgres -f -'
+```
+
+5) Scale back up and verify:
+
+```bash
+kubectl -n <namespace> scale deploy -l app.kubernetes.io/instance=<release> --replicas=1
+kubectl -n <namespace> get pods -l app.kubernetes.io/instance=<release> -w
+```
+
+### GitOps note (Argo CD / Flux)
+
+If your GitOps renderer can't perform `lookup` during dry-runs, generated secrets may drift on every sync.
+In that case, pre-create your secrets and reference them via:
+- `secrets.api.existingSecret`
+- `secrets.jwt.existingSecret`
+- `secrets.database.existingSecret`
+- `postgres.auth.existingSecret`
+- `postgres.customUser.existingSecret`
+
+</details>
+
+{{ template "helm-docs.versionFooter" . }}

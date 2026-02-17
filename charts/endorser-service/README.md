@@ -1,8 +1,54 @@
 # endorser-service
 
 ![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.1](https://img.shields.io/badge/AppVersion-1.1.1-informational?style=flat-square)
-
 A Helm chart for ACA-Py Endorser Service
+
+## Prerequisites
+
+- Kubernetes 1.19+
+- Helm 3.2.0+
+- PV provisioner support in the underlying infrastructure
+
+## Installing the Chart
+
+To install the chart with the release name `my-release`:
+
+```console
+helm repo add owf https://openwallet-foundation.github.io/helm-charts/
+helm install my-release owf/endorser-service
+```
+
+The command deploys the ACA-Py Endorser Service along with PostgreSQL on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
+
+> **Tip**: List all releases using `helm list`
+
+## Architecture
+
+This chart deploys an endorser service with the following components:
+
+- **Endorser API** - Transaction endorsement controller
+- **ACA-Py Agent** - Hyperledger Aries agent (endorser role)
+- **Caddy Proxy** - Reverse proxy for routing traffic to agent and API endpoints
+- **PostgreSQL** (x2) - Databases for endorser API and ACA-Py agent wallet
+
+```
+                  +---------+
+  ingress ------->|  Caddy  |
+                  |  Proxy  |
+                  +----+----+
+                       |
+          +------------+------------+
+          |                         |
+     +----v----+             +------v------+
+     | Endorser|  webhook    |   ACA-Py    |
+     |   API   |<------------|   Agent     |
+     +----+----+  admin API  +------+------+
+          |       --------->        |
+     +----v----+             +------v------+
+     |Postgres |             |  Postgres   |
+     |  (API)  |             |  (wallet)   |
+     +---------+             +-------------+
+```
 
 ## Maintainers
 
@@ -10,15 +56,14 @@ A Helm chart for ACA-Py Endorser Service
 | ---- | ------ | --- |
 | esune | <emiliano.sune@quartech.com> | <https://github.com/esune> |
 | i5okie | <ivan.polchenko@quartech.com> | <https://github.com/i5okie> |
-
 ## Requirements
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://charts.bitnami.com/bitnami | postgresql | 16.3.2 |
-| https://openwallet-foundation.github.io/helm-charts/ | acapy | 0.2.3 |
+| https://openwallet-foundation.github.io/helm-charts/ | acapy | 1.0.0 |
+| oci://registry-1.docker.io/cloudpirates | postgres | 0.15.5 |
 
-## Values
+## Parameters
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
@@ -43,15 +88,15 @@ A Helm chart for ACA-Py Endorser Service
 | acapy.extraEnvVarsSecret | string | `"{{ printf \"%s-acapy-webhook\" .Release.Name | trunc 63 | trimSuffix \"-\" }}"` | Name of existing secret containing extra environment variables (webhook URL for endorser) Template is evaluated by common.tplvalues.render in Aca-Py deployment |
 | acapy.image.registry | string | `"ghcr.io"` | Container image registry |
 | acapy.image.repository | string | `"openwallet-foundation/acapy-endorser-service/agent"` | Container image repository |
-| acapy.image.tag | string | `"1.1.1"` | Image tag (defaults to ACA-Py's chart appVersion) |
+| acapy.image.tag | string | `"1.1.2"` | Image tag (defaults to ACA-Py's chart appVersion) |
 | acapy.ingress.admin.enabled | bool | `false` | Enable admin ingress |
 | acapy.ingress.admin.hostname | string | `""` | Admin hostname |
 | acapy.ingress.agent.enabled | bool | `false` | Enable agent ingress |
 | acapy.ingress.agent.hostname | string | `""` | Agent hostname |
 | acapy.networkPolicy.enabled | bool | `false` | Disable ACA-Py chart's built-in NetworkPolicy (managed by parent chart instead) |
 | acapy.persistence.enabled | bool | `false` | Enable persistent volume for ACA-Py |
-| acapy.postgresql.enabled | bool | `true` | Enable PostgreSQL for ACA-Py wallet |
-| acapy.postgresql.nameOverride | string | `"acapy-postgresql"` | Name override to avoid collision with API database |
+| acapy.postgres.enabled | bool | `true` | Enable Postgres for ACA-Py wallet |
+| acapy.postgres.nameOverride | string | `"acapy-postgres"` | Name override to avoid collision with API database |
 | acapy.service.ports.admin | int | `8051` | Admin API port |
 | acapy.service.ports.http | int | `8050` | HTTP port for agent endpoints |
 | acapy.service.ports.ws | int | `8052` | WebSocket port |
@@ -78,9 +123,8 @@ A Helm chart for ACA-Py Endorser Service
 | commonLabels | object | `{}` | Common labels to add to all resources |
 | externalDatabase.adminUsername | string | `""` | Database admin username (defaults to username if not set; typically 'postgres' for PostgreSQL) |
 | externalDatabase.database | string | `""` | Database name (e.g., endorser) |
-| externalDatabase.enabled | bool | `false` | Enable external database (disables postgresql subchart) |
-| externalDatabase.existingSecret | string | `""` | Existing secret containing database credentials (required when externalDatabase.enabled is true) |
-| externalDatabase.host | string | `""` | Database hostname (e.g., postgres.example.com) |
+| externalDatabase.existingSecret | string | `""` | Existing secret containing database credentials. Required when postgres.enabled is false. |
+| externalDatabase.host | string | `""` | Database hostname (e.g., postgres.example.com). Required when postgres.enabled is false. |
 | externalDatabase.port | int | `5432` | Database port |
 | externalDatabase.secretKeys.adminPasswordKey | string | `"postgres-password"` | Key for admin password |
 | externalDatabase.secretKeys.userPasswordKey | string | `"password"` | Key for user password |
@@ -106,23 +150,38 @@ A Helm chart for ACA-Py Endorser Service
 | migration.initContainer.tag | string | `"1.36.1"` | Image tag for init container |
 | migration.resources | object | `{}` | Resource limits and requests for migration job container |
 | nameOverride | string | `""` | Override the chart name |
-| networkPolicy.egress | list | `[]` | Egress rules for API (defaults to allow all if empty) Note: There is no "extraEgress" because all egress rules must be specified here; if empty, all outbound traffic is allowed. Use to restrict outbound connections (e.g., only to database and ACA-Py) |
-| networkPolicy.enabled | bool | `true` | Enable network policy for API pods |
-| networkPolicy.extraIngress | list | `[]` | Additional ingress rules for API Note: Proxy and ACA-Py communication is handled by separate network policies (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml). Use this to add additional ingress sources (e.g., monitoring namespace, external services). |
+| networkPolicy.api.egress | list | `[]` | Egress rules for API pods (defaults to allow all if empty) Use to restrict outbound connections (e.g., only to database and ACA-Py). Note: When non-empty, these rules replace the default allow-all egress. |
+| networkPolicy.api.extraIngress | list | `[]` | Additional ingress rules for API pods Proxy and ACA-Py communication is handled by separate network policies (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml). Use this to add additional ingress sources (e.g., monitoring namespace, external services). |
+| networkPolicy.enabled | bool | `true` | Enable network policies for all components |
+| networkPolicy.postgres.extraIngress | list | `[]` | Additional ingress rules for postgres pods API and migration job access is always allowed. Use this for additional sources (e.g., backup agents, monitoring). |
+| networkPolicy.proxy.egress | list | `[]` | Egress rules for proxy pods (defaults to allow all if empty) Use to restrict outbound connections (e.g., only to API and ACA-Py). |
+| networkPolicy.proxy.extraIngress | list | `[]` | Additional ingress rules for proxy pods Default allows all cluster traffic; use this to restrict ingress sources. |
 | nodeSelector | object | `{}` | Node selector for API pods |
 | podAnnotations | object | `{}` | Annotations to add to API pods |
 | podLabels | object | `{}` | Labels to add to API pods |
 | podSecurityContext | object | `{}` | Security context for API pods |
-| postgresql.auth.database | string | `"endorser"` | Database name |
-| postgresql.auth.enablePostgresUser | bool | `true` | Enable postgres superuser (required for init scripts) |
-| postgresql.auth.username | string | `"endorser"` | Database username |
-| postgresql.enabled | bool | `true` | Enable PostgreSQL deployment for API |
-| postgresql.image.registry | string | `"docker.io"` | Image registry |
-| postgresql.image.repository | string | `"bitnamilegacy/postgresql"` | Image repository, using Bitnami legacy image. |
-| postgresql.image.tag | string | `"17.2.0-debian-12-r3"` | Image tag |
-| postgresql.primary.initdb.scripts."01-init.sh" | string | `"#!/bin/bash\nset -e\necho \"Initializing database permissions for user: $POSTGRES_USER\"\nexport PGPASSWORD=\"$POSTGRES_POSTGRES_PASSWORD\"\npsql -v ON_ERROR_STOP=1 --username \"postgres\" --dbname \"$POSTGRES_DATABASE\" <<-EOSQL\n    CREATE EXTENSION IF NOT EXISTS pgcrypto;\n    ALTER DATABASE $POSTGRES_DATABASE OWNER TO $POSTGRES_USER;\n    REVOKE ALL ON SCHEMA public FROM PUBLIC;\n    GRANT ALL ON SCHEMA public TO $POSTGRES_USER;\n    ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $POSTGRES_USER;\n    ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO $POSTGRES_USER;\n    ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO $POSTGRES_USER;\nEOSQL\necho \"Database initialization complete for user: $POSTGRES_USER\"\n"` |  |
-| postgresql.primary.persistence.enabled | bool | `true` | Enable persistent volume |
-| postgresql.primary.persistence.size | string | `"1Gi"` | Volume size |
+| postgres.auth.existingSecret | string | `"{{ printf \"%s-postgres\" .Release.Name }}"` | Name of existing secret to use for Postgres admin credentials. Points to chart-managed consolidated secret by default. |
+| postgres.auth.secretKeys.adminPasswordKey | string | `"postgres-password"` | Key in the secret containing the admin password |
+| postgres.config.postgresql.max_connections | int | `500` | Maximum number of PostgreSQL connections |
+| postgres.containerSecurityContext.runAsGroup | int | `999` | Group ID for the container |
+| postgres.containerSecurityContext.runAsUser | int | `999` | User ID for the container |
+| postgres.customUser.database | string | `"endorser"` | Database for the custom user |
+| postgres.customUser.existingSecret | string | `"{{ printf \"%s-postgres\" .Release.Name }}"` | Existing secret for custom user credentials. Points to chart-managed consolidated secret by default. |
+| postgres.customUser.name | string | `"endorser"` | Name for a custom application user to create (used by ACA-Py) |
+| postgres.customUser.secretKeys.database | string | `"database"` | Key in the secret containing the custom database name |
+| postgres.customUser.secretKeys.name | string | `"user"` | Key in the secret containing the custom username |
+| postgres.customUser.secretKeys.password | string | `"password"` | Key in the secret containing the custom user password |
+| postgres.enabled | bool | `true` | Switch to enable or disable the Postgres helm chart |
+| postgres.image.registry | string | `"docker.io"` | Postgres image registry |
+| postgres.image.repository | string | `"postgres"` | Postgres image repository |
+| postgres.image.tag | string | `"18.1"` | Postgres image tag |
+| postgres.initdb.scripts."01-init.sh" | string | `"#!/bin/bash\nset -e\necho \"Initializing database permissions for user: $POSTGRES_USER\"\nexport PGPASSWORD=\"$POSTGRES_POSTGRES_PASSWORD\"\npsql -v ON_ERROR_STOP=1 --username \"postgres\" --dbname \"$POSTGRES_DATABASE\" <<-EOSQL\n    CREATE EXTENSION IF NOT EXISTS pgcrypto;\n    ALTER DATABASE $POSTGRES_DATABASE OWNER TO $POSTGRES_USER;\n    REVOKE ALL ON SCHEMA public FROM PUBLIC;\n    GRANT ALL ON SCHEMA public TO $POSTGRES_USER;\n    ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $POSTGRES_USER;\n    ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO $POSTGRES_USER;\n    ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO $POSTGRES_USER;\nEOSQL\necho \"Database initialization complete for user: $POSTGRES_USER\"\n"` |  |
+| postgres.persistence.enabled | bool | `true` | Enable PostgreSQL data persistence using PVC |
+| postgres.persistence.size | string | `"1Gi"` | PVC Storage Request for PostgreSQL volume |
+| postgres.podSecurityContext.fsGroup | int | `999` | Group ID for the pod's volumes |
+| postgres.resources | object | `{}` | Resource requests and limits for PostgreSQL |
+| postgres.service.port | int | `5432` | PostgreSQL service port |
+| postgres.targetPlatform | string | `""` | Target platform for deployment. Set to "openshift" for OpenShift compatibility (auto-detected if not set) |
 | proxy.affinity | object | `{}` | Affinity rules for proxy pods |
 | proxy.autoscaling.enabled | bool | `false` | Enable autoscaling |
 | proxy.autoscaling.maxReplicas | int | `9` | Maximum replicas |
@@ -161,9 +220,6 @@ A Helm chart for ACA-Py Endorser Service
 | proxy.livenessProbe.initialDelaySeconds | int | `30` |  |
 | proxy.livenessProbe.periodSeconds | int | `60` |  |
 | proxy.livenessProbe.timeoutSeconds | int | `40` |  |
-| proxy.networkPolicy.egress | list | `[]` | Egress rules for proxy (defaults to allow all if empty) Use to restrict outbound connections (e.g., only to API and ACA-Py) |
-| proxy.networkPolicy.enabled | bool | `true` | Enable network policy for proxy pods |
-| proxy.networkPolicy.extraIngress | list | `[]` | Additional ingress rules for proxy Default allows all cluster traffic; use this to add additional restrictions |
 | proxy.nodeSelector | object | `{}` | Node selector for proxy pods |
 | proxy.podAnnotations | object | `{}` | Annotations to add to proxy pods |
 | proxy.podLabels | object | `{}` | Labels to add to proxy pods |
@@ -193,6 +249,7 @@ A Helm chart for ACA-Py Endorser Service
 | secrets.api.keys.endorserAdminApiKey | string | `"endorser-admin-api-key"` | Key name for endorser admin API key (used to authenticate admin operations) |
 | secrets.api.keys.webhookApiKey | string | `"webhook-api-key"` | Key name for webhook API key (used by ACA-Py to authenticate webhook calls) |
 | secrets.api.retainOnUninstall | bool | `true` | Retain API secret on chart uninstall |
+| secrets.database.retainOnUninstall | bool | `true` | Retain database secret on chart uninstall |
 | secrets.jwt.existingSecret | string | `""` | Use existing secret for JWT secret key; must contain `jwt-secret-key` key |
 | secrets.jwt.retainOnUninstall | bool | `true` | Retain JWT secret on chart uninstall |
 | securityContext | object | `{}` | Security context for API containers |
@@ -205,6 +262,115 @@ A Helm chart for ACA-Py Endorser Service
 | tolerations | list | `[]` | Tolerations for API pods |
 | volumeMounts | list | `[]` | Additional volume mounts for API containers |
 | volumes | list | `[]` | Additional volumes for API deployment |
+
+## Upgrading
+
+<details>
+<summary><strong>0.x &rarr; 1.0.0 (breaking: PostgreSQL subchart + ACA-Py subchart + NetworkPolicy)</strong></summary>
+
+This release contains three breaking changes:
+
+1. **PostgreSQL subchart** switched from Bitnami `postgresql` to CloudPirates `postgres`
+2. **ACA-Py subchart** upgraded from `0.2.3` to `1.0.0` (which also migrated its own PostgreSQL)
+3. **NetworkPolicy values** restructured under `networkPolicy.{api,proxy,postgres}`
+
+### Values migration
+
+| Old path | New path |
+|----------|----------|
+| `postgresql.enabled` | `postgres.enabled` |
+| `postgresql.auth.username` | `postgres.customUser.name` |
+| `postgresql.auth.database` | `postgres.customUser.database` |
+| `postgresql.auth.enablePostgresUser` | _(removed, always enabled)_ |
+| `postgresql.primary.persistence.enabled` | `postgres.persistence.enabled` |
+| `postgresql.primary.persistence.size` | `postgres.persistence.size` |
+| `postgresql.image.*` | `postgres.image.*` |
+| `acapy.postgresql.enabled` | `acapy.postgres.enabled` |
+| `acapy.postgresql.nameOverride` | `acapy.postgres.nameOverride` |
+| `networkPolicy.extraIngress` | `networkPolicy.api.extraIngress` |
+| `networkPolicy.egress` | `networkPolicy.api.egress` |
+| `proxy.networkPolicy.enabled` | `networkPolicy.enabled` _(single toggle)_ |
+| `proxy.networkPolicy.extraIngress` | `networkPolicy.proxy.extraIngress` |
+| `proxy.networkPolicy.egress` | `networkPolicy.proxy.egress` |
+
+### Database migration steps (existing installations)
+
+Both PostgreSQL instances (endorser API and ACA-Py wallet) need to be migrated via **backup + restore**. In-place reuse of the old Bitnami data directory is not supported.
+
+1) Freeze writes by scaling the API and ACA-Py to 0:
+
+```bash
+kubectl -n <namespace> scale deploy -l app.kubernetes.io/instance=<release> --replicas=0
+```
+
+2) Dump both databases from the old Bitnami PostgreSQL pods:
+
+```bash
+# Endorser API database
+export OLD_DB_POD=$(kubectl -n <namespace> get pod -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=postgresql -o jsonpath='{.items[0].metadata.name}')
+export PGPASSWORD="$(kubectl -n <namespace> get secret <release>-postgresql -o jsonpath='{.data.postgres-password}' | base64 -d)"
+kubectl -n <namespace> exec -i "$OLD_DB_POD" -- sh -lc 'pg_dumpall -U postgres' > endorser-api.dump.sql
+
+# ACA-Py wallet database
+export OLD_WALLET_POD=$(kubectl -n <namespace> get pod -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=acapy-postgresql -o jsonpath='{.items[0].metadata.name}')
+export PGPASSWORD="$(kubectl -n <namespace> get secret <release>-acapy-postgresql -o jsonpath='{.data.postgres-password}' | base64 -d)"
+kubectl -n <namespace> exec -i "$OLD_WALLET_POD" -- sh -lc 'pg_dumpall -U postgres' > acapy-wallet.dump.sql
+```
+
+3) Upgrade your Helm release with the new values structure:
+
+```yaml
+# values.migration.yaml
+postgres:
+  enabled: true
+  customUser:
+    name: endorser
+    database: endorser
+
+acapy:
+  postgres:
+    enabled: true
+    nameOverride: acapy-postgres
+```
+
+```bash
+helm get values <release> -n <namespace> -o yaml > values.before.yaml
+# Review values.before.yaml and update paths per the migration table above
+helm upgrade <release> owf/endorser-service -n <namespace> -f values.before.yaml -f values.migration.yaml
+```
+
+4) Restore into the new Postgres instances:
+
+```bash
+# Endorser API database
+export NEW_DB_POD=$(kubectl -n <namespace> get pod -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=postgres -o jsonpath='{.items[0].metadata.name}')
+export PGPASSWORD="$(kubectl -n <namespace> get secret <release>-postgres -o jsonpath='{.data.postgres-password}' | base64 -d)"
+cat endorser-api.dump.sql | kubectl -n <namespace> exec -i "$NEW_DB_POD" -- sh -lc 'psql -U postgres -f -'
+
+# ACA-Py wallet database
+export NEW_WALLET_POD=$(kubectl -n <namespace> get pod -l app.kubernetes.io/instance=<release>,app.kubernetes.io/name=acapy-postgres -o jsonpath='{.items[0].metadata.name}')
+export PGPASSWORD="$(kubectl -n <namespace> get secret <release>-acapy-postgres -o jsonpath='{.data.postgres-password}' | base64 -d)"
+cat acapy-wallet.dump.sql | kubectl -n <namespace> exec -i "$NEW_WALLET_POD" -- sh -lc 'psql -U postgres -f -'
+```
+
+5) Scale back up and verify:
+
+```bash
+kubectl -n <namespace> scale deploy -l app.kubernetes.io/instance=<release> --replicas=1
+kubectl -n <namespace> get pods -l app.kubernetes.io/instance=<release> -w
+```
+
+### GitOps note (Argo CD / Flux)
+
+If your GitOps renderer can't perform `lookup` during dry-runs, generated secrets may drift on every sync.
+In that case, pre-create your secrets and reference them via:
+- `secrets.api.existingSecret`
+- `secrets.jwt.existingSecret`
+- `secrets.database.existingSecret`
+- `postgres.auth.existingSecret`
+- `postgres.customUser.existingSecret`
+
+</details>
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)
