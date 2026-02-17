@@ -167,7 +167,7 @@ This chart deploys an endorser service with the following components:
 | postgres.containerSecurityContext.runAsUser | int | `999` | User ID for the container |
 | postgres.customUser.database | string | `"endorser"` | Database for the custom user |
 | postgres.customUser.existingSecret | string | `"{{ printf \"%s-postgres\" .Release.Name }}"` | Existing secret for custom user credentials. Points to chart-managed consolidated secret by default. |
-| postgres.customUser.name | string | `"endorser"` | Name for a custom application user to create (used by ACA-Py) |
+| postgres.customUser.name | string | `"endorser"` | Name for a custom application user to create (used by Endorser API) |
 | postgres.customUser.secretKeys.database | string | `"database"` | Key in the secret containing the custom database name |
 | postgres.customUser.secretKeys.name | string | `"user"` | Key in the secret containing the custom username |
 | postgres.customUser.secretKeys.password | string | `"password"` | Key in the secret containing the custom user password |
@@ -366,9 +366,9 @@ If your GitOps renderer can't perform `lookup` during dry-runs, generated secret
 In that case, pre-create your secrets and reference them via:
 - `secrets.api.existingSecret`
 - `secrets.jwt.existingSecret`
-- `secrets.database.existingSecret`
-- `postgres.auth.existingSecret`
-- `postgres.customUser.existingSecret`
+- `postgres.auth.existingSecret` (bundled Postgres admin credentials)
+- `postgres.customUser.existingSecret` (bundled Postgres application user credentials)
+- `externalDatabase.existingSecret` (when using an external database with `postgres.enabled=false`)
 
 </details>
 
