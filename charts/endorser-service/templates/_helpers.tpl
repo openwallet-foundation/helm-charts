@@ -33,7 +33,7 @@ Produces "<release>-postgres" by default.
 {{- .Values.postgres.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
 {{- $postgresContext := dict "Values" .Values.postgres "Release" .Release "Chart" (dict "Name" "postgres") -}}
-{{ template "postgres.fullname" $postgresContext }}
+{{- include "postgres.fullname" $postgresContext | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
 

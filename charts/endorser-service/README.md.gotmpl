@@ -160,9 +160,9 @@ If your GitOps renderer can't perform `lookup` during dry-runs, generated secret
 In that case, pre-create your secrets and reference them via:
 - `secrets.api.existingSecret`
 - `secrets.jwt.existingSecret`
-- `secrets.database.existingSecret`
-- `postgres.auth.existingSecret`
-- `postgres.customUser.existingSecret`
+- `postgres.auth.existingSecret` (bundled Postgres admin credentials)
+- `postgres.customUser.existingSecret` (bundled Postgres application user credentials)
+- `externalDatabase.existingSecret` (when using an external database with `postgres.enabled=false`)
 
 </details>
 
