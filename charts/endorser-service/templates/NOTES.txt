@@ -12,10 +12,10 @@ This chart deploys an ACA-Py Endorser Service with the following components:
 {{- if .Values.proxy.enabled }}
 - Caddy Proxy: Reverse proxy for routing traffic
 {{- end }}
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.postgres.enabled }}
 - PostgreSQL: Database for endorser API
 {{- end }}
-{{- if and .Values.acapy.enabled .Values.acapy.postgresql.enabled }}
+{{- if and .Values.acapy.enabled .Values.acapy.postgres.enabled }}
 - PostgreSQL (ACA-Py): Database for agent wallet
 {{- end }}
 

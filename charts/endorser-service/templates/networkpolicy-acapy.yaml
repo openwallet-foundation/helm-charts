@@ -6,6 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
 spec:
   # Allow traffic from ACA-Py to the API (webhook)
   ingress:
@@ -31,6 +32,7 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: acapy
 spec:
   # Allow traffic from the API to ACA-Py admin
   ingress:
