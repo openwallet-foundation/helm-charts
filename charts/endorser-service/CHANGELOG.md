@@ -1,3 +1,12 @@
+## [1.0.0](https://github.com/openwallet-foundation/helm-charts/compare/endorser-service-0.1.0...endorser-service-1.0.0) (2026-02-18)
+
+### ⚠ BREAKING CHANGES
+
+* **endorser-service:** replace Bitnami PostgreSQL with CloudPirates Postgres (#104)
+
+### Features
+
+* **endorser-service:** replace Bitnami PostgreSQL with CloudPirates Postgres ([#104](https://github.com/openwallet-foundation/helm-charts/issues/104)) ([a0f2874](https://github.com/openwallet-foundation/helm-charts/commit/a0f2874bccf036f005b46e4e142bb79e3c329456))
 ## 0.1.0 (2025-11-26)
 
 ### Features
