@@ -441,7 +441,7 @@ postgres:
         echo "Database initialization complete for user: $POSTGRES_USER"
 
 
-# Caddy reverse proxy configuration
+# Caddy reverse proxy configuration (disable if using ingress directly)
 proxy:
   # -- Enable Caddy proxy deployment
   enabled: true
