@@ -342,6 +342,14 @@ acapy:
     enabled: true
     # -- Name override to avoid collision with API database
     nameOverride: acapy-postgres
+    # Modification to defaults needed to correct secret references in ACA-Py chart
+    auth:
+      # -- Existing secret for ACA-Py postgres admin credentials
+      existingSecret: '{{ printf "%s-acapy-postgres" .Release.Name }}'
+    # Custom user — same ACA-Py-managed secret
+    customUser:
+      # -- Existing secret for ACA-Py postgres custom user credentials
+      existingSecret: '{{ printf "%s-acapy-postgres" .Release.Name }}'
 
 # Postgres chart configuration (CloudPirates-io postgres chart)
 # ref: https://github.com/CloudPirates-io/helm-charts/tree/main/charts/postgres

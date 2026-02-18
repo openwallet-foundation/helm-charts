@@ -95,6 +95,8 @@ This chart deploys an endorser service with the following components:
 | acapy.ingress.agent.hostname | string | `""` | Agent hostname |
 | acapy.networkPolicy.enabled | bool | `false` | Disable ACA-Py chart's built-in NetworkPolicy (managed by parent chart instead) |
 | acapy.persistence.enabled | bool | `false` | Enable persistent volume for ACA-Py |
+| acapy.postgres.auth.existingSecret | string | `"{{ printf \"%s-acapy-postgres\" .Release.Name }}"` | Existing secret for ACA-Py postgres admin credentials |
+| acapy.postgres.customUser.existingSecret | string | `"{{ printf \"%s-acapy-postgres\" .Release.Name }}"` | Existing secret for ACA-Py postgres custom user credentials |
 | acapy.postgres.enabled | bool | `true` | Enable Postgres for ACA-Py wallet |
 | acapy.postgres.nameOverride | string | `"acapy-postgres"` | Name override to avoid collision with API database |
 | acapy.service.ports.admin | int | `8051` | Admin API port |
