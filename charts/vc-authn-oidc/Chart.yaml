@@ -3,7 +3,7 @@ name: vc-authn-oidc
 description: A Helm chart to deploy ACAPy VC-AuthN on OpenShift
 type: application
 
-appVersion: "2.3.6"
+appVersion: "2.4.0"
 version: 1.0.0
 
 maintainers:
