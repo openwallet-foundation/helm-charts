@@ -1,6 +1,6 @@
 # VC-AuthN OIDC
 
-![Version: 0.5.2](https://img.shields.io/badge/Version-0.5.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.3.4](https://img.shields.io/badge/AppVersion-2.3.4-informational?style=flat-square)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.4.0](https://img.shields.io/badge/AppVersion-2.4.0-informational?style=flat-square)
 
 A Helm chart to deploy Verifiable Credential Identity Provider for OpenID Connect.
 
@@ -71,7 +71,7 @@ To delete the secrets and PVC's associated with `my-release`:
 kubectl delete secret,pvc --selector "app.kubernetes.io/instance"=my-release
 ```
 
-> **Note**: Deleting the PVC's will delete postgresql data as well. Please be cautious before doing it.
+> **Note**: Deleting the PVC's will delete PostgreSQL (ACA-Py wallet) and MongoDB data as well. Please be cautious before doing it.
 
 ## Parameters
 
@@ -337,14 +337,77 @@ Note: Secure values of the configuration are passed via equivalent environment v
 
 ### External Redis Configuration
 
-| Name                                   | Description                                                                                                                                       | Value   |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `externalRedis.host`                   | External Redis host. When set, the chart will use this instead of the internal Redis deployment. Cannot be used together with redis.enabled=true. | `""`    |
-| `externalRedis.port`                   | External Redis port                                                                                                                               | `6379`  |
-| `externalRedis.database`               | Redis database number to use                                                                                                                      | `0`     |
-| `externalRedis.auth.enabled`           | Enable authentication for external Redis                                                                                                          | `false` |
-| `externalRedis.auth.existingSecret`    | Name of existing secret containing Redis password. The secret should contain a key named 'redis-password'.                                        | `""`    |
-| `externalRedis.auth.password`          | Redis password. Ignored if existingSecret is set. A secret will be created automatically if password is provided and existingSecret is empty.     | `""`    |
-| `externalRedis.auth.retainOnUninstall` | When true, adds helm.sh/resource-policy: keep to generated external Redis secret                                                                  | `true`  |
-| `externalRedis.tls.enabled`            | Enable TLS connection to external Redis                                                                                                           | `false` |
-| `externalRedis.tls.existingSecret`     | Name of existing secret containing TLS certificates                                                                                               | `""`    |
+| Name                                   | Description                                                                                                                                       | Value      |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| `externalRedis.mode`                   | Redis mode: single, sentinel, cluster                                                                                                             | `single`   |
+| `externalRedis.sentinelMasterName`     | Sentinel master name (used only if mode=sentinel)                                                                                                 | `mymaster` |
+| `externalRedis.host`                   | External Redis host. When set, the chart will use this instead of the internal Redis deployment. Cannot be used together with redis.enabled=true. | `""`       |
+| `externalRedis.port`                   | External Redis port                                                                                                                               | `6379`     |
+| `externalRedis.database`               | Redis database number to use                                                                                                                      | `0`        |
+| `externalRedis.auth.enabled`           | Enable authentication for external Redis                                                                                                          | `false`    |
+| `externalRedis.auth.existingSecret`    | Name of existing secret containing Redis password. The secret should contain a key named 'redis-password'.                                        | `""`       |
+| `externalRedis.auth.password`          | Redis password. Ignored if existingSecret is set. A secret will be created automatically if password is provided and existingSecret is empty.     | `""`       |
+| `externalRedis.auth.retainOnUninstall` | When true, adds helm.sh/resource-policy: keep to generated external Redis secret                                                                  | `true`     |
+| `externalRedis.tls.enabled`            | Enable TLS connection to external Redis                                                                                                           | `false`    |
+| `externalRedis.tls.existingSecret`     | Name of existing secret containing TLS certificates                                                                                               | `""`       |
+
+### SIAM Audit Logging
+
+| Name                     | Description                                                                                                                                             | Value     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `siam.auditEnabled`      | Enable SIAM audit event logging. When false, all audit events are suppressed.                                                                           | `true`    |
+| `siam.ipSalt`            | Optional: Raw salt string used for one-way hashing of client IP addresses. If omitted and existingSecret is empty, one is auto-generated into a Secret. | `""`      |
+| `siam.existingSecret`    | Optional: Name of an existing secret containing the IP Salt.                                                                                            | `""`      |
+| `siam.existingSecretKey` | Key inside the existingSecret containing the salt value. Defaults to 'ip-salt'                                                                          | `ip-salt` |
+
+## Upgrading
+
+<details>
+<summary><strong>* → 1.0.0 (⚠️ breaking: ACA-Py PostgreSQL subchart replaced)</strong></summary>
+
+This chart bumped its bundled `acapy` dependency from `<1.0.0` to `1.0.0`. As part of that change, the acapy chart switched its bundled PostgreSQL from the Bitnami `postgresql` subchart to the CloudPirates-io `postgres` subchart (official `postgres` container image).
+
+**What this means for you:**
+
+- Values previously passed under `acapy.postgresql.*` must move to `acapy.postgres.*`.
+- The PostgreSQL image and on-disk data format changed — **in-place PVC reuse is not supported**.
+- Data must be migrated via **backup + restore** (see steps below).
+
+**Values diff:**
+
+```diff
+ acapy:
+-  postgresql:
++  postgres:
+     persistence:
+       enabled: true
+-    commonLabels: {}
++    commonLabels:
++      app.kubernetes.io/role: wallet
+```
+
+**Service name change:**
+
+The ACA-Py wallet database service was renamed:
+
+| Before | After |
+|--------|-------|
+| `<release>-postgresql` | `<release>-postgres` |
+
+Update any external references (e.g. NetworkPolicies, firewall rules, monitoring dashboards) accordingly.
+
+#### Data migration steps
+
+For full step-by-step instructions including dump/restore commands and GitOps (Argo CD / Flux) notes, see the **acapy chart upgrading guide**:
+
+> 📖 [acapy chart README → Upgrading: 0.x → 1.0.0](https://github.com/openwallet-foundation/helm-charts/blob/main/charts/acapy/README.md#upgrading)
+
+The migration procedure in brief:
+
+1. Scale ACA-Py to 0 replicas to freeze writes.
+2. Dump the old Bitnami PostgreSQL data with `pg_dumpall`.
+3. Run `helm upgrade` with the new `acapy.postgres.*` values — this provisions the new CloudPirates postgres instance.
+4. Restore the dump into the new postgres pod.
+5. Scale ACA-Py back up and verify logs.
+
+</details>
