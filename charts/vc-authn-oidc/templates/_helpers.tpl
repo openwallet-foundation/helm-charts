@@ -212,6 +212,17 @@ Return true if the api-secret should be created
 {{- end }}
 
 {{/*
+Create the name of the siem secret to use
+*/}}
+{{- define "vc-authn-oidc.siemSecretName" -}}
+{{- if (empty .Values.siem.existingSecret) }}
+    {{- printf "%s-%s" .Release.Name "siem" | trunc 63 | trimSuffix "-" }}
+{{- else -}}
+    {{- .Values.siem.existingSecret }}
+{{- end -}}
+{{- end }}
+
+{{/*
 Return the secret with vc-authn-oidc token private key
 */}}
 {{- define "vc-authn-oidc.token.secretName" -}}

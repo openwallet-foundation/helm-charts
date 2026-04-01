@@ -125,15 +125,15 @@ spec:
               value: {{ printf "/opt/token/%s" .Values.auth.token.privateKey.filename }}
             - name: LOG_LEVEL
               value: {{ .Values.logLevel | quote }}
-            {{- if typeIs "bool" .Values.siam.auditEnabled }}
-            - name: SIAM_AUDIT_ENABLED
-              value: {{ .Values.siam.auditEnabled | quote }}
+            {{- if typeIs "bool" .Values.siem.auditEnabled }}
+            - name: SIEM_AUDIT_ENABLED
+              value: {{ .Values.siem.auditEnabled | quote }}
             {{- end }}
-            - name: SIAM_IP_SALT
+            - name: SIEM_IP_SALT
               valueFrom:
                 secretKeyRef:
-                  name: {{ if .Values.siam.existingSecret }}{{ .Values.siam.existingSecret }}{{ else }}{{ include "global.fullname" . }}-siam{{ end }}
-                  key: {{ .Values.siam.existingSecretKey | default "ip-salt" }}
+                  name: {{ include "vc-authn-oidc.siemSecretName" . }}
+                  key: {{ .Values.siem.existingSecretKey | default "ip-salt" }}
             {{- if or .Values.redis.enabled .Values.externalRedis.host }}
             - name: REDIS_MODE
               value: {{ if .Values.redis.enabled }}"single"{{ else }}{{ .Values.externalRedis.mode | quote }}{{ end }}

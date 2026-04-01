@@ -351,14 +351,14 @@ Note: Secure values of the configuration are passed via equivalent environment v
 | `externalRedis.tls.enabled`            | Enable TLS connection to external Redis                                                                                                           | `false`    |
 | `externalRedis.tls.existingSecret`     | Name of existing secret containing TLS certificates                                                                                               | `""`       |
 
-### SIAM Audit Logging
+### SIEM Audit Logging
 
 | Name                     | Description                                                                                                                                             | Value     |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `siam.auditEnabled`      | Enable SIAM audit event logging. When false, all audit events are suppressed.                                                                           | `true`    |
-| `siam.ipSalt`            | Optional: Raw salt string used for one-way hashing of client IP addresses. If omitted and existingSecret is empty, one is auto-generated into a Secret. | `""`      |
-| `siam.existingSecret`    | Optional: Name of an existing secret containing the IP Salt.                                                                                            | `""`      |
-| `siam.existingSecretKey` | Key inside the existingSecret containing the salt value. Defaults to 'ip-salt'                                                                          | `ip-salt` |
+| `siem.auditEnabled`      | Enable SIEM audit event logging. When false, all audit events are suppressed.                                                                           | `true`    |
+| `siem.ipSalt`            | Optional: Raw salt string used for one-way hashing of client IP addresses. If omitted and existingSecret is empty, one is auto-generated into a Secret. | `""`      |
+| `siem.existingSecret`    | Optional: Name of an existing secret containing the IP Salt.                                                                                            | `""`      |
+| `siem.existingSecretKey` | Key inside the existingSecret containing the salt value. Defaults to 'ip-salt'                                                                          | `ip-salt` |
 
 ## Upgrading
 

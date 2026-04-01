@@ -829,18 +829,18 @@ externalRedis:
     ##
     existingSecret: ""
 
-## @section SIAM Audit Logging
+## @section SIEM Audit Logging
 ##
-siam:
-  ## @param siam.auditEnabled Enable SIAM audit event logging. When false, all audit events are suppressed.
+siem:
+  ## @param siem.auditEnabled Enable SIEM audit event logging. When false, all audit events are suppressed.
   ##
   auditEnabled: true
-  ## @param siam.ipSalt Optional: Raw salt string used for one-way hashing of client IP addresses. If omitted and existingSecret is empty, one is auto-generated into a Secret.
+  ## @param siem.ipSalt Optional: Raw salt string used for one-way hashing of client IP addresses. If omitted and existingSecret is empty, one is auto-generated into a Secret.
   ##
   ipSalt: ""
-  ## @param siam.existingSecret Optional: Name of an existing secret containing the IP Salt.
+  ## @param siem.existingSecret Optional: Name of an existing secret containing the IP Salt.
   ##
   existingSecret: ""
-  ## @param siam.existingSecretKey Key inside the existingSecret containing the salt value. Defaults to 'ip-salt'
+  ## @param siem.existingSecretKey Key inside the existingSecret containing the salt value. Defaults to 'ip-salt'
   ##
   existingSecretKey: "ip-salt"
