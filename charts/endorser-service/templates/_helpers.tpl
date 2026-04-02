@@ -111,8 +111,10 @@ Return the name of the service account to use.
 {{- define "endorser-service.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
 {{- default (include "endorser-service.fullname" .) .Values.serviceAccount.name }}
+{{- else if .Values.serviceAccount.name }}
+{{- .Values.serviceAccount.name }}
 {{- else }}
-{{- default "default" .Values.serviceAccount.name }}
+{{- "" }}
 {{- end }}
 {{- end }}
 
