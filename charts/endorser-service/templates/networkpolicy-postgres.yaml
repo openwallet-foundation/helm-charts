@@ -4,6 +4,11 @@ apiVersion: networking.k8s.io/v1
 metadata:
   name: {{ include "endorser-service.fullname" . }}-postgres
   namespace: {{ .Release.Namespace | quote }}
+  {{- $annotations := include "endorser-service.renderAnnotations" (dict "context" .) }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: database

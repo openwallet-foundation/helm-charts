@@ -4,13 +4,14 @@ kind: Ingress
 metadata:
   name: {{ include "endorser-service.fullname" . }}
   namespace: {{ .Release.Namespace | quote }}
+  {{- $annotations := include "endorser-service.renderAnnotations" (dict "context" . "annotations" .Values.ingress.annotations) }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: api
-  {{- with .Values.ingress.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
 spec:
   {{- with .Values.ingress.className }}
   ingressClassName: {{ . }}

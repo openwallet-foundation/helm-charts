@@ -4,6 +4,11 @@ kind: Deployment
 metadata:
   name: {{ include "endorser-service.fullname" . }}-proxy
   namespace: {{ .Release.Namespace | quote }}
+  {{- $annotations := include "endorser-service.renderAnnotations" (dict "context" .) }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: proxy
