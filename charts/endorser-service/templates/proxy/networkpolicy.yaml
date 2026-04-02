@@ -24,16 +24,40 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow all (cluster internal) if no user rules provided
-    {{- if .Values.networkPolicy.proxy.extraIngress }}
-    {{- toYaml .Values.networkPolicy.proxy.extraIngress | nindent 4 }}
+    {{- if and .Values.proxy.ingress.enabled .Values.networkPolicy.proxy.ingress.enabled }}
+    {{- if or $proxyIngressNamespaceSelector $proxyIngressPodSelector }}
+    - from:
+        - {{- if $proxyIngressNamespaceSelector }}
+          namespaceSelector:
+            matchLabels:
+              {{- toYaml $proxyIngressNamespaceSelector | nindent 14 }}
+          {{- end }}
+          {{- if $proxyIngressPodSelector }}
+          podSelector:
+            matchLabels:
+              {{- toYaml $proxyIngressPodSelector | nindent 14 }}
+          {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.proxy.service.ports.agent }}
+        - protocol: TCP
+          port: {{ .Values.proxy.service.ports.admin }}
+        - protocol: TCP
+          port: {{ .Values.proxy.service.ports.endorser }}
     {{- else }}
-    - {}
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.proxy.service.ports.agent }}
+        - protocol: TCP
+          port: {{ .Values.proxy.service.ports.admin }}
+        - protocol: TCP
+          port: {{ .Values.proxy.service.ports.endorser }}
+    {{- end }}
+    {{- end }}
+    {{- with .Values.networkPolicy.proxy.extraIngress }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
   egress:
-    {{- if .Values.networkPolicy.proxy.egress }}
-    {{- toYaml .Values.networkPolicy.proxy.egress | nindent 4 }}
-    {{- else }}
+    # OpenShift SDN does not support egress restrictions, so egress remains open.
     - {}
-    {{- end }}
 {{- end }}
