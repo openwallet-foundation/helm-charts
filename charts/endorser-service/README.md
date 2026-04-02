@@ -1,6 +1,6 @@
 # endorser-service
 
-![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.1](https://img.shields.io/badge/AppVersion-1.1.1-informational?style=flat-square)
+![Version: 1.0.1](https://img.shields.io/badge/Version-1.0.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.1](https://img.shields.io/badge/AppVersion-1.1.1-informational?style=flat-square)
 A Helm chart for ACA-Py Endorser Service
 
 ## Prerequisites
@@ -152,12 +152,14 @@ This chart deploys an endorser service with the following components:
 | migration.initContainer.tag | string | `"1.36.1"` | Image tag for init container |
 | migration.resources | object | `{}` | Resource limits and requests for migration job container |
 | nameOverride | string | `""` | Override the chart name |
-| networkPolicy.api.egress | list | `[]` | Egress rules for API pods (defaults to allow all if empty) Use to restrict outbound connections (e.g., only to database and ACA-Py). Note: When non-empty, these rules replace the default allow-all egress. |
-| networkPolicy.api.extraIngress | list | `[]` | Additional ingress rules for API pods Proxy and ACA-Py communication is handled by separate network policies (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml). Use this to add additional ingress sources (e.g., monitoring namespace, external services). |
+| networkPolicy.acapy.extraIngress | list | `[]` | Additional ingress rules for ACA-Py pods Traffic from proxy and the API is always allowed by the chart-managed ACA-Py policy. |
+| networkPolicy.api.extraIngress | list | `[]` | Additional ingress rules for API pods Traffic from proxy and ACA-Py is always allowed by the chart-managed API policy. Use this to add additional ingress sources (e.g., monitoring namespace, external services). |
 | networkPolicy.enabled | bool | `true` | Enable network policies for all components |
 | networkPolicy.postgres.extraIngress | list | `[]` | Additional ingress rules for postgres pods API and migration job access is always allowed. Use this for additional sources (e.g., backup agents, monitoring). |
-| networkPolicy.proxy.egress | list | `[]` | Egress rules for proxy pods (defaults to allow all if empty) Use to restrict outbound connections (e.g., only to API and ACA-Py). |
-| networkPolicy.proxy.extraIngress | list | `[]` | Additional ingress rules for proxy pods Default allows all cluster traffic; use this to restrict ingress sources. |
+| networkPolicy.proxy.extraIngress | list | `[]` | Additional ingress rules for proxy pods Use this to add additional ingress sources beyond the ingress controller selectors. |
+| networkPolicy.proxy.ingress.enabled | bool | `true` | Enable selector-based ingress rules for proxy pods |
+| networkPolicy.proxy.ingress.namespaceSelector | object | `{}` | Namespace selector labels allowed to reach proxy pods When both selectors are empty, ingress is allowed from any source on the proxy ports. |
+| networkPolicy.proxy.ingress.podSelector | object | `{}` | Pod selector labels allowed to reach proxy pods inside matching namespaces |
 | nodeSelector | object | `{}` | Node selector for API pods |
 | podAnnotations | object | `{}` | Annotations to add to API pods |
 | podLabels | object | `{}` | Labels to add to API pods |
@@ -258,7 +260,7 @@ This chart deploys an endorser service with the following components:
 | service.port | int | `5000` | Service port for endorser API |
 | service.type | string | `"ClusterIP"` | Service type (ClusterIP, NodePort, LoadBalancer) |
 | serviceAccount.annotations | object | `{}` | Annotations for the service account |
-| serviceAccount.automountServiceAccountToken | bool | `true` | Automatically mount service account credentials |
+| serviceAccount.automountServiceAccountToken | bool | `false` | Automatically mount service account credentials |
 | serviceAccount.create | bool | `false` | Create a service account |
 | serviceAccount.name | string | `""` | Service account name (generated if empty and create is true) |
 | tolerations | list | `[]` | Tolerations for API pods |
