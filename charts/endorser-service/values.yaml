@@ -39,7 +39,7 @@ serviceAccount:
   # -- Create a service account
   create: false
   # -- Automatically mount service account credentials
-  automountServiceAccountToken: true
+  automountServiceAccountToken: false
   # -- Annotations for the service account
   annotations: {}
   # -- Service account name (generated if empty and create is true)
