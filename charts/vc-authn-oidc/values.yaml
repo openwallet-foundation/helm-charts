@@ -309,7 +309,7 @@ acapy:
     repository: openwallet-foundation/acapy-vc-authn-oidc-agent
     pullPolicy: IfNotPresent
     pullSecrets: []
-    tag: "2.4"
+    tag: "2.4.0"
 
   ## ServiceAccount configuration
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
@@ -361,19 +361,19 @@ acapy:
   ## @param acapy.argfile.yml.auto-respond-messages Automatically respond to basic messages indicating the message was received. Default: false.
   ## @param acapy.argfile.yml.auto-respond-presentation-request Automatically respond to Indy presentation requests with a constructed presentation if a corresponding credential can be retrieved. Default: false.
   ## @param acapy.argfile.yml.auto-verify-presentation Automatically verify a presentation when it is received. Default: false.
+  ## @param acapy.argfile.yml.debug-webhooks Enable webhook debug logging. Default: false.
   ## @param acapy.argfile.yml.genesis-transactions-list Load YAML configuration for connecting to multiple HyperLedger Indy ledgers.
   ## @param acapy.argfile.yml.log-level Specifies a custom logging level as one of: ('debug', 'info', 'warning', 'error', 'critical')
   ## @param acapy.argfile.yml.monitor-ping Send a webhook when a ping is sent or received.
   ## @param acapy.argfile.yml.multitenant-admin Specify whether to enable the multitenant admin api.
   ## @param acapy.argfile.yml.multitenant Enable multitenant mode.
+  ## @param acapy.argfile.yml.preserve-exchange-records Keep credential exchange records after exchange has completed. Default: false.
   ## @param acapy.argfile.yml.public-invites Send invitations out using the public DID for the agent, and receive connection requests solicited by invitations which use the public DID. Default: false.
   ## @param acapy.argfile.yml.read-only-ledger Sets ledger to read-only to prevent updates. Default: false.
-  ## @param acapy.argfile.yml.wallet-local-did If this parameter is set, provisions the wallet with a local DID from the '--seed' parameter, instead of a public DID to use with a Hyperledger Indy ledger. Default: false.
+  ## @param acapy.argfile.yml.wallet-local-did If this parameter is set, provisions the wallet with a local DID from the '--seed' parameter, instead of a public DID to use with a Hyperledger Indy ledger. Default: true.
   ## @param acapy.argfile.yml.wallet-name Specifies the wallet name to be used by the agent. This is useful if your deployment has multiple wallets.
   ## @param acapy.argfile.yml.wallet-storage-type Specifies the type of Indy wallet backend to use. Supported internal storage types are 'basic' (memory), 'default' (sqlite), and 'postgres_storage'.  The default, if not specified, is 'default'.
   ## @param acapy.argfile.yml.wallet-type Specifies the type of wallet provider to use. Supported types are 'askar' and 'askar-anoncreds'. Use 'askar-anoncreds' for WebVH support.
-  ## @param acapy.argfile.yml.preserve-exchange-records Keep credential exchange records after exchange has completed. Default: false.
-  ## @param acapy.argfile.yml.debug-webhooks Enable webhook debug logging. Default: false.
   ## @param acapy.argfile.yml.plugin [array] List of ACA-Py plugins to load
   ##
   argfile.yml:
@@ -386,19 +386,19 @@ acapy:
     auto-respond-messages: true
     auto-respond-presentation-request: true
     auto-verify-presentation: true
+    debug-webhooks: true
     genesis-transactions-list: /tmp/ledgers.yml
     log-level: info
     monitor-ping: true
     multitenant-admin: false
     multitenant: false
+    preserve-exchange-records: false
     public-invites: true
     read-only-ledger: true
     wallet-local-did: true
     wallet-name: askar-wallet
     wallet-storage-type: postgres_storage
     wallet-type: askar-anoncreds
-    preserve-exchange-records: false
-    debug-webhooks: true
     plugin:
       - webvh
 
@@ -503,8 +503,18 @@ acapy:
       ## @param acapy.ingress.admin.hostname When the ingress is enabled, a host pointing to this will be created
       hostname: admin.vc-authn-oidc-acapy.local
 
-  postgresql:
-    ## @param acapy.postgresql.commonLabels [object] apply common labels to postgresql resources
+  ## @section Acapy PostgreSQL sub-chart overrides
+  ## Overrides for CloudPirates postgres chart bundled with the acapy subchart.
+  ## Values path changed from `postgresql.*` to `postgres.*` as of acapy chart 1.0.0.
+  ## See the acapy chart README "Upgrading" section for migration steps.
+  ##
+  ## @param acapy.postgres.enabled Switch to enable or disable the PostgreSQL helm chart
+  ## @param acapy.postgres.persistence.enabled Enable PostgreSQL data persistence using PVC
+  ## @param acapy.postgres.commonLabels [object] Apply common labels to postgres resources
+  postgres:
+    enabled: true
+    persistence:
+      enabled: true
     commonLabels:
       app.kubernetes.io/role: wallet
 
@@ -779,10 +789,16 @@ redis:
 ## Use this when connecting to an existing external Redis instance
 ##
 externalRedis:
-  ## @param externalRedis.host External Redis host. When set, the chart will use this instead of the internal Redis deployment. Cannot be used together with redis.enabled=true.
+  ## @param externalRedis.mode Redis mode: single, sentinel, cluster
+  ##
+  mode: single
+  ## @param externalRedis.sentinelMasterName Sentinel master name (used only if mode=sentinel)
+  ##
+  sentinelMasterName: mymaster
+  ## @param externalRedis.host External Redis host list. Accepts a single host or comma-separated hosts. Entries may be provided as host:port, otherwise externalRedis.port is appended automatically. Cannot be used together with redis.enabled=true.
   ##
   host: ""
-  ## @param externalRedis.port External Redis port
+  ## @param externalRedis.port External Redis port appended to externalRedis.host entries that do not already include a port
   ##
   port: 6379
   ## @param externalRedis.database Redis database number to use
@@ -803,12 +819,19 @@ externalRedis:
     ## @param externalRedis.auth.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated external Redis secret
     ##
     retainOnUninstall: true
-  ## External Redis TLS configuration
+
+## @section SIEM Audit Logging
+##
+siem:
+  ## @param siem.auditEnabled Enable SIEM audit event logging. When false, all audit events are suppressed.
   ##
-  tls:
-    ## @param externalRedis.tls.enabled Enable TLS connection to external Redis
-    ##
-    enabled: false
-    ## @param externalRedis.tls.existingSecret Name of existing secret containing TLS certificates
-    ##
-    existingSecret: ""
+  auditEnabled: true
+  ## @param siem.ipSalt Optional: Raw salt string used for one-way hashing of client IP addresses. If omitted and existingSecret is empty, one is auto-generated into a Secret.
+  ##
+  ipSalt: ""
+  ## @param siem.existingSecret Optional: Name of an existing secret containing the IP Salt.
+  ##
+  existingSecret: ""
+  ## @param siem.existingSecretKey Key inside the existingSecret containing the salt value. Defaults to 'ip-salt'
+  ##
+  existingSecretKey: "ip-salt"

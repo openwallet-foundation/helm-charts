@@ -212,6 +212,17 @@ Return true if the api-secret should be created
 {{- end }}
 
 {{/*
+Create the name of the siem secret to use
+*/}}
+{{- define "vc-authn-oidc.siemSecretName" -}}
+{{- if (empty .Values.siem.existingSecret) }}
+    {{- printf "%s-%s" .Release.Name "siem" | trunc 63 | trimSuffix "-" }}
+{{- else -}}
+    {{- .Values.siem.existingSecret }}
+{{- end -}}
+{{- end }}
+
+{{/*
 Return the secret with vc-authn-oidc token private key
 */}}
 {{- define "vc-authn-oidc.token.secretName" -}}
@@ -327,6 +338,30 @@ Return true if an external Redis secret should be created
 {{- define "vc-authn-oidc.externalRedis.createSecret" -}}
 {{- if and .Values.externalRedis.host .Values.externalRedis.auth.enabled (not .Values.externalRedis.auth.existingSecret) .Values.externalRedis.auth.password -}}
 {{- true -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return REDIS_HOST in the host:port format expected by the controller.
+For external Redis, append externalRedis.port to any host entries that do not
+already include a port.
+*/}}
+{{- define "vc-authn-oidc.redis.host" -}}
+{{- if .Values.redis.enabled -}}
+{{- printf "%s-redis:6379" (include "global.fullname" .) -}}
+{{- else -}}
+{{- $defaultPort := printf "%v" .Values.externalRedis.port -}}
+{{- $hosts := list -}}
+{{- range $entry := splitList "," .Values.externalRedis.host -}}
+{{- $host := trim $entry -}}
+{{- if $host -}}
+{{- if not (contains ":" $host) -}}
+{{- $host = printf "%s:%s" $host $defaultPort -}}
+{{- end -}}
+{{- $hosts = append $hosts $host -}}
+{{- end -}}
+{{- end -}}
+{{- join "," $hosts -}}
 {{- end -}}
 {{- end -}}
 

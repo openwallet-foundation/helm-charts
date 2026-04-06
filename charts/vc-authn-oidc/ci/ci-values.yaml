@@ -6,7 +6,7 @@ acapy:
     enabled: false
   persistence:
     enabled: false
-  postgresql:
+  postgres:
     persistence:
       enabled: false
 
