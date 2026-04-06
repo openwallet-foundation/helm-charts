@@ -819,15 +819,6 @@ externalRedis:
     ## @param externalRedis.auth.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated external Redis secret
     ##
     retainOnUninstall: true
-  ## External Redis TLS configuration
-  ##
-  tls:
-    ## @param externalRedis.tls.enabled Enable TLS connection to external Redis
-    ##
-    enabled: false
-    ## @param externalRedis.tls.existingSecret Name of existing secret containing TLS certificates
-    ##
-    existingSecret: ""
 
 ## @section SIEM Audit Logging
 ##
