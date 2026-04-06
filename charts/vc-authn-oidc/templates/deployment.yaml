@@ -138,7 +138,7 @@ spec:
             - name: REDIS_MODE
               value: {{ if .Values.redis.enabled }}"single"{{ else }}{{ .Values.externalRedis.mode | quote }}{{ end }}
             - name: REDIS_HOST
-              value: {{ if .Values.redis.enabled }}"{{ include "global.fullname" . }}-redis:6379"{{ else }}{{ .Values.externalRedis.host | quote }}{{ end }}
+              value: {{ include "vc-authn-oidc.redis.host" . | quote }}
             {{- if not (and .Values.externalRedis.host (or (eq .Values.externalRedis.mode "cluster") (eq .Values.externalRedis.mode "sentinel"))) }}
             - name: REDIS_DB
               value: {{ if .Values.redis.enabled }}"0"{{ else }}{{ .Values.externalRedis.database | quote }}{{ end }}

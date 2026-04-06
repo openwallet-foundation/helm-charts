@@ -795,10 +795,10 @@ externalRedis:
   ## @param externalRedis.sentinelMasterName Sentinel master name (used only if mode=sentinel)
   ##
   sentinelMasterName: mymaster
-  ## @param externalRedis.host External Redis host. When set, the chart will use this instead of the internal Redis deployment. Cannot be used together with redis.enabled=true.
+  ## @param externalRedis.host External Redis host list. Accepts a single host or comma-separated hosts. Entries may be provided as host:port, otherwise externalRedis.port is appended automatically. Cannot be used together with redis.enabled=true.
   ##
   host: ""
-  ## @param externalRedis.port External Redis port
+  ## @param externalRedis.port External Redis port appended to externalRedis.host entries that do not already include a port
   ##
   port: 6379
   ## @param externalRedis.database Redis database number to use

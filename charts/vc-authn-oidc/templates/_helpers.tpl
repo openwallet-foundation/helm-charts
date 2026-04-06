@@ -342,6 +342,30 @@ Return true if an external Redis secret should be created
 {{- end -}}
 
 {{/*
+Return REDIS_HOST in the host:port format expected by the controller.
+For external Redis, append externalRedis.port to any host entries that do not
+already include a port.
+*/}}
+{{- define "vc-authn-oidc.redis.host" -}}
+{{- if .Values.redis.enabled -}}
+{{- printf "%s-redis:6379" (include "global.fullname" .) -}}
+{{- else -}}
+{{- $defaultPort := printf "%v" .Values.externalRedis.port -}}
+{{- $hosts := list -}}
+{{- range $entry := splitList "," .Values.externalRedis.host -}}
+{{- $host := trim $entry -}}
+{{- if $host -}}
+{{- if not (contains ":" $host) -}}
+{{- $host = printf "%s:%s" $host $defaultPort -}}
+{{- end -}}
+{{- $hosts = append $hosts $host -}}
+{{- end -}}
+{{- end -}}
+{{- join "," $hosts -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Validate MongoDB configuration - ensure external MongoDB is properly configured when bundled MongoDB is disabled
 */}}
 {{- define "vc-authn-oidc.validateMongoConfig" -}}
