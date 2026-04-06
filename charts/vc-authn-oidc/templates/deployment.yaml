@@ -140,8 +140,6 @@ spec:
             - name: REDIS_HOST
               value: {{ if .Values.redis.enabled }}"{{ include "global.fullname" . }}-redis:6379"{{ else }}{{ .Values.externalRedis.host | quote }}{{ end }}
             {{- if not (and .Values.externalRedis.host (or (eq .Values.externalRedis.mode "cluster") (eq .Values.externalRedis.mode "sentinel"))) }}
-            - name: REDIS_PORT
-              value: {{ if .Values.redis.enabled }}"6379"{{ else }}{{ .Values.externalRedis.port | quote }}{{ end }}
             - name: REDIS_DB
               value: {{ if .Values.redis.enabled }}"0"{{ else }}{{ .Values.externalRedis.database | quote }}{{ end }}
             {{- end }}
@@ -155,15 +153,6 @@ spec:
                 secretKeyRef:
                   name: {{ if .Values.externalRedis.auth.existingSecret }}{{ .Values.externalRedis.auth.existingSecret }}{{ else }}{{ include "global.fullname" . }}-redis-external{{ end }}
                   key: redis-password
-            {{- if not (or (eq .Values.externalRedis.mode "cluster") (eq .Values.externalRedis.mode "sentinel")) }}
-            - name: REDIS_URL
-              value: "redis://:$(REDIS_PASSWORD)@{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}"
-            {{- end }}
-            {{- else }}
-            {{- if not (and .Values.externalRedis.host (or (eq .Values.externalRedis.mode "cluster") (eq .Values.externalRedis.mode "sentinel"))) }}
-            - name: REDIS_URL
-              value: {{ if .Values.redis.enabled }}"redis://{{ include "global.fullname" . }}-redis:6379/0"{{ else }}"redis://{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}"{{ end }}
-            {{- end }}
             {{- end }}
             - name: SESSION_STORAGE_TYPE
               value: "redis"
