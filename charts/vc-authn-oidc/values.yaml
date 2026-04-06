@@ -309,8 +309,7 @@ acapy:
     repository: openwallet-foundation/acapy-vc-authn-oidc-agent
     pullPolicy: IfNotPresent
     pullSecrets: []
-    ## Note: Image tag should match vc-authn-oidc appVersion (published by PR #958)
-    tag: "2.3.6"
+    tag: "2.4"
 
   ## ServiceAccount configuration
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
