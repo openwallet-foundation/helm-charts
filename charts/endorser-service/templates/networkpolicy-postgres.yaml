@@ -4,6 +4,11 @@ apiVersion: networking.k8s.io/v1
 metadata:
   name: {{ include "endorser-service.fullname" . }}-postgres
   namespace: {{ .Release.Namespace | quote }}
+  {{- $annotations := include "endorser-service.renderAnnotations" (dict "context" .) }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: database
@@ -25,10 +30,21 @@ spec:
     {{- with .Values.networkPolicy.postgres.extraIngress }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+  egress:
+    {{- if .Values.networkPolicy.postgres.allowExternalEgress }}
+    - {}
+    {{- else }}
+    {{- with .Values.networkPolicy.postgres.extraEgress }}
+    {{- toYaml . | nindent 4 }}
+    {{- else }}
+    []
+    {{- end }}
+    {{- end }}
   podSelector:
     matchLabels:
       app.kubernetes.io/name: postgres
       app.kubernetes.io/instance: {{ .Release.Name }}
   policyTypes:
     - Ingress
+    - Egress
 {{- end }}

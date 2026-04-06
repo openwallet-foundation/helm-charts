@@ -66,7 +66,7 @@ This release contains three breaking changes:
 
 1. **PostgreSQL subchart** switched from Bitnami `postgresql` to CloudPirates `postgres`
 2. **ACA-Py subchart** upgraded from `0.2.3` to `1.0.0` (which also migrated its own PostgreSQL)
-3. **NetworkPolicy values** restructured under `networkPolicy.{api,proxy,postgres}`
+3. **NetworkPolicy values** restructured under `networkPolicy.{api,acapy,proxy,postgres}`
 
 ### Values migration
 
@@ -82,10 +82,10 @@ This release contains three breaking changes:
 | `acapy.postgresql.enabled` | `acapy.postgres.enabled` |
 | `acapy.postgresql.nameOverride` | `acapy.postgres.nameOverride` |
 | `networkPolicy.extraIngress` | `networkPolicy.api.extraIngress` |
-| `networkPolicy.egress` | `networkPolicy.api.egress` |
+| `networkPolicy.egress` | `networkPolicy.api.extraEgress` + `networkPolicy.api.allowExternalEgress=false` |
 | `proxy.networkPolicy.enabled` | `networkPolicy.enabled` _(single toggle)_ |
 | `proxy.networkPolicy.extraIngress` | `networkPolicy.proxy.extraIngress` |
-| `proxy.networkPolicy.egress` | `networkPolicy.proxy.egress` |
+| `proxy.networkPolicy.egress` | `networkPolicy.proxy.extraEgress` + `networkPolicy.proxy.allowExternalEgress=false` |
 
 ### Database migration steps (existing installations)
 

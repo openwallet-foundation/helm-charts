@@ -2,40 +2,34 @@
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
-  name: {{ include "endorser-service.fullname" . }}-acapy-webhook
+  name: {{ include "endorser-service.fullname" . }}-acapy
   namespace: {{ .Release.Namespace | quote }}
-  labels:
-    {{- include "endorser-service.labels" . | nindent 4 }}
-    app.kubernetes.io/component: api
-spec:
-  # Allow traffic from ACA-Py to the API (webhook)
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: acapy
-              app.kubernetes.io/instance: {{ .Release.Name }}
-      ports:
-        - protocol: TCP
-          port: {{ .Values.service.port }}
-  podSelector:
-    matchLabels:
-      {{- include "endorser-service.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: api
-  policyTypes:
-    - Ingress
----
-kind: NetworkPolicy
-apiVersion: networking.k8s.io/v1
-metadata:
-  name: {{ include "endorser-service.fullname" . }}-acapy-admin
-  namespace: {{ .Release.Namespace | quote }}
+  {{- $annotations := include "endorser-service.renderAnnotations" (dict "context" .) }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: acapy
 spec:
-  # Allow traffic from the API to ACA-Py admin
   ingress:
+    {{- if .Values.proxy.enabled }}
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "endorser-service.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: proxy
+      ports:
+        - protocol: TCP
+          port: {{ .Values.acapy.service.ports.http }}
+        - protocol: TCP
+          port: {{ .Values.acapy.service.ports.admin }}
+        {{- if .Values.acapy.websockets.enabled }}
+        - protocol: TCP
+          port: {{ .Values.acapy.service.ports.ws }}
+        {{- end }}
+    {{- end }}
     - from:
         - podSelector:
             matchLabels:
@@ -44,10 +38,27 @@ spec:
       ports:
         - protocol: TCP
           port: {{ .Values.acapy.service.ports.admin }}
+    {{- with .Values.networkPolicy.acapy.extraIngress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  egress:
+    {{- if .Values.networkPolicy.acapy.allowExternalEgress }}
+    - {}
+    {{- else }}
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    {{- with .Values.networkPolicy.acapy.extraEgress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- end }}
   podSelector:
     matchLabels:
       app.kubernetes.io/name: acapy
       app.kubernetes.io/instance: {{ .Release.Name }}
   policyTypes:
     - Ingress
+    - Egress
 {{- end }}

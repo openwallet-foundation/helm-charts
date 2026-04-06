@@ -4,6 +4,11 @@ kind: NetworkPolicy
 metadata:
   name: {{ include "endorser-service.fullname" . }}
   namespace: {{ .Release.Namespace | quote }}
+  {{- $annotations := include "endorser-service.renderAnnotations" (dict "context" .) }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: api
@@ -17,25 +22,39 @@ spec:
     - Egress
   ingress:
     {{- if .Values.proxy.enabled }}
-    # When proxy is enabled, ingress is handled by separate NetworkPolicies
-    # (networkpolicy-proxy.yaml and networkpolicy-acapy.yaml).
-    # Only include user-supplied additional rules here.
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "endorser-service.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: proxy
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.port }}
+    {{- end }}
+    {{- if .Values.acapy.enabled }}
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: acapy
+              app.kubernetes.io/instance: {{ .Release.Name }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.port }}
+    {{- end }}
     {{- with .Values.networkPolicy.api.extraIngress }}
     {{- toYaml . | nindent 4 }}
-    {{- end }}
-    {{- else }}
-    # When proxy is disabled, allow all ingress by default so the API can be
-    # accessed directly (e.g., via ingress controller). Users can restrict
-    # this by providing specific rules via networkPolicy.api.extraIngress.
-    - {}
-    {{- with .Values.networkPolicy.api.extraIngress }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
     {{- end }}
   egress:
-    {{- if .Values.networkPolicy.api.egress | len }}
-    {{- toYaml .Values.networkPolicy.api.egress | nindent 4 }}
-    {{- else }}
+    {{- if .Values.networkPolicy.api.allowExternalEgress }}
     - {}
+    {{- else }}
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    {{- with .Values.networkPolicy.api.extraEgress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
     {{- end }}
 {{- end }}

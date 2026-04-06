@@ -48,12 +48,33 @@ Create chart name and version as used by the chart label.
 Common labels.
 */}}
 {{- define "endorser-service.labels" -}}
-helm.sh/chart: {{ include "endorser-service.chart" . }}
-{{ include "endorser-service.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- $labels := dict -}}
+{{- with .Values.commonLabels }}
+{{- $labels = mergeOverwrite $labels . -}}
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- $labels = mergeOverwrite $labels (dict "helm.sh/chart" (include "endorser-service.chart" .)) -}}
+{{- $labels = mergeOverwrite $labels (fromYaml (include "endorser-service.selectorLabels" .)) -}}
+{{- if .Chart.AppVersion }}
+{{- $labels = mergeOverwrite $labels (dict "app.kubernetes.io/version" .Chart.AppVersion) -}}
+{{- end }}
+{{- $labels = mergeOverwrite $labels (dict "app.kubernetes.io/managed-by" .Release.Service) -}}
+{{- toYaml $labels -}}
+{{- end }}
+
+{{/*
+Common annotations merged with resource-specific annotations.
+*/}}
+{{- define "endorser-service.renderAnnotations" -}}
+{{- $annotations := dict -}}
+{{- with .context.Values.commonAnnotations }}
+{{- $annotations = mergeOverwrite $annotations . -}}
+{{- end }}
+{{- with .annotations }}
+{{- $annotations = mergeOverwrite $annotations . -}}
+{{- end }}
+{{- if $annotations }}
+{{- toYaml $annotations -}}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -90,8 +111,10 @@ Return the name of the service account to use.
 {{- define "endorser-service.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
 {{- default (include "endorser-service.fullname" .) .Values.serviceAccount.name }}
+{{- else if .Values.serviceAccount.name }}
+{{- .Values.serviceAccount.name }}
 {{- else }}
-{{- default "default" .Values.serviceAccount.name }}
+{{- "" }}
 {{- end }}
 {{- end }}
 
