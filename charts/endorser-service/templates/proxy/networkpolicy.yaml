@@ -58,6 +58,16 @@ spec:
     {{- toYaml . | nindent 4 }}
     {{- end }}
   egress:
-    # OpenShift SDN does not support egress restrictions, so egress remains open.
+    {{- if .Values.networkPolicy.proxy.allowExternalEgress }}
     - {}
+    {{- else }}
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    {{- with .Values.networkPolicy.proxy.extraEgress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- end }}
 {{- end }}

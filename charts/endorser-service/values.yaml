@@ -157,12 +157,22 @@ networkPolicy:
   enabled: true
   # API component network policy settings
   api:
+    # -- Allow API pods to access any port and any destination.
+    # Set to false to restrict egress to DNS by default and layer additional rules via extraEgress.
+    allowExternalEgress: true
+    # -- Additional egress rules for API pods
+    extraEgress: []
     # -- Additional ingress rules for API pods
     # Traffic from proxy and ACA-Py is always allowed by the chart-managed API policy.
     # Use this to add additional ingress sources (e.g., monitoring namespace, external services).
     extraIngress: []
   # ACA-Py component network policy settings
   acapy:
+    # -- Allow ACA-Py pods to access any port and any destination.
+    # Set to false to restrict egress to DNS by default and layer additional rules via extraEgress.
+    allowExternalEgress: true
+    # -- Additional egress rules for ACA-Py pods
+    extraEgress: []
     # -- Additional ingress rules for ACA-Py pods
     # Traffic from proxy and the API is always allowed by the chart-managed ACA-Py policy.
     extraIngress: []
@@ -178,11 +188,21 @@ networkPolicy:
         # network.openshift.io/policy-group: ingress
       # -- Pod selector labels allowed to reach proxy pods inside matching namespaces
       podSelector: {}
+    # -- Allow proxy pods to access any port and any destination.
+    # Set to false to restrict egress to DNS by default and layer additional rules via extraEgress.
+    allowExternalEgress: true
+    # -- Additional egress rules for proxy pods
+    extraEgress: []
     # -- Additional ingress rules for proxy pods
     # Use this to add additional ingress sources beyond the ingress controller selectors.
     extraIngress: []
   # Postgres database network policy settings (only applies to bundled postgres)
   postgres:
+    # -- Allow postgres pods to access any port and any destination.
+    # Set to false to deny postgres egress by default and layer additional rules via extraEgress only when needed.
+    allowExternalEgress: false
+    # -- Additional egress rules for postgres pods
+    extraEgress: []
     # -- Additional ingress rules for postgres pods
     # API and migration job access is always allowed. Use this for additional sources (e.g., backup agents, monitoring).
     extraIngress: []

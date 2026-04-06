@@ -41,10 +41,24 @@ spec:
     {{- with .Values.networkPolicy.acapy.extraIngress }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+  egress:
+    {{- if .Values.networkPolicy.acapy.allowExternalEgress }}
+    - {}
+    {{- else }}
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    {{- with .Values.networkPolicy.acapy.extraEgress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- end }}
   podSelector:
     matchLabels:
       app.kubernetes.io/name: acapy
       app.kubernetes.io/instance: {{ .Release.Name }}
   policyTypes:
     - Ingress
+    - Egress
 {{- end }}

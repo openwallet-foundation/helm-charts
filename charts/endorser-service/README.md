@@ -152,10 +152,18 @@ This chart deploys an endorser service with the following components:
 | migration.initContainer.tag | string | `"1.36.1"` | Image tag for init container |
 | migration.resources | object | `{}` | Resource limits and requests for migration job container |
 | nameOverride | string | `""` | Override the chart name |
+| networkPolicy.acapy.allowExternalEgress | bool | `true` | Allow ACA-Py pods to access any port and any destination. Set to false to restrict egress to DNS by default and layer additional rules via extraEgress. |
+| networkPolicy.acapy.extraEgress | list | `[]` | Additional egress rules for ACA-Py pods |
 | networkPolicy.acapy.extraIngress | list | `[]` | Additional ingress rules for ACA-Py pods Traffic from proxy and the API is always allowed by the chart-managed ACA-Py policy. |
+| networkPolicy.api.allowExternalEgress | bool | `true` | Allow API pods to access any port and any destination. Set to false to restrict egress to DNS by default and layer additional rules via extraEgress. |
+| networkPolicy.api.extraEgress | list | `[]` | Additional egress rules for API pods |
 | networkPolicy.api.extraIngress | list | `[]` | Additional ingress rules for API pods Traffic from proxy and ACA-Py is always allowed by the chart-managed API policy. Use this to add additional ingress sources (e.g., monitoring namespace, external services). |
 | networkPolicy.enabled | bool | `true` | Enable network policies for all components |
+| networkPolicy.postgres.allowExternalEgress | bool | `false` | Allow postgres pods to access any port and any destination. Set to false to deny postgres egress by default and layer additional rules via extraEgress only when needed. |
+| networkPolicy.postgres.extraEgress | list | `[]` | Additional egress rules for postgres pods |
 | networkPolicy.postgres.extraIngress | list | `[]` | Additional ingress rules for postgres pods API and migration job access is always allowed. Use this for additional sources (e.g., backup agents, monitoring). |
+| networkPolicy.proxy.allowExternalEgress | bool | `true` | Allow proxy pods to access any port and any destination. Set to false to restrict egress to DNS by default and layer additional rules via extraEgress. |
+| networkPolicy.proxy.extraEgress | list | `[]` | Additional egress rules for proxy pods |
 | networkPolicy.proxy.extraIngress | list | `[]` | Additional ingress rules for proxy pods Use this to add additional ingress sources beyond the ingress controller selectors. |
 | networkPolicy.proxy.ingress.enabled | bool | `true` | Enable selector-based ingress rules for proxy pods |
 | networkPolicy.proxy.ingress.namespaceSelector | object | `{}` | Namespace selector labels allowed to reach proxy pods When both selectors are empty, ingress is allowed from any source on the proxy ports. |
@@ -276,7 +284,7 @@ This release contains three breaking changes:
 
 1. **PostgreSQL subchart** switched from Bitnami `postgresql` to CloudPirates `postgres`
 2. **ACA-Py subchart** upgraded from `0.2.3` to `1.0.0` (which also migrated its own PostgreSQL)
-3. **NetworkPolicy values** restructured under `networkPolicy.{api,proxy,postgres}`
+3. **NetworkPolicy values** restructured under `networkPolicy.{api,acapy,proxy,postgres}`
 
 ### Values migration
 
@@ -292,10 +300,10 @@ This release contains three breaking changes:
 | `acapy.postgresql.enabled` | `acapy.postgres.enabled` |
 | `acapy.postgresql.nameOverride` | `acapy.postgres.nameOverride` |
 | `networkPolicy.extraIngress` | `networkPolicy.api.extraIngress` |
-| `networkPolicy.egress` | `networkPolicy.api.egress` |
+| `networkPolicy.egress` | `networkPolicy.api.extraEgress` + `networkPolicy.api.allowExternalEgress=false` |
 | `proxy.networkPolicy.enabled` | `networkPolicy.enabled` _(single toggle)_ |
 | `proxy.networkPolicy.extraIngress` | `networkPolicy.proxy.extraIngress` |
-| `proxy.networkPolicy.egress` | `networkPolicy.proxy.egress` |
+| `proxy.networkPolicy.egress` | `networkPolicy.proxy.extraEgress` + `networkPolicy.proxy.allowExternalEgress=false` |
 
 ### Database migration steps (existing installations)
 
