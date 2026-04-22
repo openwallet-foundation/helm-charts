@@ -130,7 +130,6 @@ image:
 ## @param argfile.yml.wallet-name Specifies the wallet name to be used by the agent. This is useful if your deployment has multiple wallets.
 ## @param argfile.yml.wallet-storage-type Specifies the type of Indy wallet backend to use. Supported internal storage types are 'basic' (memory), 'default' (sqlite), and 'postgres_storage'.  The default, if not specified, is 'default'.
 ## @param argfile.yml.wallet-type Specifies the type of Indy wallet provider to use. Supported internal storage types are 'basic' (memory) and 'indy'. The default (if not specified) is 'basic'.
-## @param argfile.yml.webhook-url Send webhooks containing internal state changes to the specified URL. Optional API key to be passed in the request body can be appended using a hash separator [#]. This is useful for a controller to monitor agent events and respond to those events using the admin API. If not specified, webhooks are not published by the agent.
 ##
 argfile.yml:
   admin-insecure-mode: false
@@ -170,7 +169,25 @@ argfile.yml:
   wallet-name: askar-wallet
   wallet-storage-type: postgres_storage
   wallet-type: askar
-  webhook-url: '{{- printf "%s/webhooks" (include "acapy.agent.url" .) }}'
+
+## @section Webhook configuration
+## @descriptionStart
+## Configure ACA-Py webhook delivery.
+## Set `webhook.url` to send webhooks to a plain URL (evaluated as a template, so parent charts can compute it dynamically).
+## Set `webhook.existingSecret` to load a pre-composed `ACAPY_WEBHOOK_URL` from a Secret (takes precedence over `webhook.url`).
+## If neither is set, webhooks are disabled.
+##
+## To include an API key in the URL, either bake it into `webhook.url` directly as `<url>#<apikey>`,
+## or store the full composed value in a Secret and reference it with `webhook.existingSecret`.
+## @descriptionEnd
+##
+## @param webhook.url Webhook callback URL. Evaluated as a template. Set ACAPY_WEBHOOK_URL to this value.
+## @param webhook.existingSecret Name of an existing Secret containing a full ACAPY_WEBHOOK_URL value (including any API key). Takes precedence over webhook.url.
+## @param webhook.secretKey Key in webhook.existingSecret containing the ACAPY_WEBHOOK_URL value.
+webhook:
+  url: ""
+  existingSecret: ""
+  secretKey: ACAPY_WEBHOOK_URL
 
 ## @param ledgers.yml [object]
 ledgers.yml:
@@ -217,7 +234,6 @@ websockets:
 ##   adminApiKey   (omitted if argfile.yml.admin-insecure-mode=true)
 ##   jwt           (multitenant JWT signing secret)
 ##   walletKey     (primary wallet key / encryption key)
-##   webhookapi    (optional key appended to webhook-url if using #APIKEY pattern)
 ## Seed Secret keys expected:
 ##   seed          (32 char wallet seed when wallet-local-did=true or deterministic DID needed)
 ##
@@ -231,7 +247,6 @@ websockets:
 ## @param secrets.api.secretKeys.adminApiKey Key in the API secret holding the admin API key.
 ## @param secrets.api.secretKeys.jwtKey Key in the API secret holding the multitenant JWT signing secret.
 ## @param secrets.api.secretKeys.walletKey Key in the API secret holding the wallet key.
-## @param secrets.api.secretKeys.webhookapiKey Key in the API secret holding the webhook API key (used when embedding in webhook-url).
 ## @param secrets.seed.enabled Enable creation and mounting of the seed secret as ACAPY_WALLET_SEED.
 ## @param secrets.seed.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated seed secret
 ## @param secrets.seed.existingSecret Name of an existing Secret providing the wallet seed. If set, the chart will NOT create the seed secret.
@@ -245,7 +260,6 @@ secrets:
       adminApiKey: adminApiKey
       jwtKey: jwt
       walletKey: walletKey
-      webhookapiKey: webhookapi
   seed:
     enabled: true
     retainOnUninstall: true

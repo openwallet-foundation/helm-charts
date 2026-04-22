@@ -1,5 +1,7 @@
 {{ $apiSecretName := include "acapy.api.secretName" . }}
 {{ $seedSecretName := include "acapy.seed.secretName" . }}
+{{ $webhookSecretName := include "acapy.webhook.secretName" . }}
+{{ $webhookURL := include "common.tplvalues.render" (dict "value" .Values.webhook.url "context" $) }}
 {{ $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
 apiVersion: apps/v1
 kind: Deployment
@@ -127,6 +129,16 @@ spec:
                   key: {{ .Values.secrets.api.secretKeys.jwtKey | default "jwt" }}
             - name: ACAPY_WALLET_STORAGE_CREDS
               value: {{ include "acapy.walletStorageCredentials" . }}
+            {{- if $webhookSecretName }}
+            - name: ACAPY_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $webhookSecretName }}
+                  key: {{ .Values.webhook.secretKey }}
+            {{- else if $webhookURL }}
+            - name: ACAPY_WEBHOOK_URL
+              value: {{ $webhookURL | quote }}
+            {{- end }}
             {{- if .Values.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 6 }}
             {{- end }}
