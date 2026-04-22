@@ -150,6 +150,15 @@ Return the Secret name for seed secret
 {{- end -}}
 
 {{/*
+Return the Secret name that holds a precomposed ACAPY_WEBHOOK_URL.
+*/}}
+{{- define "acapy.webhook.secretName" -}}
+{{- if .Values.webhook.existingSecret -}}
+{{- tpl .Values.webhook.existingSecret . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Generate ACA-Py wallet storage config
 */}}
 {{- define "acapy.walletStorageConfig" -}}
