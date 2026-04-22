@@ -151,9 +151,12 @@ Return the Secret name for seed secret
 
 {{/*
 Return the Secret name that holds a precomposed ACAPY_WEBHOOK_URL.
+Fails if both webhook.url and webhook.existingSecret are set simultaneously.
 */}}
 {{- define "acapy.webhook.secretName" -}}
-{{- if .Values.webhook.existingSecret -}}
+{{- if and .Values.webhook.existingSecret .Values.webhook.url -}}
+  {{- fail "webhook: set either webhook.url or webhook.existingSecret, not both" -}}
+{{- else if .Values.webhook.existingSecret -}}
 {{- tpl .Values.webhook.existingSecret . }}
 {{- end -}}
 {{- end -}}
