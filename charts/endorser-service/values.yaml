@@ -184,8 +184,7 @@ networkPolicy:
     ingress:
       # -- Namespace selector labels allowed to reach proxy pods.
       # When both selectors are empty, ingress is allowed from any source on the proxy ports.
-      # OpenShift SDN:  network.openshift.io/policy-group: ingress
-      # OpenShift OVN:  kubernetes.io/metadata.name: openshift-ingress
+      # Example (ingress-nginx): kubernetes.io/metadata.name: ingress-nginx
       namespaceSelector: {}
       # -- Pod selector labels allowed to reach proxy pods inside matching namespaces
       podSelector: {}
@@ -390,7 +389,7 @@ acapy:
 postgres:
   # -- Switch to enable or disable the Postgres helm chart
   enabled: true
-  # -- Target platform for deployment. Set to "openshift" for OpenShift compatibility (auto-detected if not set)
+  # -- Target platform for deployment (e.g., "openshift"). Adjusts security context defaults for the target environment. Auto-detected if not set.
   targetPlatform: ""
   # Postgres container image
   image:
@@ -435,12 +434,12 @@ postgres:
     # -- PVC Storage Request for PostgreSQL volume
     size: 1Gi
   # Pod Security Context
-  # Note: When targetPlatform is "openshift", these are automatically omitted
+  # Note: These fields may be omitted automatically depending on the targetPlatform value
   podSecurityContext:
     # -- Group ID for the pod's volumes
     fsGroup: 999
   # Container Security Context
-  # Note: When targetPlatform is "openshift", runAsUser/runAsGroup are automatically omitted
+  # Note: runAsUser/runAsGroup may be omitted automatically depending on the targetPlatform value
   containerSecurityContext:
     # -- User ID for the container
     runAsUser: 999
@@ -526,8 +525,8 @@ proxy:
     # -- Ingress class name
     className: ""
     # -- Ingress annotations
-    annotations:
-      route.openshift.io/termination: edge
+    annotations: {}
+      # nginx.ingress.kubernetes.io/ssl-redirect: "true"
     # Ingress hosts (typically three: agent, admin, endorser)
     hosts:
       - host: endorser-agent.example.com

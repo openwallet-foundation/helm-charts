@@ -1,6 +1,6 @@
 # endorser-service
 
-![Version: 1.0.2](https://img.shields.io/badge/Version-1.0.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.1](https://img.shields.io/badge/AppVersion-1.1.1-informational?style=flat-square)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.1](https://img.shields.io/badge/AppVersion-1.1.1-informational?style=flat-square)
 A Helm chart for ACA-Py Endorser Service
 
 ## Prerequisites
@@ -166,7 +166,7 @@ This chart deploys an endorser service with the following components:
 | networkPolicy.proxy.allowExternalEgress | bool | `true` | Allow proxy pods to access any port and any destination. Set to false to restrict egress to DNS by default and layer additional rules via extraEgress. |
 | networkPolicy.proxy.extraEgress | list | `[]` | Additional egress rules for proxy pods |
 | networkPolicy.proxy.extraIngress | list | `[]` | Additional ingress rules for proxy pods Use this to add additional ingress sources beyond the ingress controller selectors. |
-| networkPolicy.proxy.ingress.namespaceSelector | object | `{}` | Namespace selector labels allowed to reach proxy pods. When both selectors are empty, ingress is allowed from any source on the proxy ports. OpenShift SDN:  network.openshift.io/policy-group: ingress OpenShift OVN:  kubernetes.io/metadata.name: openshift-ingress |
+| networkPolicy.proxy.ingress.namespaceSelector | object | `{}` | Namespace selector labels allowed to reach proxy pods. When both selectors are empty, ingress is allowed from any source on the proxy ports. Example (ingress-nginx): kubernetes.io/metadata.name: ingress-nginx |
 | networkPolicy.proxy.ingress.podSelector | object | `{}` | Pod selector labels allowed to reach proxy pods inside matching namespaces |
 | nodeSelector | object | `{}` | Node selector for API pods |
 | podAnnotations | object | `{}` | Annotations to add to API pods |
@@ -193,7 +193,7 @@ This chart deploys an endorser service with the following components:
 | postgres.podSecurityContext.fsGroup | int | `999` | Group ID for the pod's volumes |
 | postgres.resources | object | `{}` | Resource requests and limits for PostgreSQL |
 | postgres.service.port | int | `5432` | PostgreSQL service port |
-| postgres.targetPlatform | string | `""` | Target platform for deployment. Set to "openshift" for OpenShift compatibility (auto-detected if not set) |
+| postgres.targetPlatform | string | `""` | Target platform for deployment (e.g., "openshift"). Adjusts security context defaults for the target environment. Auto-detected if not set. |
 | proxy.affinity | object | `{}` | Affinity rules for proxy pods |
 | proxy.autoscaling.enabled | bool | `false` | Enable autoscaling |
 | proxy.autoscaling.maxReplicas | int | `9` | Maximum replicas |
@@ -210,7 +210,7 @@ This chart deploys an endorser service with the following components:
 | proxy.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
 | proxy.image.repository | string | `"ghcr.io/i5okie/caddy-rootless"` | Image repository |
 | proxy.image.tag | string | `"2-alpine"` | Image tag |
-| proxy.ingress.annotations | object | `{"route.openshift.io/termination":"edge"}` | Ingress annotations |
+| proxy.ingress.annotations | object | `{}` | Ingress annotations |
 | proxy.ingress.className | string | `""` | Ingress class name |
 | proxy.ingress.enabled | bool | `true` | Enable ingress for proxy |
 | proxy.ingress.hosts[0].host | string | `"endorser-agent.example.com"` |  |
