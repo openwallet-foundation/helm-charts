@@ -462,6 +462,32 @@ entries:
   endorser-service:
   - apiVersion: v2
     appVersion: 1.1.1
+    created: "2026-04-23T15:54:58.857436396Z"
+    dependencies:
+    - condition: acapy.enabled
+      name: acapy
+      repository: https://openwallet-foundation.github.io/helm-charts/
+      version: 1.0.2
+    - condition: postgres.enabled
+      name: postgres
+      repository: oci://registry-1.docker.io/cloudpirates
+      version: 0.15.5
+    description: A Helm chart for ACA-Py Endorser Service
+    digest: 2c3a061543523ee60842e40e9eb5fb2b8f4b890b8f7f49cfdecdd05c184713ba
+    maintainers:
+    - email: emiliano.sune@quartech.com
+      name: esune
+      url: https://github.com/esune
+    - email: ivan.polchenko@quartech.com
+      name: i5okie
+      url: https://github.com/i5okie
+    name: endorser-service
+    type: application
+    urls:
+    - https://github.com/openwallet-foundation/helm-charts/releases/download/endorser-service-1.1.0/endorser-service-1.1.0.tgz
+    version: 1.1.0
+  - apiVersion: v2
+    appVersion: 1.1.1
     created: "2026-02-18T21:53:39.640476348Z"
     dependencies:
     - condition: acapy.enabled
@@ -868,4 +894,4 @@ entries:
     urls:
     - https://github.com/openwallet-foundation/helm-charts/releases/download/vc-authn-oidc-0.4.3/vc-authn-oidc-0.4.3.tgz
     version: 0.4.3
-generated: "2026-04-22T22:44:48.060439034Z"
+generated: "2026-04-23T15:54:58.857519072Z"
