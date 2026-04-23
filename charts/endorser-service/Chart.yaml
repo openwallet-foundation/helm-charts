@@ -14,7 +14,7 @@ maintainers:
     url: https://github.com/i5okie
 dependencies:
   - name: acapy
-    version: "1.0.0"
+    version: "1.0.2"
     repository: "https://openwallet-foundation.github.io/helm-charts/"
     condition: acapy.enabled
   - name: postgres

@@ -178,14 +178,14 @@ networkPolicy:
     extraIngress: []
   # Proxy component network policy settings
   proxy:
-    # Selector-based ingress control for proxy pods
+    # Selector-based ingress control for proxy pods.
+    # This is independent of whether a Kubernetes Ingress resource is deployed (proxy.ingress.enabled).
+    # It controls which sources (e.g. ingress controller) are allowed to reach the proxy.
     ingress:
-      # -- Enable selector-based ingress rules for proxy pods
-      enabled: true
-      # -- Namespace selector labels allowed to reach proxy pods
+      # -- Namespace selector labels allowed to reach proxy pods.
       # When both selectors are empty, ingress is allowed from any source on the proxy ports.
+      # Example (ingress-nginx): kubernetes.io/metadata.name: ingress-nginx
       namespaceSelector: {}
-        # network.openshift.io/policy-group: ingress
       # -- Pod selector labels allowed to reach proxy pods inside matching namespaces
       podSelector: {}
     # -- Allow proxy pods to access any port and any destination.
@@ -323,9 +323,14 @@ acapy:
       witness: true
   # -- Extra environment variables as an array
   extraEnvVars: []
-  # -- Name of existing secret containing extra environment variables (webhook URL for endorser)
-  # Template is evaluated by common.tplvalues.render in Aca-Py deployment
-  extraEnvVarsSecret: '{{ printf "%s-acapy-webhook" .Release.Name | trunc 63 | trimSuffix "-" }}'
+  # Webhook configuration for ACA-Py to deliver events to the endorser API
+  webhook:
+    # -- Name of the Secret containing a pre-composed ACAPY_WEBHOOK_URL (with embedded API key).
+    # Evaluated as a template; takes precedence over webhook.url.
+    # Points to the chart-managed webhook secret by default.
+    existingSecret: '{{ printf "%s-acapy-webhook" .Release.Name | trunc 63 | trimSuffix "-" }}'
+    # -- Key within the secret that holds the full webhook URL value.
+    secretKey: ACAPY_WEBHOOK_URL
   # -- External agent URL (public endpoint)
   agentUrl: https://endorser-agent.example.com
   # -- External admin URL (public endpoint)
@@ -384,7 +389,7 @@ acapy:
 postgres:
   # -- Switch to enable or disable the Postgres helm chart
   enabled: true
-  # -- Target platform for deployment. Set to "openshift" for OpenShift compatibility (auto-detected if not set)
+  # -- Target platform for deployment (e.g., "openshift"). Adjusts security context defaults for the target environment. Auto-detected if not set.
   targetPlatform: ""
   # Postgres container image
   image:
@@ -429,12 +434,12 @@ postgres:
     # -- PVC Storage Request for PostgreSQL volume
     size: 1Gi
   # Pod Security Context
-  # Note: When targetPlatform is "openshift", these are automatically omitted
+  # Note: These fields may be omitted automatically depending on the targetPlatform value
   podSecurityContext:
     # -- Group ID for the pod's volumes
     fsGroup: 999
   # Container Security Context
-  # Note: When targetPlatform is "openshift", runAsUser/runAsGroup are automatically omitted
+  # Note: runAsUser/runAsGroup may be omitted automatically depending on the targetPlatform value
   containerSecurityContext:
     # -- User ID for the container
     runAsUser: 999
@@ -520,8 +525,8 @@ proxy:
     # -- Ingress class name
     className: ""
     # -- Ingress annotations
-    annotations:
-      route.openshift.io/termination: edge
+    annotations: {}
+      # nginx.ingress.kubernetes.io/ssl-redirect: "true"
     # Ingress hosts (typically three: agent, admin, endorser)
     hosts:
       - host: endorser-agent.example.com
