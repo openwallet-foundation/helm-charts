@@ -1,3 +1,12 @@
+## [1.1.0](https://github.com/openwallet-foundation/helm-charts/compare/endorser-service-1.0.0...endorser-service-1.1.0) (2026-04-23)
+
+### Features
+
+* **endorser-service:** Update to latest acapy-1.0.2 chart, implement new webhook setting, fix network policy ([#122](https://github.com/openwallet-foundation/helm-charts/issues/122)) ([79dd546](https://github.com/openwallet-foundation/helm-charts/commit/79dd546fed2db72a6702feeff23538ae2b722cfb))
+
+### Bug Fixes
+
+* **endorser-service:** Fix network policy not rendering ingress by de… ([#115](https://github.com/openwallet-foundation/helm-charts/issues/115)) ([b6acbfb](https://github.com/openwallet-foundation/helm-charts/commit/b6acbfb172b3cb5d818990c9c1a47b6f2d06d954))
 ## [1.0.0](https://github.com/openwallet-foundation/helm-charts/compare/endorser-service-0.1.0...endorser-service-1.0.0) (2026-02-18)
 
 ### ⚠ BREAKING CHANGES
