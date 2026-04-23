@@ -1,6 +1,6 @@
 # endorser-service
 
-![Version: 1.0.1](https://img.shields.io/badge/Version-1.0.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.1](https://img.shields.io/badge/AppVersion-1.1.1-informational?style=flat-square)
+![Version: 1.0.2](https://img.shields.io/badge/Version-1.0.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.1](https://img.shields.io/badge/AppVersion-1.1.1-informational?style=flat-square)
 A Helm chart for ACA-Py Endorser Service
 
 ## Prerequisites
@@ -60,7 +60,7 @@ This chart deploys an endorser service with the following components:
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://openwallet-foundation.github.io/helm-charts/ | acapy | 1.0.0 |
+| https://openwallet-foundation.github.io/helm-charts/ | acapy | 1.0.2 |
 | oci://registry-1.docker.io/cloudpirates | postgres | 0.15.5 |
 
 ## Parameters
@@ -85,7 +85,6 @@ This chart deploys an endorser service with the following components:
 | acapy.agentUrl | string | `"https://endorser-agent.example.com"` | External agent URL (public endpoint) |
 | acapy.enabled | bool | `true` | Enable ACA-Py agent deployment |
 | acapy.extraEnvVars | list | `[]` | Extra environment variables as an array |
-| acapy.extraEnvVarsSecret | string | `"{{ printf \"%s-acapy-webhook\" .Release.Name | trunc 63 | trimSuffix \"-\" }}"` | Name of existing secret containing extra environment variables (webhook URL for endorser) Template is evaluated by common.tplvalues.render in Aca-Py deployment |
 | acapy.image.registry | string | `"ghcr.io"` | Container image registry |
 | acapy.image.repository | string | `"openwallet-foundation/acapy-endorser-service/agent"` | Container image repository |
 | acapy.image.tag | string | `"1.1.2"` | Image tag (defaults to ACA-Py's chart appVersion) |
@@ -102,6 +101,8 @@ This chart deploys an endorser service with the following components:
 | acapy.service.ports.admin | int | `8051` | Admin API port |
 | acapy.service.ports.http | int | `8050` | HTTP port for agent endpoints |
 | acapy.service.ports.ws | int | `8052` | WebSocket port |
+| acapy.webhook.existingSecret | string | `"{{ printf \"%s-acapy-webhook\" .Release.Name | trunc 63 | trimSuffix \"-\" }}"` | Name of the Secret containing a pre-composed ACAPY_WEBHOOK_URL (with embedded API key). Evaluated as a template; takes precedence over webhook.url. Points to the chart-managed webhook secret by default. |
+| acapy.webhook.secretKey | string | `"ACAPY_WEBHOOK_URL"` | Key within the secret that holds the full webhook URL value. |
 | acapy.websockets.enabled | bool | `true` | Enable WebSocket support |
 | affinity | object | `{}` | Affinity rules for API pods |
 | api.acapyAdminUrl | string | `"https://endorser-agent-admin.example.com"` | ACA-Py admin URL (external) |
