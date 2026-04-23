@@ -165,8 +165,7 @@ This chart deploys an endorser service with the following components:
 | networkPolicy.proxy.allowExternalEgress | bool | `true` | Allow proxy pods to access any port and any destination. Set to false to restrict egress to DNS by default and layer additional rules via extraEgress. |
 | networkPolicy.proxy.extraEgress | list | `[]` | Additional egress rules for proxy pods |
 | networkPolicy.proxy.extraIngress | list | `[]` | Additional ingress rules for proxy pods Use this to add additional ingress sources beyond the ingress controller selectors. |
-| networkPolicy.proxy.ingress.enabled | bool | `true` | Enable selector-based ingress rules for proxy pods |
-| networkPolicy.proxy.ingress.namespaceSelector | object | `{}` | Namespace selector labels allowed to reach proxy pods When both selectors are empty, ingress is allowed from any source on the proxy ports. |
+| networkPolicy.proxy.ingress.namespaceSelector | object | `{}` | Namespace selector labels allowed to reach proxy pods. When both selectors are empty, ingress is allowed from any source on the proxy ports. OpenShift SDN:  network.openshift.io/policy-group: ingress OpenShift OVN:  kubernetes.io/metadata.name: openshift-ingress |
 | networkPolicy.proxy.ingress.podSelector | object | `{}` | Pod selector labels allowed to reach proxy pods inside matching namespaces |
 | nodeSelector | object | `{}` | Node selector for API pods |
 | podAnnotations | object | `{}` | Annotations to add to API pods |

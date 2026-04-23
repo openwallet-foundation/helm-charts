@@ -178,14 +178,15 @@ networkPolicy:
     extraIngress: []
   # Proxy component network policy settings
   proxy:
-    # Selector-based ingress control for proxy pods
+    # Selector-based ingress control for proxy pods.
+    # This is independent of whether a Kubernetes Ingress resource is deployed (proxy.ingress.enabled).
+    # It controls which sources (e.g. ingress controller) are allowed to reach the proxy.
     ingress:
-      # -- Enable selector-based ingress rules for proxy pods
-      enabled: true
-      # -- Namespace selector labels allowed to reach proxy pods
+      # -- Namespace selector labels allowed to reach proxy pods.
       # When both selectors are empty, ingress is allowed from any source on the proxy ports.
+      # OpenShift SDN:  network.openshift.io/policy-group: ingress
+      # OpenShift OVN:  kubernetes.io/metadata.name: openshift-ingress
       namespaceSelector: {}
-        # network.openshift.io/policy-group: ingress
       # -- Pod selector labels allowed to reach proxy pods inside matching namespaces
       podSelector: {}
     # -- Allow proxy pods to access any port and any destination.
