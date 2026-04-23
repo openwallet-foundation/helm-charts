@@ -1,9 +1,9 @@
 dependencies:
 - name: acapy
   repository: https://openwallet-foundation.github.io/helm-charts/
-  version: 1.0.0
+  version: 1.0.2
 - name: postgres
   repository: oci://registry-1.docker.io/cloudpirates
   version: 0.15.5
-digest: sha256:ee8a4e349cc95a50f9bf2d59a389c681ed88b4625305554abc4c0d9c5c0fe705
-generated: "2026-02-11T15:10:21.541621-08:00"
+digest: sha256:4091e70804eba48b19f49b2bab43c0f15d44c89115330690cac7903348dbbaa3
+generated: "2026-04-22T18:24:45.010748-07:00"
