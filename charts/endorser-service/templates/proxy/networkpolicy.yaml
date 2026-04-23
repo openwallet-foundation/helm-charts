@@ -26,13 +26,20 @@ spec:
   ingress:
     {{- if or $proxyIngressNamespaceSelector $proxyIngressPodSelector }}
     - from:
-        - {{ if $proxyIngressNamespaceSelector }}namespaceSelector:
+        {{- if $proxyIngressNamespaceSelector }}
+        - namespaceSelector:
             matchLabels:
               {{- toYaml $proxyIngressNamespaceSelector | nindent 14 }}
-          {{ end }}{{- if $proxyIngressPodSelector }}podSelector:
+          {{- if $proxyIngressPodSelector }}
+          podSelector:
             matchLabels:
               {{- toYaml $proxyIngressPodSelector | nindent 14 }}
-          {{ end }}
+          {{- end }}
+        {{- else if $proxyIngressPodSelector }}
+        - podSelector:
+            matchLabels:
+              {{- toYaml $proxyIngressPodSelector | nindent 14 }}
+        {{- end }}
       ports:
         - protocol: TCP
           port: {{ .Values.proxy.service.ports.agent }}
