@@ -446,7 +446,6 @@ acapy:
   ## @param acapy.secrets.api.secretKeys.adminApiKey Key in the API secret holding the admin API key.
   ## @param acapy.secrets.api.secretKeys.jwtKey Key in the API secret holding the multitenant JWT signing secret.
   ## @param acapy.secrets.api.secretKeys.walletKey Key in the API secret holding the wallet key.
-  ## @param acapy.secrets.api.secretKeys.webhookapiKey Key in the API secret holding the webhook API key (used when embedding in webhook-url).
   ## @param acapy.secrets.seed.retainOnUninstall When true, adds helm.sh/resource-policy: keep to generated seed secret
   ## @param acapy.secrets.seed.existingSecret Name of an existing Secret providing the wallet seed. If set, the chart will NOT create the seed secret.
   ## @param acapy.secrets.seed.secretKeys.seed Key in the seed secret holding the wallet seed value.
@@ -458,7 +457,6 @@ acapy:
         adminApiKey: adminApiKey
         jwtKey: jwt
         walletKey: walletKey
-        webhookapiKey: webhookapi
     seed:
       retainOnUninstall: true
       existingSecret: ""
@@ -482,6 +480,15 @@ acapy:
     ## @param acapy.networkPolicy.ingressNSMatchLabels [object] Labels to match to allow traffic from other namespaces. Ignored if `networkPolicy.allowExternal` is true.
     ingressNSMatchLabels:
       network.openshift.io/policy-group: ingress
+
+  # Webhook configuration for ACA-Py to deliver events to the vc-authn-oidc controller
+  webhook:
+    # -- Name of the Secret containing a pre-composed ACAPY_WEBHOOK_URL (with embedded API key).
+    # Evaluated as a template; takes precedence over webhook.url.
+    # Points to the chart-managed webhook secret by default.
+    existingSecret: '{{ printf "%s-acapy-webhook" .Release.Name | trunc 63 | trimSuffix "-" }}'
+    # -- Key within the secret that holds the full webhook URL value.
+    secretKey: ACAPY_WEBHOOK_URL
 
   ## @param acapy.agentUrl Agent host, required if `enabled` is `false`, otherwise ignored
   agentUrl: ""
