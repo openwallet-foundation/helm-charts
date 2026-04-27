@@ -481,13 +481,13 @@ acapy:
     ingressNSMatchLabels:
       network.openshift.io/policy-group: ingress
 
-  # Webhook configuration for ACA-Py to deliver events to the vc-authn-oidc controller
+  ## Webhook configuration for ACA-Py to deliver events to the vc-authn-oidc controller
   webhook:
-    # -- Name of the Secret containing a pre-composed ACAPY_WEBHOOK_URL (with embedded API key).
-    # Evaluated as a template; takes precedence over webhook.url.
-    # Points to the chart-managed webhook secret by default.
+    ## @param acapy.webhook.existingSecret Name of the Secret containing a pre-composed ACAPY_WEBHOOK_URL (with embedded API key).
+    ## Evaluated as a template; takes precedence over webhook.url.
+    ## Points to the chart-managed webhook secret by default.
     existingSecret: '{{ printf "%s-acapy-webhook" .Release.Name | trunc 63 | trimSuffix "-" }}'
-    # -- Key within the secret that holds the full webhook URL value.
+    ## @param acapy.webhook.secretKey Key within the secret that holds the full webhook URL value.
     secretKey: ACAPY_WEBHOOK_URL
 
   ## @param acapy.agentUrl Agent host, required if `enabled` is `false`, otherwise ignored
