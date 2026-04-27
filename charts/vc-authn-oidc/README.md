@@ -1,7 +1,5 @@
 # VC-AuthN OIDC
 
-![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.4.0](https://img.shields.io/badge/AppVersion-2.4.0-informational?style=flat-square)
-
 A Helm chart to deploy Verifiable Credential Identity Provider for OpenID Connect.
 
 See [here](/docs/README.md) for background into how this integration is defined.
@@ -216,38 +214,39 @@ Note: Secure values of the configuration are passed via equivalent environment v
 
 ### Acapy common configurations
 
-| Name                                         | Description                                                                                              | Value         |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------- |
-| `acapy.resources.limits`                     | The cpu and memory limit for the Acapy containers                                                        | `{}`          |
-| `acapy.resources.requests.memory`            | The requested memory for the Acapy containers                                                            | `384Mi`       |
-| `acapy.resources.requests.cpu`               | The requested cpu for the Acapy containers                                                               | `250m`        |
-| `acapy.service.ports.http`                   | AcaPy service HTTP port                                                                                  | `8021`        |
-| `acapy.service.ports.admin`                  | AcaPy service admin port                                                                                 | `8022`        |
-| `acapy.service.ports.ws`                     | AcaPy service websockets port                                                                            | `8023`        |
-| `acapy.secrets.api.retainOnUninstall`        | When true, adds helm.sh/resource-policy: keep to generated api secret                                    | `true`        |
-| `acapy.secrets.api.existingSecret`           | Name of an existing Secret providing API related keys. If set, the chart will NOT create the api secret. | `""`          |
-| `acapy.secrets.api.secretKeys.adminApiKey`   | Key in the API secret holding the admin API key.                                                         | `adminApiKey` |
-| `acapy.secrets.api.secretKeys.jwtKey`        | Key in the API secret holding the multitenant JWT signing secret.                                        | `jwt`         |
-| `acapy.secrets.api.secretKeys.walletKey`     | Key in the API secret holding the wallet key.                                                            | `walletKey`   |
-| `acapy.secrets.api.secretKeys.webhookapiKey` | Key in the API secret holding the webhook API key (used when embedding in webhook-url).                  | `webhookapi`  |
-| `acapy.secrets.seed.retainOnUninstall`       | When true, adds helm.sh/resource-policy: keep to generated seed secret                                   | `true`        |
-| `acapy.secrets.seed.existingSecret`          | Name of an existing Secret providing the wallet seed. If set, the chart will NOT create the seed secret. | `""`          |
-| `acapy.secrets.seed.secretKeys.seed`         | Key in the seed secret holding the wallet seed value.                                                    | `seed`        |
+| Name                                       | Description                                                                                              | Value         |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------- |
+| `acapy.resources.limits`                   | The cpu and memory limit for the Acapy containers                                                        | `{}`          |
+| `acapy.resources.requests.memory`          | The requested memory for the Acapy containers                                                            | `384Mi`       |
+| `acapy.resources.requests.cpu`             | The requested cpu for the Acapy containers                                                               | `250m`        |
+| `acapy.service.ports.http`                 | AcaPy service HTTP port                                                                                  | `8021`        |
+| `acapy.service.ports.admin`                | AcaPy service admin port                                                                                 | `8022`        |
+| `acapy.service.ports.ws`                   | AcaPy service websockets port                                                                            | `8023`        |
+| `acapy.secrets.api.retainOnUninstall`      | When true, adds helm.sh/resource-policy: keep to generated api secret                                    | `true`        |
+| `acapy.secrets.api.existingSecret`         | Name of an existing Secret providing API related keys. If set, the chart will NOT create the api secret. | `""`          |
+| `acapy.secrets.api.secretKeys.adminApiKey` | Key in the API secret holding the admin API key.                                                         | `adminApiKey` |
+| `acapy.secrets.api.secretKeys.jwtKey`      | Key in the API secret holding the multitenant JWT signing secret.                                        | `jwt`         |
+| `acapy.secrets.api.secretKeys.walletKey`   | Key in the API secret holding the wallet key.                                                            | `walletKey`   |
+| `acapy.secrets.seed.retainOnUninstall`     | When true, adds helm.sh/resource-policy: keep to generated seed secret                                   | `true`        |
+| `acapy.secrets.seed.existingSecret`        | Name of an existing Secret providing the wallet seed. If set, the chart will NOT create the seed secret. | `""`          |
+| `acapy.secrets.seed.secretKeys.seed`       | Key in the seed secret holding the wallet seed value.                                                    | `seed`        |
 
 ### Acapy NetworkPolicy parameters
 
-| Name                                       | Description                                                                                               | Value                             |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| `acapy.networkPolicy.enabled`              | Enable network policies                                                                                   | `true`                            |
-| `acapy.networkPolicy.allowExternal`        | Don't require server label for connections                                                                | `false`                           |
-| `acapy.networkPolicy.ingressNSMatchLabels` | Labels to match to allow traffic from other namespaces. Ignored if `networkPolicy.allowExternal` is true. | `{}`                              |
-| `acapy.agentUrl`                           | Agent host, required if `enabled` is `false`, otherwise ignored                                           | `""`                              |
-| `acapy.adminUrl`                           | Agent admin host, required if `enabled` is `false`, otherwise ignored                                     | `""`                              |
-| `acapy.ingress.agent.enabled`              | Set to true to enable acapy ingress                                                                       | `false`                           |
-| `acapy.ingress.agent.publicScheme`         | Scheme used to construct the public URL from the ingress host.                                            | `https`                           |
-| `acapy.ingress.agent.hostname`             | When the ingress is enabled, a host pointing to this will be created                                      | `vc-authn-oidc-acapy.local`       |
-| `acapy.ingress.admin.enabled`              | Set to true to enable acapy admin ingress                                                                 | `false`                           |
-| `acapy.ingress.admin.hostname`             | When the ingress is enabled, a host pointing to this will be created                                      | `admin.vc-authn-oidc-acapy.local` |
+| Name                                       | Description                                                                                               | Value                                                                       |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `acapy.networkPolicy.enabled`              | Enable network policies                                                                                   | `true`                                                                      |
+| `acapy.networkPolicy.allowExternal`        | Don't require server label for connections                                                                | `false`                                                                     |
+| `acapy.networkPolicy.ingressNSMatchLabels` | Labels to match to allow traffic from other namespaces. Ignored if `networkPolicy.allowExternal` is true. | `{}`                                                                        |
+| `acapy.webhook.existingSecret`             | Name of the Secret containing a pre-composed ACAPY_WEBHOOK_URL (with embedded API key).                   | `{{ printf "%s-acapy-webhook" .Release.Name | trunc 63 | trimSuffix "-" }}` |
+| `acapy.webhook.secretKey`                  | Key within the secret that holds the full webhook URL value.                                              | `ACAPY_WEBHOOK_URL`                                                         |
+| `acapy.agentUrl`                           | Agent host, required if `enabled` is `false`, otherwise ignored                                           | `""`                                                                        |
+| `acapy.adminUrl`                           | Agent admin host, required if `enabled` is `false`, otherwise ignored                                     | `""`                                                                        |
+| `acapy.ingress.agent.enabled`              | Set to true to enable acapy ingress                                                                       | `false`                                                                     |
+| `acapy.ingress.agent.publicScheme`         | Scheme used to construct the public URL from the ingress host.                                            | `https`                                                                     |
+| `acapy.ingress.agent.hostname`             | When the ingress is enabled, a host pointing to this will be created                                      | `vc-authn-oidc-acapy.local`                                                 |
+| `acapy.ingress.admin.enabled`              | Set to true to enable acapy admin ingress                                                                 | `false`                                                                     |
+| `acapy.ingress.admin.hostname`             | When the ingress is enabled, a host pointing to this will be created                                      | `admin.vc-authn-oidc-acapy.local`                                           |
 
 ### Acapy PostgreSQL sub-chart overrides
 
