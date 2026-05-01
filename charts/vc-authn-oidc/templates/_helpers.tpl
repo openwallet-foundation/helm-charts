@@ -270,6 +270,14 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Return the name of the webhook secret used by ACA-Py.
+Contains the ACAPY_WEBHOOK_URL with embedded API key.
+*/}}
+{{- define "vc-authn-oidc.webhookSecretName" -}}
+    {{- printf "%s-acapy-webhook" .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
 Return the acapy secret name
 */}}
 {{- define "vc-authn-oidc.acapy.secretName" -}}
