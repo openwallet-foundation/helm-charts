@@ -1,3 +1,8 @@
+## [2.1.0](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-2.0.0...vc-authn-oidc-2.1.0) (2026-06-01)
+
+### Features
+
+* **vc-authn-oidc:** update acapy subchart, webhook url config ([#126](https://github.com/openwallet-foundation/helm-charts/issues/126)) ([6750fb7](https://github.com/openwallet-foundation/helm-charts/commit/6750fb707150cb0ad42c4650f46cb45cc806abb3))
 ## [2.0.0](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-1.0.0...vc-authn-oidc-2.0.0) (2026-04-08)
 
 ### Features
