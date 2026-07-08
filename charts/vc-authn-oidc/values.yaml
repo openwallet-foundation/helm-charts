@@ -602,21 +602,18 @@ mongodb:
     ##
     existingSecret: '{{ printf "%s-mongodb" .Release.Name }}'
 
-  customUser:
-    ## @param mongodb.customUser.name Name of the custom user to be created
-    name: "vcauthn"
-    ## @param mongodb.customUser.database Name of the database to be created
-    database: "vcauthn"
-    ## @param mongodb.customUser.existingSecret Existing secret containing the custom user password
-    ## Uses the same secret as auth.existingSecret for simplicity
-    existingSecret: '{{ printf "%s-mongodb" .Release.Name }}'
-    ## @param mongodb.customUser.secretKeys.name Key name for username in existing secret
-    ## @param mongodb.customUser.secretKeys.password Key name for password in existing secret
-    ## @param mongodb.customUser.secretKeys.database Key name for database in existing secret
-    secretKeys:
-      name: "mongodb-user"
-      password: "mongodb-password"
-      database: "mongodb-database"
+  ## @param mongodb.customUsers [array] Custom MongoDB users to provision. Defaults to the `vcauthn` app user; keep
+  ## `existingSecret`/`secretKeys` pointed at the chart-managed consolidated secret (see `templates/secrets.yaml`).
+  customUsers:
+    - name: "vcauthn"
+      database: "vcauthn"
+      existingSecret: '{{ printf "%s-mongodb" .Release.Name }}'
+      secretKeys:
+        name: "mongodb-user"
+        password: "mongodb-password"
+        database: "mongodb-database"
+      roles:
+        - readWrite
 
   ## @param mongodb.commonLabels [object] Add labels to all the deployed resources
   ##
