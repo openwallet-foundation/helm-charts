@@ -3,7 +3,7 @@ name: vc-authn-oidc
 description: A Helm chart to deploy ACAPy VC-AuthN on OpenShift
 type: application
 
-appVersion: "2.4.0"
+appVersion: "2.4.1"
 version: 2.1.0
 
 maintainers:
@@ -17,14 +17,14 @@ maintainers:
 # Charts the vc-authn-oidc service depends on
 dependencies:
   - name: acapy
-    version: 1.0.3
+    version: 1.0.4
     repository: https://openwallet-foundation.github.io/helm-charts/
   - name: mongodb
-    version: 0.10.3
+    version: 0.18.0
     repository: "oci://registry-1.docker.io/cloudpirates"
     condition: mongodb.enabled
   - name: common
     repository: "https://charts.bitnami.com/bitnami"
     tags:
       - bitnami-common
-    version: 2.x.x
+    version: 2.38.0
