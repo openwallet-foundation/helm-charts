@@ -584,7 +584,7 @@ mongodb:
   image:
     registry: docker.io
     repository: mongo
-    tag: "8.0"
+    tag: "8.3.2"
     pullPolicy: IfNotPresent
 
   ## @param mongodb.targetPlatform Target platform for MongoDB deployment. Set to "openshift" for OpenShift compatibility, leave empty for standard Kubernetes.
@@ -713,7 +713,7 @@ redis:
   image:
     registry: docker.io
     repository: redis
-    tag: "7.2-alpine"
+    tag: "8-alpine"
     pullPolicy: IfNotPresent
   ## @param redis.resources.limits.cpu CPU limit for Redis containers
   ## @param redis.resources.limits.memory Memory limit for Redis containers
