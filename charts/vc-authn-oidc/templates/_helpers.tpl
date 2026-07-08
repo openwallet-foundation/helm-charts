@@ -410,13 +410,23 @@ Return the MongoDB port
 {{- end -}}
 
 {{/*
+Return the chart-owned MongoDB custom user config (first entry of mongodb.customUsers).
+*/}}
+{{- define "vc-authn-oidc.mongodb.customUser" -}}
+{{- if .Values.mongodb.customUsers -}}
+{{- first .Values.mongodb.customUsers | toYaml -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the MongoDB database name
 */}}
 {{- define "vc-authn-oidc.mongodb.database" -}}
+{{- $customUser := include "vc-authn-oidc.mongodb.customUser" . | fromYaml -}}
 {{- if not .Values.mongodb.enabled -}}
 {{- .Values.externalMongodb.database | default "vcauthn" -}}
-{{- else if .Values.mongodb.customUser.database -}}
-{{- .Values.mongodb.customUser.database -}}
+{{- else if $customUser.database -}}
+{{- $customUser.database -}}
 {{- else -}}
 {{- "vcauthn" -}}
 {{- end -}}
@@ -426,10 +436,11 @@ Return the MongoDB database name
 Return the MongoDB username
 */}}
 {{- define "vc-authn-oidc.mongodb.username" -}}
+{{- $customUser := include "vc-authn-oidc.mongodb.customUser" . | fromYaml -}}
 {{- if not .Values.mongodb.enabled -}}
 {{- .Values.externalMongodb.auth.username | default "vcauthn" -}}
-{{- else if .Values.mongodb.customUser.name -}}
-{{- .Values.mongodb.customUser.name -}}
+{{- else if $customUser.name -}}
+{{- $customUser.name -}}
 {{- else -}}
 {{- "vcauthn" -}}
 {{- end -}}
@@ -439,16 +450,15 @@ Return the MongoDB username
 Return the MongoDB password secret name
 */}}
 {{- define "vc-authn-oidc.mongodb.secretName" -}}
+{{- $customUser := include "vc-authn-oidc.mongodb.customUser" . | fromYaml -}}
 {{- if not .Values.mongodb.enabled -}}
 {{- if .Values.externalMongodb.auth.existingSecret -}}
 {{- .Values.externalMongodb.auth.existingSecret -}}
 {{- else -}}
 {{- printf "%s-mongodb-external" (include "global.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
-{{- else if .Values.mongodb.customUser.existingSecret -}}
-{{- tpl .Values.mongodb.customUser.existingSecret . -}}
-{{- else if .Values.mongodb.customUser.name -}}
-{{- include "vc-authn-oidc.databaseSecretName" . -}}
+{{- else if $customUser.existingSecret -}}
+{{- tpl $customUser.existingSecret . -}}
 {{- else -}}
 {{- include "vc-authn-oidc.databaseSecretName" . -}}
 {{- end -}}
@@ -458,11 +468,12 @@ Return the MongoDB password secret name
 Return the MongoDB password secret key
 */}}
 {{- define "vc-authn-oidc.mongodb.secretKey" -}}
+{{- $customUser := include "vc-authn-oidc.mongodb.customUser" . | fromYaml -}}
 {{- if not .Values.mongodb.enabled -}}
 {{- .Values.externalMongodb.auth.existingSecretPasswordKey | default "mongodb-password" -}}
-{{- else if and .Values.mongodb.customUser.secretKeys (index .Values.mongodb.customUser.secretKeys "password") -}}
-{{- index .Values.mongodb.customUser.secretKeys "password" -}}
-{{- else if .Values.mongodb.customUser.name -}}
+{{- else if and $customUser.secretKeys (index $customUser.secretKeys "password") -}}
+{{- index $customUser.secretKeys "password" -}}
+{{- else if $customUser.name -}}
 {{- "mongodb-password" -}}
 {{- else -}}
 {{- "mongodb-root-password" -}}
