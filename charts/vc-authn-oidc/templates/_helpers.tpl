@@ -206,7 +206,7 @@ Create the name of the api key secret to use
 Return true if the api-secret should be created
 */}}
 {{- define "vc-authn-oidc.api.createSecret" -}}
-{{- if (empty .Values.auth.token.privateKey.existingSecret) }}
+{{- if (empty .Values.auth.api.existingSecret) }}
     {{- true -}}
 {{- end -}}
 {{- end }}
