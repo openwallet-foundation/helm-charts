@@ -383,4 +383,9 @@ WHERE n.nspname = 'public'
   AND r.rolname = 'postgres'
   AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f')
 \gexec
+-- Existing objects (including those just reassigned) need explicit grants;
+-- ALTER DEFAULT PRIVILEGES only covers objects created afterward.
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO :app_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO :app_user;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO :app_user;
 {{- end -}}
