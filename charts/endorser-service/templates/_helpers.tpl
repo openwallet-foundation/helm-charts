@@ -308,14 +308,15 @@ Return the database application username.
 
 {{/*
 Return the database admin username (Alembic / owner role).
-For bundled postgres use the custom user (DB owner from 01-init.sh), not the
-"postgres" superuser. Migrating as postgres leaves tables owned by superuser
-and the app user then hits "permission denied" on fresh installs / PVC recreate.
+For bundled postgres use the same custom user as the app (DB owner from
+01-init.sh), not the "postgres" superuser. Migrating as postgres leaves tables
+owned by superuser and the app user then hits "permission denied" on fresh
+installs / PVC recreate.
 For external databases uses adminUsername, falling back to username.
 */}}
 {{- define "endorser-service.db.adminUser" -}}
 {{- if .Values.postgres.enabled -}}
-{{- .Values.postgres.customUser.name | default "endorser" -}}
+{{- include "endorser-service.db.username" . -}}
 {{- else -}}
   {{- if .Values.externalDatabase.adminUsername -}}
 {{- .Values.externalDatabase.adminUsername -}}
