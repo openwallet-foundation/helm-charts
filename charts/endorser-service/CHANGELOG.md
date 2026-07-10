@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/openwallet-foundation/helm-charts/compare/endorser-service-1.1.0...endorser-service-1.1.1) (2026-07-10)
+
+### Bug Fixes
+
+* **endorser-service:** correct webhook URL path in webhook-secret.yaml ([#134](https://github.com/openwallet-foundation/helm-charts/issues/134)) ([ff5648f](https://github.com/openwallet-foundation/helm-charts/commit/ff5648fadf4f3f82ab390b3cb295dede4e885226))
+* **endorser-service:** migrate as DB owner, not postgres superuser ([#139](https://github.com/openwallet-foundation/helm-charts/issues/139)) ([ae563fc](https://github.com/openwallet-foundation/helm-charts/commit/ae563fcb5d0ea80ac21dc9fc3658165a152b9a3b))
 ## [1.1.0](https://github.com/openwallet-foundation/helm-charts/compare/endorser-service-1.0.0...endorser-service-1.1.0) (2026-04-23)
 
 ### Features
