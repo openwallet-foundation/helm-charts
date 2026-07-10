@@ -3,11 +3,11 @@ kind: Job
 metadata:
   name: {{ include "endorser-service.fullname" . }}-migrate
   namespace: {{ .Release.Namespace | quote }}
-  {{- $annotations := include "endorser-service.renderAnnotations" (dict "context" . "annotations" (dict "helm.sh/hook" "post-install,post-upgrade" "helm.sh/hook-delete-policy" "before-hook-creation,hook-succeeded")) }}
-  {{- if $annotations }}
   labels:
     {{- include "endorser-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: migration
+  {{- $annotations := include "endorser-service.renderAnnotations" (dict "context" . "annotations" (dict "helm.sh/hook" "post-install,post-upgrade" "helm.sh/hook-weight" "0" "helm.sh/hook-delete-policy" "before-hook-creation,hook-succeeded")) }}
+  {{- if $annotations }}
   annotations:
     {{- $annotations | nindent 4 }}
   {{- end }}
@@ -26,13 +26,7 @@ spec:
       serviceAccountName: {{ $serviceAccountName }}
       {{- end }}
       initContainers:
-        - name: wait-for-db
-          image: "{{ .Values.migration.initContainer.image }}:{{ .Values.migration.initContainer.tag }}"
-          command: ["/bin/sh","-c"]
-          args:
-            - >-
-              until nc -z {{ include "endorser-service.db.host" . }} {{ include "endorser-service.db.port" . }}; do echo waiting for db; sleep 2; done;
-
+        {{- include "endorser-service.db.ensureRolesInitContainers" . | nindent 8 }}
       containers:
         - name: migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

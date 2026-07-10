@@ -409,7 +409,7 @@ postgres:
       adminPasswordKey: postgres-password
   # Custom user (application user for Endorser API) — same consolidated secret
   customUser:
-    # -- Name for a custom application user to create (used by Endorser API)
+    # -- Name for a custom application user to create (used by Endorser API / CONTROLLER_POSTGRESQL_USER)
     name: endorser
     # -- Database for the custom user
     database: endorser
@@ -423,6 +423,24 @@ postgres:
       database: database
       # -- Key in the secret containing the custom user password
       password: password
+  # Custom admin user (Alembic / DB owner) — same consolidated secret.
+  # Not the Postgres superuser (auth / postgres-password). Distinct from api.adminUser
+  # (HTTP basic auth), even when the default name string matches.
+  #
+  # Secret keys (fixed in templates): admin-user, admin-password.
+  # Chart-managed secret on upgrade: lookup keeps password / postgres-password /
+  # user / database; only missing admin-* keys are generated. Do not delete the
+  # secret to force recreation — that rotates DB passwords and requires a PVC wipe.
+  # ExternalSecrets / sealed secrets still need admin-* in the external source.
+  customAdminUser:
+    # -- Name for the migration/owner role (CONTROLLER_POSTGRESQL_ADMIN_USER)
+    name: endorser-admin
+    # Key names within the consolidated database secret (documented; templates hardcode these keys)
+    secretKeys:
+      # -- Key in the secret containing the custom admin username
+      name: admin-user
+      # -- Key in the secret containing the custom admin password
+      password: admin-password
   # PostgreSQL service configuration
   service:
     # -- PostgreSQL service port
@@ -456,22 +474,17 @@ postgres:
   initdb:
     # -- Init scripts to run on PostgreSQL initialization. Evaluated as a template. @default -- See `values.yaml`
     scripts:
-      # Initialize database permissions and extensions
+      # First-boot only (empty PVC). customAdminUser + grants are applied by the
+      # migration Job ensure-db-roles initContainer (single SQL source in _helpers.tpl).
       01-init.sh: |
-        #!/bin/bash
+        #!/bin/sh
         set -e
-        echo "Initializing database permissions for user: $POSTGRES_USER"
-        export PGPASSWORD="$POSTGRES_POSTGRES_PASSWORD"
-        psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$POSTGRES_DATABASE" <<-EOSQL
-            CREATE EXTENSION IF NOT EXISTS pgcrypto;
-            ALTER DATABASE $POSTGRES_DATABASE OWNER TO $POSTGRES_USER;
-            REVOKE ALL ON SCHEMA public FROM PUBLIC;
-            GRANT ALL ON SCHEMA public TO $POSTGRES_USER;
-            ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $POSTGRES_USER;
-            ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO $POSTGRES_USER;
-            ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO $POSTGRES_USER;
+        APP_DB='{{ .Values.customUser.database | default .Values.customUser.name }}'
+        echo "Initializing database extensions for ${APP_DB}..."
+        psql -v ON_ERROR_STOP=1 -U postgres -d "${APP_DB}" <<'EOSQL'
+          CREATE EXTENSION IF NOT EXISTS pgcrypto;
         EOSQL
-        echo "Database initialization complete for user: $POSTGRES_USER"
+        echo "Database extension initialization complete"
 
 
 # Caddy reverse proxy configuration (disable if using ingress directly)
@@ -650,18 +663,18 @@ proxy:
 
 # External database configuration (used when postgres.enabled is false)
 # When the bundled PostgreSQL is disabled, these values configure the connection
-# to an external database. externalDatabase.host and externalDatabase.existingSecret
-# are required when postgres.enabled is false.
+# to an external database. host, existingSecret, database, and username are
+# required when postgres.enabled is false.
 externalDatabase:
   # -- Database hostname (e.g., postgres.example.com). Required when postgres.enabled is false.
   host: ""
   # -- Database port
   port: 5432
-  # -- Database name (e.g., endorser)
+  # -- Database name (e.g., endorser). Required when postgres.enabled is false.
   database: ""
-  # -- Database username (e.g., endorser)
+  # -- Database username (e.g., endorser). Required when postgres.enabled is false.
   username: ""
-  # -- Database admin username (defaults to username if not set; typically 'postgres' for PostgreSQL)
+  # -- Database admin username (defaults to username if not set)
   adminUsername: ""
   # -- Existing secret containing database credentials. Required when postgres.enabled is false.
   existingSecret: ""

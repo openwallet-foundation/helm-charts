@@ -179,15 +179,18 @@ This chart deploys an endorser service with the following components:
 | postgres.containerSecurityContext.runAsUser | int | `999` | User ID for the container |
 | postgres.customUser.database | string | `"endorser"` | Database for the custom user |
 | postgres.customUser.existingSecret | string | `"{{ printf \"%s-postgres\" .Release.Name }}"` | Existing secret for custom user credentials. Points to chart-managed consolidated secret by default. |
-| postgres.customUser.name | string | `"endorser"` | Name for a custom application user to create (used by Endorser API) |
+| postgres.customUser.name | string | `"endorser"` | Name for a custom application user to create (used by Endorser API / CONTROLLER_POSTGRESQL_USER) |
 | postgres.customUser.secretKeys.database | string | `"database"` | Key in the secret containing the custom database name |
 | postgres.customUser.secretKeys.name | string | `"user"` | Key in the secret containing the custom username |
 | postgres.customUser.secretKeys.password | string | `"password"` | Key in the secret containing the custom user password |
+| postgres.customAdminUser.name | string | `"endorser-admin"` | Name for the migration/owner role (CONTROLLER_POSTGRESQL_ADMIN_USER). Not the Postgres superuser. |
+| postgres.customAdminUser.secretKeys.name | string | `"admin-user"` | Key in the secret containing the custom admin username |
+| postgres.customAdminUser.secretKeys.password | string | `"admin-password"` | Key in the secret containing the custom admin password |
 | postgres.enabled | bool | `true` | Switch to enable or disable the Postgres helm chart |
 | postgres.image.registry | string | `"docker.io"` | Postgres image registry |
 | postgres.image.repository | string | `"postgres"` | Postgres image repository |
 | postgres.image.tag | string | `"18.1"` | Postgres image tag |
-| postgres.initdb.scripts."01-init.sh" | string | `"#!/bin/bash\nset -e\necho \"Initializing database permissions for user: $POSTGRES_USER\"\nexport PGPASSWORD=\"$POSTGRES_POSTGRES_PASSWORD\"\npsql -v ON_ERROR_STOP=1 --username \"postgres\" --dbname \"$POSTGRES_DATABASE\" <<-EOSQL\n    CREATE EXTENSION IF NOT EXISTS pgcrypto;\n    ALTER DATABASE $POSTGRES_DATABASE OWNER TO $POSTGRES_USER;\n    REVOKE ALL ON SCHEMA public FROM PUBLIC;\n    GRANT ALL ON SCHEMA public TO $POSTGRES_USER;\n    ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $POSTGRES_USER;\n    ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO $POSTGRES_USER;\n    ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO $POSTGRES_USER;\nEOSQL\necho \"Database initialization complete for user: $POSTGRES_USER\"\n"` |  |
+| postgres.initdb.scripts."01-init.sh" | string | `""` | First-boot: enable pgcrypto. customAdminUser roles/grants are applied by the migration Job (`endorser-service.db.ensureRolesSql`). |
 | postgres.persistence.enabled | bool | `true` | Enable PostgreSQL data persistence using PVC |
 | postgres.persistence.size | string | `"1Gi"` | PVC Storage Request for PostgreSQL volume |
 | postgres.podSecurityContext.fsGroup | int | `999` | Group ID for the pod's volumes |
@@ -380,6 +383,9 @@ In that case, pre-create your secrets and reference them via:
 - `secrets.jwt.existingSecret`
 - `postgres.auth.existingSecret` (bundled Postgres admin credentials)
 - `postgres.customUser.existingSecret` (bundled Postgres application user credentials)
+- `postgres.customAdminUser` credentials live in the **same** consolidated database secret (`admin-user` / `admin-password`, plus `user` / `password` / `database` / `postgres-password`).
+  - **Chart-managed secret:** on upgrade, `getOrGeneratePass` **preserves** existing keys (so DB passwords stay aligned with the PVC) and **only generates** missing ones (e.g. `admin-password`). Do not delete the secret to add keys — that rotates passwords and forces a PVC wipe.
+  - **ExternalSecrets / sealed secrets:** add `admin-user` and `admin-password` in the external source before upgrading — the migration Job fails if `admin-password` is missing.
 - `externalDatabase.existingSecret` (when using an external database with `postgres.enabled=false`)
 
 </details>

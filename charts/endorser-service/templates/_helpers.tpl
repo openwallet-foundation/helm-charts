@@ -86,8 +86,12 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Return an existing secret value, or generate a random one if the secret does not yet exist.
-Uses lookup to preserve values across upgrades (lookup-then-retain pattern for GitOps idempotency).
+Return an existing secret value, or generate a random one if missing.
+Uses lookup to preserve values across upgrades (lookup-then-retain).
+Critical for postgres: password / postgres-password must stay stable — regenerating
+them desyncs from the PVC and forces a destructive wipe. Only generate when the
+Secret is absent or the specific key is missing/empty (e.g. adding admin-password
+on upgrade). Never delete the chart-managed DB secret to "recreate" keys.
 For Secrets the returned value is base64-encoded; for other kinds it is plain text.
 
 Usage:
@@ -96,8 +100,12 @@ Usage:
 {{- define "getOrGeneratePass" }}
 {{- $len := (default 16 .Length) | int -}}
 {{- $obj := (lookup "v1" .Kind .Namespace .Name).data -}}
-{{- if $obj }}
-{{- index $obj .Key -}}
+{{- $existing := "" -}}
+{{- if $obj -}}
+{{- $existing = index $obj .Key | default "" -}}
+{{- end -}}
+{{- if $existing -}}
+{{- $existing -}}
 {{- else if (eq (lower .Kind) "secret") -}}
 {{- randAlphaNum $len | b64enc -}}
 {{- else -}}
@@ -261,11 +269,14 @@ password
 {{- end -}}
 
 {{/*
-Return the secret key name for the admin (postgres) password.
+Return the secret key name for the admin (owner-role) password.
+For bundled postgres this is customAdminUser (Alembic / DB owner), not the
+postgres superuser password key.
+For external databases this is the configured admin password key.
 */}}
 {{- define "endorser-service.db.adminPasswordKey" -}}
 {{- if .Values.postgres.enabled -}}
-postgres-password
+admin-password
 {{- else -}}
 {{- default "postgres-password" .Values.externalDatabase.secretKeys.adminPasswordKey -}}
 {{- end -}}
@@ -287,9 +298,9 @@ Return the database name.
 */}}
 {{- define "endorser-service.db.database" -}}
 {{- if .Values.postgres.enabled -}}
-{{- .Values.postgres.customUser.database | default .Values.postgres.customUser.name | default "endorser" -}}
+{{- .Values.postgres.customUser.database | default .Values.postgres.customUser.name -}}
 {{- else -}}
-{{- .Values.externalDatabase.database | default "endorser" -}}
+{{- required "externalDatabase.database is required when postgres.enabled is false" .Values.externalDatabase.database -}}
 {{- end -}}
 {{- end -}}
 
@@ -298,25 +309,138 @@ Return the database application username.
 */}}
 {{- define "endorser-service.db.username" -}}
 {{- if .Values.postgres.enabled -}}
-{{- .Values.postgres.customUser.name | default "endorser" -}}
+{{- .Values.postgres.customUser.name -}}
 {{- else -}}
-{{- .Values.externalDatabase.username | default "endorser" -}}
+{{- required "externalDatabase.username is required when postgres.enabled is false" .Values.externalDatabase.username -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Return the database admin username.
-For bundled postgres the superuser is always "postgres".
+Return the database admin username (Alembic / owner role).
+For bundled postgres this is customAdminUser (not the postgres superuser and not
+customUser). Migrating as postgres leaves tables owned by superuser and the app
+user then hits "permission denied" on fresh installs / PVC recreate.
 For external databases uses adminUsername, falling back to username.
 */}}
 {{- define "endorser-service.db.adminUser" -}}
 {{- if .Values.postgres.enabled -}}
-postgres
+{{- .Values.postgres.customAdminUser.name -}}
 {{- else -}}
   {{- if .Values.externalDatabase.adminUsername -}}
 {{- .Values.externalDatabase.adminUsername -}}
   {{- else -}}
-{{- .Values.externalDatabase.username | default "postgres" -}}
+{{- include "endorser-service.db.username" . -}}
   {{- end -}}
 {{- end -}}
+{{- end -}}
+
+{{/*
+SQL body for ensure-db-roles (psql -v APP_USER/ADMIN_USER/ADMIN_PASSWORD).
+Creates customAdminUser, sets DB owner, grants DML defaults to the app user,
+and reassigns objects left owned by the app user or postgres.
+*/}}
+{{- define "endorser-service.db.ensureRolesSql" -}}
+SELECT quote_ident(:'APP_USER') AS app_user \gset
+SELECT quote_ident(:'ADMIN_USER') AS admin_user \gset
+SELECT quote_literal(:'ADMIN_PASSWORD') AS admin_password \gset
+SELECT quote_ident(current_database()) AS dbname \gset
+
+SELECT EXISTS(SELECT 1 FROM pg_roles WHERE rolname = :'ADMIN_USER') AS admin_exists \gset
+\if :admin_exists
+  ALTER ROLE :admin_user WITH LOGIN PASSWORD :admin_password;
+\else
+  CREATE ROLE :admin_user LOGIN PASSWORD :admin_password;
+\endif
+
+ALTER DATABASE :dbname OWNER TO :admin_user;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT CONNECT ON DATABASE :dbname TO :app_user;
+GRANT ALL ON SCHEMA public TO :admin_user;
+GRANT USAGE ON SCHEMA public TO :app_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO :app_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO :app_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO :app_user;
+-- Repair app-owned objects from CloudPirates 00-init (DB owner was customUser).
+REASSIGN OWNED BY :app_user TO :admin_user;
+-- Repair tables/sequences left owned by postgres from older Alembic runs.
+-- Do not REASSIGN OWNED BY postgres — that fails on system-required objects.
+-- Use \gexec (not DO $$) so psql :'ADMIN_USER' substitution works.
+SELECT format(
+  CASE c.relkind
+    WHEN 'S' THEN 'ALTER SEQUENCE public.%I OWNER TO %I'
+    ELSE 'ALTER TABLE public.%I OWNER TO %I'
+  END,
+  c.relname,
+  :'ADMIN_USER'
+)
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+JOIN pg_roles r ON r.oid = c.relowner
+WHERE n.nspname = 'public'
+  AND r.rolname = 'postgres'
+  AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f')
+\gexec
+-- Existing objects (including those just reassigned) need explicit grants;
+-- ALTER DEFAULT PRIVILEGES only covers objects created afterward.
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO :app_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO :app_user;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO :app_user;
+{{- end -}}
+
+{{/*
+Init containers: wait for DB, then (bundled postgres only) ensure customAdminUser.
+Used by the API Deployment (before Alembic/startup) and the migration Job.
+API must not start until endorser-admin exists — post-install hooks race the
+Deployment, and CI emptyDir postgres restarts wipe roles created only by the Job.
+*/}}
+{{- define "endorser-service.db.ensureRolesInitContainers" -}}
+- name: wait-for-db
+  image: "{{ .Values.migration.initContainer.image }}:{{ .Values.migration.initContainer.tag }}"
+  command: ["/bin/sh","-c"]
+  args:
+    - >-
+      until nc -z {{ include "endorser-service.db.host" . }} {{ include "endorser-service.db.port" . }}; do echo waiting for db; sleep 2; done;
+{{- if .Values.postgres.enabled }}
+- name: ensure-db-roles
+  image: "{{ .Values.postgres.image.registry }}/{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+  imagePullPolicy: {{ .Values.image.pullPolicy }}
+  env:
+    - name: PGHOST
+      value: {{ include "endorser-service.db.host" . | quote }}
+    - name: PGPORT
+      value: {{ include "endorser-service.db.port" . | quote }}
+    - name: PGDATABASE
+      value: {{ include "endorser-service.db.database" . | quote }}
+    - name: PGUSER
+      value: postgres
+    - name: PGPASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "endorser-service.db.secretName" . }}
+          key: {{ .Values.postgres.auth.secretKeys.adminPasswordKey | default "postgres-password" | quote }}
+    - name: APP_USER
+      value: {{ include "endorser-service.db.username" . | quote }}
+    - name: ADMIN_USER
+      value: {{ include "endorser-service.db.adminUser" . | quote }}
+    - name: ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "endorser-service.db.secretName" . }}
+          key: {{ include "endorser-service.db.adminPasswordKey" . | quote }}
+  command: ["/bin/bash", "-c"]
+  args:
+    - |
+      set -euo pipefail
+      echo "Ensuring customAdminUser '${ADMIN_USER}' for '${PGDATABASE}'"
+      psql -v ON_ERROR_STOP=1 \
+        -v APP_USER="${APP_USER}" \
+        -v ADMIN_USER="${ADMIN_USER}" \
+        -v ADMIN_PASSWORD="${ADMIN_PASSWORD}" <<'EOSQL'
+{{ include "endorser-service.db.ensureRolesSql" . | nindent 6 }}
+      EOSQL
+      echo "Database roles ready"
+{{- end }}
 {{- end -}}
