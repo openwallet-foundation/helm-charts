@@ -1,3 +1,8 @@
+## [2.1.2](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-2.1.1...vc-authn-oidc-2.1.2) (2026-07-10)
+
+### Bug Fixes
+
+* **secrets:** update api secret creation logic and move webhook secret for acapy to single getorgenerate ([#141](https://github.com/openwallet-foundation/helm-charts/issues/141)) ([be6ae04](https://github.com/openwallet-foundation/helm-charts/commit/be6ae04e3b1810d14a2f7f3da193308d5ef29aad))
 ## [2.1.1](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-2.1.0...vc-authn-oidc-2.1.1) (2026-07-08)
 ## [2.1.0](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-2.0.0...vc-authn-oidc-2.1.0) (2026-07-08)
 

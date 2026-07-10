@@ -4,7 +4,7 @@ description: A Helm chart to deploy ACAPy VC-AuthN on OpenShift
 type: application
 
 appVersion: "2.4.1"
-version: 2.1.1
+version: 2.1.2
 
 maintainers:
   - email: emiliano.sune@quartech.com
