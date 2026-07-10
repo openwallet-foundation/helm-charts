@@ -88,6 +88,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{/*
 Return an existing secret value, or generate a random one if the secret does not yet exist.
 Uses lookup to preserve values across upgrades (lookup-then-retain pattern for GitOps idempotency).
+If the object exists but the key is missing (or empty), a new value is generated — so chart
+upgrades can add keys like admin-password without manual secret patches.
 For Secrets the returned value is base64-encoded; for other kinds it is plain text.
 
 Usage:
@@ -96,8 +98,12 @@ Usage:
 {{- define "getOrGeneratePass" }}
 {{- $len := (default 16 .Length) | int -}}
 {{- $obj := (lookup "v1" .Kind .Namespace .Name).data -}}
-{{- if $obj }}
-{{- index $obj .Key -}}
+{{- $existing := "" -}}
+{{- if $obj -}}
+{{- $existing = index $obj .Key | default "" -}}
+{{- end -}}
+{{- if $existing -}}
+{{- $existing -}}
 {{- else if (eq (lower .Kind) "secret") -}}
 {{- randAlphaNum $len | b64enc -}}
 {{- else -}}
