@@ -268,7 +268,7 @@ For external databases this is the configured admin password key.
 */}}
 {{- define "endorser-service.db.adminPasswordKey" -}}
 {{- if .Values.postgres.enabled -}}
-{{- default "admin-password" .Values.postgres.customAdminUser.secretKeys.password -}}
+admin-password
 {{- else -}}
 {{- default "postgres-password" .Values.externalDatabase.secretKeys.adminPasswordKey -}}
 {{- end -}}
