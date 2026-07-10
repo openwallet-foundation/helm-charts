@@ -1,6 +1,6 @@
 # endorser-service
 
-![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.1](https://img.shields.io/badge/AppVersion-1.1.1-informational?style=flat-square)
+![Version: 1.1.1](https://img.shields.io/badge/Version-1.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.1](https://img.shields.io/badge/AppVersion-1.1.1-informational?style=flat-square)
 A Helm chart for ACA-Py Endorser Service
 
 ## Prerequisites
@@ -124,14 +124,14 @@ This chart deploys an endorser service with the following components:
 | autoscaling.targetCPUUtilizationPercentage | int | `80` | Target CPU utilization percentage |
 | commonAnnotations | object | `{}` | Common annotations to add to all resources |
 | commonLabels | object | `{}` | Common labels to add to all resources |
-| externalDatabase.adminUsername | string | `""` | Database admin username (defaults to username if not set; typically 'postgres' for PostgreSQL) |
-| externalDatabase.database | string | `""` | Database name (e.g., endorser) |
+| externalDatabase.adminUsername | string | `""` | Database admin username (defaults to username if not set) |
+| externalDatabase.database | string | `""` | Database name (e.g., endorser). Required when postgres.enabled is false. |
 | externalDatabase.existingSecret | string | `""` | Existing secret containing database credentials. Required when postgres.enabled is false. |
 | externalDatabase.host | string | `""` | Database hostname (e.g., postgres.example.com). Required when postgres.enabled is false. |
 | externalDatabase.port | int | `5432` | Database port |
 | externalDatabase.secretKeys.adminPasswordKey | string | `"postgres-password"` | Key for admin password |
 | externalDatabase.secretKeys.userPasswordKey | string | `"password"` | Key for user password |
-| externalDatabase.username | string | `""` | Database username (e.g., endorser) |
+| externalDatabase.username | string | `""` | Database username (e.g., endorser). Required when postgres.enabled is false. |
 | fullnameOverride | string | `""` | Override the full release name |
 | global.ingressSuffix | string | `".example.com"` | Ingress hostname suffix for generated hostnames |
 | global.security | object | `{"allowInsecureImages":true}` | Security settings for subcharts |
@@ -177,20 +177,20 @@ This chart deploys an endorser service with the following components:
 | postgres.config.postgresql.max_connections | int | `500` | Maximum number of PostgreSQL connections |
 | postgres.containerSecurityContext.runAsGroup | int | `999` | Group ID for the container |
 | postgres.containerSecurityContext.runAsUser | int | `999` | User ID for the container |
+| postgres.customAdminUser.name | string | `"endorser-admin"` | Name for the migration/owner role (CONTROLLER_POSTGRESQL_ADMIN_USER) |
+| postgres.customAdminUser.secretKeys.name | string | `"admin-user"` | Key in the secret containing the custom admin username |
+| postgres.customAdminUser.secretKeys.password | string | `"admin-password"` | Key in the secret containing the custom admin password |
 | postgres.customUser.database | string | `"endorser"` | Database for the custom user |
 | postgres.customUser.existingSecret | string | `"{{ printf \"%s-postgres\" .Release.Name }}"` | Existing secret for custom user credentials. Points to chart-managed consolidated secret by default. |
 | postgres.customUser.name | string | `"endorser"` | Name for a custom application user to create (used by Endorser API / CONTROLLER_POSTGRESQL_USER) |
 | postgres.customUser.secretKeys.database | string | `"database"` | Key in the secret containing the custom database name |
 | postgres.customUser.secretKeys.name | string | `"user"` | Key in the secret containing the custom username |
 | postgres.customUser.secretKeys.password | string | `"password"` | Key in the secret containing the custom user password |
-| postgres.customAdminUser.name | string | `"endorser-admin"` | Name for the migration/owner role (CONTROLLER_POSTGRESQL_ADMIN_USER). Not the Postgres superuser. |
-| postgres.customAdminUser.secretKeys.name | string | `"admin-user"` | Key in the secret containing the custom admin username |
-| postgres.customAdminUser.secretKeys.password | string | `"admin-password"` | Key in the secret containing the custom admin password |
 | postgres.enabled | bool | `true` | Switch to enable or disable the Postgres helm chart |
 | postgres.image.registry | string | `"docker.io"` | Postgres image registry |
 | postgres.image.repository | string | `"postgres"` | Postgres image repository |
 | postgres.image.tag | string | `"18.1"` | Postgres image tag |
-| postgres.initdb.scripts."01-init.sh" | string | `""` | First-boot: enable pgcrypto. customAdminUser roles/grants are applied by the migration Job (`endorser-service.db.ensureRolesSql`). |
+| postgres.initdb.scripts."01-init.sh" | string | `"#!/bin/sh\nset -e\nAPP_DB='{{ .Values.customUser.database | default .Values.customUser.name }}'\necho \"Initializing database extensions for ${APP_DB}...\"\npsql -v ON_ERROR_STOP=1 -U postgres -d \"${APP_DB}\" <<'EOSQL'\n  CREATE EXTENSION IF NOT EXISTS pgcrypto;\nEOSQL\necho \"Database extension initialization complete\"\n"` |  |
 | postgres.persistence.enabled | bool | `true` | Enable PostgreSQL data persistence using PVC |
 | postgres.persistence.size | string | `"1Gi"` | PVC Storage Request for PostgreSQL volume |
 | postgres.podSecurityContext.fsGroup | int | `999` | Group ID for the pod's volumes |
