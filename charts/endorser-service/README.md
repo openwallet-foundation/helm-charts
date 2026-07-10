@@ -179,10 +179,13 @@ This chart deploys an endorser service with the following components:
 | postgres.containerSecurityContext.runAsUser | int | `999` | User ID for the container |
 | postgres.customUser.database | string | `"endorser"` | Database for the custom user |
 | postgres.customUser.existingSecret | string | `"{{ printf \"%s-postgres\" .Release.Name }}"` | Existing secret for custom user credentials. Points to chart-managed consolidated secret by default. |
-| postgres.customUser.name | string | `"endorser"` | Name for a custom application user to create (used by Endorser API) |
+| postgres.customUser.name | string | `"endorser"` | Name for a custom application user to create (used by Endorser API / CONTROLLER_POSTGRESQL_USER) |
 | postgres.customUser.secretKeys.database | string | `"database"` | Key in the secret containing the custom database name |
 | postgres.customUser.secretKeys.name | string | `"user"` | Key in the secret containing the custom username |
 | postgres.customUser.secretKeys.password | string | `"password"` | Key in the secret containing the custom user password |
+| postgres.customAdminUser.name | string | `"endorser-admin"` | Name for the migration/owner role (CONTROLLER_POSTGRESQL_ADMIN_USER). Not the Postgres superuser. |
+| postgres.customAdminUser.secretKeys.name | string | `"admin-user"` | Key in the secret containing the custom admin username |
+| postgres.customAdminUser.secretKeys.password | string | `"admin-password"` | Key in the secret containing the custom admin password |
 | postgres.enabled | bool | `true` | Switch to enable or disable the Postgres helm chart |
 | postgres.image.registry | string | `"docker.io"` | Postgres image registry |
 | postgres.image.repository | string | `"postgres"` | Postgres image repository |
@@ -380,6 +383,7 @@ In that case, pre-create your secrets and reference them via:
 - `secrets.jwt.existingSecret`
 - `postgres.auth.existingSecret` (bundled Postgres admin credentials)
 - `postgres.customUser.existingSecret` (bundled Postgres application user credentials)
+- `postgres.customAdminUser` credentials live in the same consolidated database secret (`admin-user` / `admin-password` by default)
 - `externalDatabase.existingSecret` (when using an external database with `postgres.enabled=false`)
 
 </details>

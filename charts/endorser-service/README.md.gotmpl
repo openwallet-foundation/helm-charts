@@ -162,6 +162,7 @@ In that case, pre-create your secrets and reference them via:
 - `secrets.jwt.existingSecret`
 - `postgres.auth.existingSecret` (bundled Postgres admin credentials)
 - `postgres.customUser.existingSecret` (bundled Postgres application user credentials)
+- `postgres.customAdminUser` credentials live in the same consolidated database secret (`admin-user` / `admin-password` by default)
 - `externalDatabase.existingSecret` (when using an external database with `postgres.enabled=false`)
 
 </details>

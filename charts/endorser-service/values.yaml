@@ -409,7 +409,7 @@ postgres:
       adminPasswordKey: postgres-password
   # Custom user (application user for Endorser API) — same consolidated secret
   customUser:
-    # -- Name for a custom application user to create (used by Endorser API)
+    # -- Name for a custom application user to create (used by Endorser API / CONTROLLER_POSTGRESQL_USER)
     name: endorser
     # -- Database for the custom user
     database: endorser
@@ -423,6 +423,18 @@ postgres:
       database: database
       # -- Key in the secret containing the custom user password
       password: password
+  # Custom admin user (Alembic / DB owner) — same consolidated secret.
+  # Not the Postgres superuser (auth / postgres-password). Distinct from api.adminUser
+  # (HTTP basic auth), even when the default name string matches.
+  customAdminUser:
+    # -- Name for the migration/owner role (CONTROLLER_POSTGRESQL_ADMIN_USER)
+    name: endorser-admin
+    # Key names within the consolidated database secret
+    secretKeys:
+      # -- Key in the secret containing the custom admin username
+      name: admin-user
+      # -- Key in the secret containing the custom admin password
+      password: admin-password
   # PostgreSQL service configuration
   service:
     # -- PostgreSQL service port
@@ -456,22 +468,24 @@ postgres:
   initdb:
     # -- Init scripts to run on PostgreSQL initialization. Evaluated as a template. @default -- See `values.yaml`
     scripts:
-      # Initialize database permissions and extensions
+      # Initialize extensions and baseline schema grants for the application user.
+      # customAdminUser (DB owner / Alembic role) is ensured by the migration Job
+      # before alembic runs — CloudPirates only provisions a single customUser.
       01-init.sh: |
         #!/bin/bash
         set -e
-        echo "Initializing database permissions for user: $POSTGRES_USER"
-        export PGPASSWORD="$POSTGRES_POSTGRES_PASSWORD"
-        psql -v ON_ERROR_STOP=1 --username "postgres" --dbname "$POSTGRES_DATABASE" <<-EOSQL
+        APP_USER="${CUSTOM_USER}"
+        APP_DB="${CUSTOM_DB}"
+        echo "Initializing database permissions for application user: ${APP_USER} (database: ${APP_DB})"
+        export PGPASSWORD="${POSTGRES_PASSWORD}"
+        psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER:-postgres}" --dbname "${APP_DB}" \
+          -v APP_USER="${APP_USER}" <<-EOSQL
             CREATE EXTENSION IF NOT EXISTS pgcrypto;
-            ALTER DATABASE $POSTGRES_DATABASE OWNER TO $POSTGRES_USER;
+            SELECT quote_ident(:'APP_USER') AS app_user \gset
             REVOKE ALL ON SCHEMA public FROM PUBLIC;
-            GRANT ALL ON SCHEMA public TO $POSTGRES_USER;
-            ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $POSTGRES_USER;
-            ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO $POSTGRES_USER;
-            ALTER DEFAULT PRIVILEGES FOR USER $POSTGRES_USER IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO $POSTGRES_USER;
+            GRANT ALL ON SCHEMA public TO :app_user;
         EOSQL
-        echo "Database initialization complete for user: $POSTGRES_USER"
+        echo "Database initialization complete for application user: ${APP_USER}"
 
 
 # Caddy reverse proxy configuration (disable if using ingress directly)
