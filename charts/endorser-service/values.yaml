@@ -426,10 +426,16 @@ postgres:
   # Custom admin user (Alembic / DB owner) — same consolidated secret.
   # Not the Postgres superuser (auth / postgres-password). Distinct from api.adminUser
   # (HTTP basic auth), even when the default name string matches.
+  #
+  # Secret keys (fixed in templates): admin-user, admin-password.
+  # Chart-managed secrets get these via getOrGeneratePass on install/upgrade.
+  # If you use existingSecret / ExternalSecrets, you MUST add those keys to the
+  # secret before upgrading — otherwise the migration Job's ensure-db-roles
+  # initContainer fails looking up admin-password.
   customAdminUser:
     # -- Name for the migration/owner role (CONTROLLER_POSTGRESQL_ADMIN_USER)
     name: endorser-admin
-    # Key names within the consolidated database secret
+    # Key names within the consolidated database secret (documented; templates hardcode these keys)
     secretKeys:
       # -- Key in the secret containing the custom admin username
       name: admin-user

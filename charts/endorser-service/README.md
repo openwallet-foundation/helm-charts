@@ -184,8 +184,8 @@ This chart deploys an endorser service with the following components:
 | postgres.customUser.secretKeys.name | string | `"user"` | Key in the secret containing the custom username |
 | postgres.customUser.secretKeys.password | string | `"password"` | Key in the secret containing the custom user password |
 | postgres.customAdminUser.name | string | `"endorser-admin"` | Name for the migration/owner role (CONTROLLER_POSTGRESQL_ADMIN_USER). Not the Postgres superuser. |
-| postgres.customAdminUser.secretKeys.name | string | `"admin-user"` | Key in the secret containing the custom admin username |
-| postgres.customAdminUser.secretKeys.password | string | `"admin-password"` | Key in the secret containing the custom admin password |
+| postgres.customAdminUser.secretKeys.name | string | `"admin-user"` | Key in the secret containing the custom admin username (required in existingSecret / ExternalSecrets on upgrade) |
+| postgres.customAdminUser.secretKeys.password | string | `"admin-password"` | Key in the secret containing the custom admin password (required in existingSecret / ExternalSecrets on upgrade) |
 | postgres.enabled | bool | `true` | Switch to enable or disable the Postgres helm chart |
 | postgres.image.registry | string | `"docker.io"` | Postgres image registry |
 | postgres.image.repository | string | `"postgres"` | Postgres image repository |
@@ -383,7 +383,11 @@ In that case, pre-create your secrets and reference them via:
 - `secrets.jwt.existingSecret`
 - `postgres.auth.existingSecret` (bundled Postgres admin credentials)
 - `postgres.customUser.existingSecret` (bundled Postgres application user credentials)
-- `postgres.customAdminUser` credentials live in the same consolidated database secret (`admin-user` / `admin-password` by default)
+- `postgres.customAdminUser` credentials live in the **same** consolidated database secret. Required keys:
+  - `admin-user` (migration/owner role name, default `endorser-admin`)
+  - `admin-password` (password for that role)
+  - plus existing `user` / `password` / `database` / `postgres-password`
+  - **Upgrade note:** if this secret is managed outside the chart (ExternalSecrets, sealed secrets, etc.), add `admin-user` and `admin-password` before upgrading — the migration Job reads `admin-password` and will fail if the key is missing.
 - `externalDatabase.existingSecret` (when using an external database with `postgres.enabled=false`)
 
 </details>
