@@ -355,6 +355,29 @@ ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO :app_user;
 ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
   GRANT EXECUTE ON FUNCTIONS TO :app_user;
+-- Repair app-owned objects from CloudPirates 00-init (DB owner was customUser).
 REASSIGN OWNED BY :app_user TO :admin_user;
-REASSIGN OWNED BY postgres TO :admin_user;
+-- Repair tables/sequences left owned by postgres from older Alembic runs.
+-- Do not REASSIGN OWNED BY postgres — that fails on system-required objects.
+DO $repair$
+DECLARE
+  obj record;
+BEGIN
+  FOR obj IN
+    SELECT c.relname AS name, c.relkind
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_roles r ON r.oid = c.relowner
+    WHERE n.nspname = 'public'
+      AND r.rolname = 'postgres'
+      AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f')
+  LOOP
+    IF obj.relkind = 'S' THEN
+      EXECUTE format('ALTER SEQUENCE public.%I OWNER TO %I', obj.name, :'ADMIN_USER');
+    ELSE
+      EXECUTE format('ALTER TABLE public.%I OWNER TO %I', obj.name, :'ADMIN_USER');
+    END IF;
+  END LOOP;
+END
+$repair$;
 {{- end -}}
