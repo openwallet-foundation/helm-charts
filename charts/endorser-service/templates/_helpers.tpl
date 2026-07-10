@@ -292,7 +292,7 @@ Return the database name.
 {{- if .Values.postgres.enabled -}}
 {{- .Values.postgres.customUser.database | default .Values.postgres.customUser.name -}}
 {{- else -}}
-{{- .Values.externalDatabase.database | default "endorser" -}}
+{{- required "externalDatabase.database is required when postgres.enabled is false" .Values.externalDatabase.database -}}
 {{- end -}}
 {{- end -}}
 
@@ -303,7 +303,7 @@ Return the database application username.
 {{- if .Values.postgres.enabled -}}
 {{- .Values.postgres.customUser.name -}}
 {{- else -}}
-{{- .Values.externalDatabase.username | default "endorser" -}}
+{{- required "externalDatabase.username is required when postgres.enabled is false" .Values.externalDatabase.username -}}
 {{- end -}}
 {{- end -}}
 
@@ -321,7 +321,7 @@ For external databases uses adminUsername, falling back to username.
   {{- if .Values.externalDatabase.adminUsername -}}
 {{- .Values.externalDatabase.adminUsername -}}
   {{- else -}}
-{{- .Values.externalDatabase.username | default "postgres" -}}
+{{- include "endorser-service.db.username" . -}}
   {{- end -}}
 {{- end -}}
 {{- end -}}

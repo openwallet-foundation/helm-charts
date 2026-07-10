@@ -692,18 +692,18 @@ proxy:
 
 # External database configuration (used when postgres.enabled is false)
 # When the bundled PostgreSQL is disabled, these values configure the connection
-# to an external database. externalDatabase.host and externalDatabase.existingSecret
-# are required when postgres.enabled is false.
+# to an external database. host, existingSecret, database, and username are
+# required when postgres.enabled is false.
 externalDatabase:
   # -- Database hostname (e.g., postgres.example.com). Required when postgres.enabled is false.
   host: ""
   # -- Database port
   port: 5432
-  # -- Database name (e.g., endorser)
+  # -- Database name (e.g., endorser). Required when postgres.enabled is false.
   database: ""
-  # -- Database username (e.g., endorser)
+  # -- Database username (e.g., endorser). Required when postgres.enabled is false.
   username: ""
-  # -- Database admin username (defaults to username if not set; typically 'postgres' for PostgreSQL)
+  # -- Database admin username (defaults to username if not set)
   adminUsername: ""
   # -- Existing secret containing database credentials. Required when postgres.enabled is false.
   existingSecret: ""
