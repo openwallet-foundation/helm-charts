@@ -33,8 +33,9 @@ spec:
             - >-
               until nc -z {{ include "endorser-service.db.host" . }} {{ include "endorser-service.db.port" . }}; do echo waiting for db; sleep 2; done;
         {{- if .Values.postgres.enabled }}
-        # CloudPirates only creates customUser; ensure customAdminUser owns the DB and
-        # grants DML to the app user before Alembic runs as CONTROLLER_POSTGRESQL_ADMIN_*.
+        # Sync customAdminUser password from the chart secret and repair ownership on
+        # upgrades (initdb.scripts only run on empty PVC). First-boot role creation
+        # lives in postgres.initdb.scripts (01-init-endorser-roles.sh).
         - name: ensure-db-roles
           image: "{{ .Values.postgres.image.registry }}/{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -65,7 +66,7 @@ spec:
           args:
             - |
               set -euo pipefail
-              echo "Ensuring customAdminUser '${ADMIN_USER}' owns '${PGDATABASE}' and grants DML to '${APP_USER}'"
+              echo "Syncing customAdminUser '${ADMIN_USER}' (password + grants + ownership repair)"
               psql -v ON_ERROR_STOP=1 \
                 -v APP_USER="${APP_USER}" \
                 -v ADMIN_USER="${ADMIN_USER}" \
@@ -92,6 +93,7 @@ spec:
                 GRANT USAGE, SELECT ON SEQUENCES TO :app_user;
               ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
                 GRANT EXECUTE ON FUNCTIONS TO :app_user;
+              -- Repair tables left owned by the app user or postgres (pre-fix installs)
               REASSIGN OWNED BY :app_user TO :admin_user;
               REASSIGN OWNED BY postgres TO :admin_user;
               EOSQL

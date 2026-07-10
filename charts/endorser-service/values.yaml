@@ -468,24 +468,52 @@ postgres:
   initdb:
     # -- Init scripts to run on PostgreSQL initialization. Evaluated as a template. @default -- See `values.yaml`
     scripts:
-      # Initialize extensions and baseline schema grants for the application user.
-      # customAdminUser (DB owner / Alembic role) is ensured by the migration Job
-      # before alembic runs — CloudPirates only provisions a single customUser.
-      01-init.sh: |
-        #!/bin/bash
+      # First-boot role setup (ACA-Py-style initdb.scripts). CloudPirates only creates
+      # customUser (00-init-custom-user.sh); this script adds customAdminUser as DB owner
+      # and default privileges so the app user can DML tables Alembic creates.
+      # The admin login password is synced from the chart secret by the migration Job
+      # (init cannot read that secret; same pattern as needing a post-install ensure step).
+      01-init-endorser-roles.sh: |
+        #!/bin/sh
         set -e
-        APP_USER="${CUSTOM_USER}"
-        APP_DB="${CUSTOM_DB}"
-        echo "Initializing database permissions for application user: ${APP_USER} (database: ${APP_DB})"
-        export PGPASSWORD="${POSTGRES_PASSWORD}"
-        psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER:-postgres}" --dbname "${APP_DB}" \
-          -v APP_USER="${APP_USER}" <<-EOSQL
-            CREATE EXTENSION IF NOT EXISTS pgcrypto;
-            SELECT quote_ident(:'APP_USER') AS app_user \gset
-            REVOKE ALL ON SCHEMA public FROM PUBLIC;
-            GRANT ALL ON SCHEMA public TO :app_user;
+        APP_USER='{{ .Values.customUser.name }}'
+        APP_DB='{{ .Values.customUser.database | default .Values.customUser.name }}'
+        ADMIN_USER='{{ .Values.customAdminUser.name }}'
+        # Temporary password until the migration Job applies admin-password from the secret.
+        BOOTSTRAP_PASS="$(dd if=/dev/urandom bs=24 count=1 2>/dev/null | base64 | tr -d '\n/=+')"
+
+        echo "Granting endorser DB roles (app=${APP_USER}, admin=${ADMIN_USER}, db=${APP_DB})..."
+        psql -v ON_ERROR_STOP=1 -U postgres -d "${APP_DB}" \
+          -v APP_USER="${APP_USER}" \
+          -v ADMIN_USER="${ADMIN_USER}" \
+          -v ADMIN_PASSWORD="${BOOTSTRAP_PASS}" <<'EOSQL'
+          CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+          SELECT quote_ident(:'APP_USER') AS app_user \gset
+          SELECT quote_ident(:'ADMIN_USER') AS admin_user \gset
+          SELECT quote_literal(:'ADMIN_PASSWORD') AS admin_password \gset
+          SELECT quote_ident(current_database()) AS dbname \gset
+
+          SELECT EXISTS(SELECT 1 FROM pg_roles WHERE rolname = :'ADMIN_USER') AS admin_exists \gset
+          \if :admin_exists
+            ALTER ROLE :admin_user WITH LOGIN PASSWORD :admin_password;
+          \else
+            CREATE ROLE :admin_user LOGIN PASSWORD :admin_password;
+          \endif
+
+          ALTER DATABASE :dbname OWNER TO :admin_user;
+          REVOKE ALL ON SCHEMA public FROM PUBLIC;
+          GRANT CONNECT ON DATABASE :dbname TO :app_user;
+          GRANT ALL ON SCHEMA public TO :admin_user;
+          GRANT USAGE ON SCHEMA public TO :app_user;
+          ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
+            GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO :app_user;
+          ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
+            GRANT USAGE, SELECT ON SEQUENCES TO :app_user;
+          ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
+            GRANT EXECUTE ON FUNCTIONS TO :app_user;
         EOSQL
-        echo "Database initialization complete for application user: ${APP_USER}"
+        echo "Endorser DB role initialization complete"
 
 
 # Caddy reverse proxy configuration (disable if using ingress directly)
