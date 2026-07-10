@@ -86,10 +86,12 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Return an existing secret value, or generate a random one if the secret does not yet exist.
-Uses lookup to preserve values across upgrades (lookup-then-retain pattern for GitOps idempotency).
-If the object exists but the key is missing (or empty), a new value is generated — so chart
-upgrades can add keys like admin-password without manual secret patches.
+Return an existing secret value, or generate a random one if missing.
+Uses lookup to preserve values across upgrades (lookup-then-retain).
+Critical for postgres: password / postgres-password must stay stable — regenerating
+them desyncs from the PVC and forces a destructive wipe. Only generate when the
+Secret is absent or the specific key is missing/empty (e.g. adding admin-password
+on upgrade). Never delete the chart-managed DB secret to "recreate" keys.
 For Secrets the returned value is base64-encoded; for other kinds it is plain text.
 
 Usage:

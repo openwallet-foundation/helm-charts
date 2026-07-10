@@ -384,7 +384,7 @@ In that case, pre-create your secrets and reference them via:
 - `postgres.auth.existingSecret` (bundled Postgres admin credentials)
 - `postgres.customUser.existingSecret` (bundled Postgres application user credentials)
 - `postgres.customAdminUser` credentials live in the **same** consolidated database secret (`admin-user` / `admin-password`, plus `user` / `password` / `database` / `postgres-password`).
-  - **Chart-managed secret:** missing `admin-*` keys are generated on upgrade via `getOrGeneratePass` (no manual patch).
+  - **Chart-managed secret:** on upgrade, `getOrGeneratePass` **preserves** existing keys (so DB passwords stay aligned with the PVC) and **only generates** missing ones (e.g. `admin-password`). Do not delete the secret to add keys — that rotates passwords and forces a PVC wipe.
   - **ExternalSecrets / sealed secrets:** add `admin-user` and `admin-password` in the external source before upgrading — the migration Job fails if `admin-password` is missing.
 - `externalDatabase.existingSecret` (when using an external database with `postgres.enabled=false`)
 

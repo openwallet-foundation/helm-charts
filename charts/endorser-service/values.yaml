@@ -428,9 +428,10 @@ postgres:
   # (HTTP basic auth), even when the default name string matches.
   #
   # Secret keys (fixed in templates): admin-user, admin-password.
-  # Chart-managed secrets: getOrGeneratePass adds missing keys on upgrade (no
-  # manual kubectl patch). ExternalSecrets / sealed secrets still need those
-  # keys in the external source before upgrading, or ensure-db-roles fails.
+  # Chart-managed secret on upgrade: lookup keeps password / postgres-password /
+  # user / database; only missing admin-* keys are generated. Do not delete the
+  # secret to force recreation — that rotates DB passwords and requires a PVC wipe.
+  # ExternalSecrets / sealed secrets still need admin-* in the external source.
   customAdminUser:
     # -- Name for the migration/owner role (CONTROLLER_POSTGRESQL_ADMIN_USER)
     name: endorser-admin
