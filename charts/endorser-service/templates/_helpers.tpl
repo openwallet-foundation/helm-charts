@@ -261,11 +261,13 @@ password
 {{- end -}}
 
 {{/*
-Return the secret key name for the admin (postgres) password.
+Return the secret key name for the admin (owner-role) password.
+For bundled postgres this is the custom user password (DB owner used by Alembic).
+For external databases this is the configured admin password key.
 */}}
 {{- define "endorser-service.db.adminPasswordKey" -}}
 {{- if .Values.postgres.enabled -}}
-postgres-password
+password
 {{- else -}}
 {{- default "postgres-password" .Values.externalDatabase.secretKeys.adminPasswordKey -}}
 {{- end -}}
@@ -305,13 +307,15 @@ Return the database application username.
 {{- end -}}
 
 {{/*
-Return the database admin username.
-For bundled postgres the superuser is always "postgres".
+Return the database admin username (Alembic / owner role).
+For bundled postgres use the custom user (DB owner from 01-init.sh), not the
+"postgres" superuser. Migrating as postgres leaves tables owned by superuser
+and the app user then hits "permission denied" on fresh installs / PVC recreate.
 For external databases uses adminUsername, falling back to username.
 */}}
 {{- define "endorser-service.db.adminUser" -}}
 {{- if .Values.postgres.enabled -}}
-postgres
+{{- .Values.postgres.customUser.name | default "endorser" -}}
 {{- else -}}
   {{- if .Values.externalDatabase.adminUsername -}}
 {{- .Values.externalDatabase.adminUsername -}}
