@@ -190,7 +190,7 @@ This chart deploys an endorser service with the following components:
 | postgres.image.registry | string | `"docker.io"` | Postgres image registry |
 | postgres.image.repository | string | `"postgres"` | Postgres image repository |
 | postgres.image.tag | string | `"18.1"` | Postgres image tag |
-| postgres.initdb.scripts."01-init-endorser-roles.sh" | string | `""` | First-boot script: create customAdminUser, set DB owner, default privileges for customUser (see `values.yaml`). Migration Job syncs admin password from the secret on install/upgrade. |
+| postgres.initdb.scripts."01-init.sh" | string | `""` | First-boot: enable pgcrypto. customAdminUser roles/grants are applied by the migration Job (`endorser-service.db.ensureRolesSql`). |
 | postgres.persistence.enabled | bool | `true` | Enable PostgreSQL data persistence using PVC |
 | postgres.persistence.size | string | `"1Gi"` | PVC Storage Request for PostgreSQL volume |
 | postgres.podSecurityContext.fsGroup | int | `999` | Group ID for the pod's volumes |

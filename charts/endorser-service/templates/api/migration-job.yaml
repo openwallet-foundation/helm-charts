@@ -33,9 +33,8 @@ spec:
             - >-
               until nc -z {{ include "endorser-service.db.host" . }} {{ include "endorser-service.db.port" . }}; do echo waiting for db; sleep 2; done;
         {{- if .Values.postgres.enabled }}
-        # Sync customAdminUser password from the chart secret and repair ownership on
-        # upgrades (initdb.scripts only run on empty PVC). First-boot role creation
-        # lives in postgres.initdb.scripts (01-init-endorser-roles.sh).
+        # Single source of role SQL: endorser-service.db.ensureRolesSql (_helpers.tpl).
+        # Runs on every install/upgrade (initdb only runs on empty PVC).
         - name: ensure-db-roles
           image: "{{ .Values.postgres.image.registry }}/{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -66,36 +65,12 @@ spec:
           args:
             - |
               set -euo pipefail
-              echo "Syncing customAdminUser '${ADMIN_USER}' (password + grants + ownership repair)"
+              echo "Ensuring customAdminUser '${ADMIN_USER}' for '${PGDATABASE}'"
               psql -v ON_ERROR_STOP=1 \
                 -v APP_USER="${APP_USER}" \
                 -v ADMIN_USER="${ADMIN_USER}" \
                 -v ADMIN_PASSWORD="${ADMIN_PASSWORD}" <<'EOSQL'
-              SELECT quote_ident(:'APP_USER') AS app_user \gset
-              SELECT quote_ident(:'ADMIN_USER') AS admin_user \gset
-              SELECT quote_literal(:'ADMIN_PASSWORD') AS admin_password \gset
-              SELECT quote_ident(current_database()) AS dbname \gset
-
-              SELECT EXISTS(SELECT 1 FROM pg_roles WHERE rolname = :'ADMIN_USER') AS admin_exists \gset
-              \if :admin_exists
-                ALTER ROLE :admin_user WITH LOGIN PASSWORD :admin_password;
-              \else
-                CREATE ROLE :admin_user LOGIN PASSWORD :admin_password;
-              \endif
-
-              ALTER DATABASE :dbname OWNER TO :admin_user;
-              GRANT CONNECT ON DATABASE :dbname TO :app_user;
-              GRANT ALL ON SCHEMA public TO :admin_user;
-              GRANT USAGE ON SCHEMA public TO :app_user;
-              ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
-                GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO :app_user;
-              ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
-                GRANT USAGE, SELECT ON SEQUENCES TO :app_user;
-              ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
-                GRANT EXECUTE ON FUNCTIONS TO :app_user;
-              -- Repair tables left owned by the app user or postgres (pre-fix installs)
-              REASSIGN OWNED BY :app_user TO :admin_user;
-              REASSIGN OWNED BY postgres TO :admin_user;
+              {{ include "endorser-service.db.ensureRolesSql" . | nindent 14 }}
               EOSQL
               echo "Database roles ready"
         {{- end }}

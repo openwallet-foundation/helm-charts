@@ -325,3 +325,36 @@ For external databases uses adminUsername, falling back to username.
   {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+SQL body for ensure-db-roles (psql -v APP_USER/ADMIN_USER/ADMIN_PASSWORD).
+Creates customAdminUser, sets DB owner, grants DML defaults to the app user,
+and reassigns objects left owned by the app user or postgres.
+*/}}
+{{- define "endorser-service.db.ensureRolesSql" -}}
+SELECT quote_ident(:'APP_USER') AS app_user \gset
+SELECT quote_ident(:'ADMIN_USER') AS admin_user \gset
+SELECT quote_literal(:'ADMIN_PASSWORD') AS admin_password \gset
+SELECT quote_ident(current_database()) AS dbname \gset
+
+SELECT EXISTS(SELECT 1 FROM pg_roles WHERE rolname = :'ADMIN_USER') AS admin_exists \gset
+\if :admin_exists
+  ALTER ROLE :admin_user WITH LOGIN PASSWORD :admin_password;
+\else
+  CREATE ROLE :admin_user LOGIN PASSWORD :admin_password;
+\endif
+
+ALTER DATABASE :dbname OWNER TO :admin_user;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT CONNECT ON DATABASE :dbname TO :app_user;
+GRANT ALL ON SCHEMA public TO :admin_user;
+GRANT USAGE ON SCHEMA public TO :app_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO :app_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO :app_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE :admin_user IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO :app_user;
+REASSIGN OWNED BY :app_user TO :admin_user;
+REASSIGN OWNED BY postgres TO :admin_user;
+{{- end -}}
