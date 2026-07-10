@@ -45,6 +45,8 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      initContainers:
+        {{- include "endorser-service.db.ensureRolesInitContainers" . | nindent 8 }}
       containers:
         - name: acapy-endorser-api
           {{- with .Values.securityContext }}

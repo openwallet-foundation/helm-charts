@@ -389,3 +389,58 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO :app_user
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO :app_user;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO :app_user;
 {{- end -}}
+
+{{/*
+Init containers: wait for DB, then (bundled postgres only) ensure customAdminUser.
+Used by the API Deployment (before Alembic/startup) and the migration Job.
+API must not start until endorser-admin exists — post-install hooks race the
+Deployment, and CI emptyDir postgres restarts wipe roles created only by the Job.
+*/}}
+{{- define "endorser-service.db.ensureRolesInitContainers" -}}
+- name: wait-for-db
+  image: "{{ .Values.migration.initContainer.image }}:{{ .Values.migration.initContainer.tag }}"
+  command: ["/bin/sh","-c"]
+  args:
+    - >-
+      until nc -z {{ include "endorser-service.db.host" . }} {{ include "endorser-service.db.port" . }}; do echo waiting for db; sleep 2; done;
+{{- if .Values.postgres.enabled }}
+- name: ensure-db-roles
+  image: "{{ .Values.postgres.image.registry }}/{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+  imagePullPolicy: {{ .Values.image.pullPolicy }}
+  env:
+    - name: PGHOST
+      value: {{ include "endorser-service.db.host" . | quote }}
+    - name: PGPORT
+      value: {{ include "endorser-service.db.port" . | quote }}
+    - name: PGDATABASE
+      value: {{ include "endorser-service.db.database" . | quote }}
+    - name: PGUSER
+      value: postgres
+    - name: PGPASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "endorser-service.db.secretName" . }}
+          key: {{ .Values.postgres.auth.secretKeys.adminPasswordKey | default "postgres-password" | quote }}
+    - name: APP_USER
+      value: {{ include "endorser-service.db.username" . | quote }}
+    - name: ADMIN_USER
+      value: {{ include "endorser-service.db.adminUser" . | quote }}
+    - name: ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "endorser-service.db.secretName" . }}
+          key: {{ include "endorser-service.db.adminPasswordKey" . | quote }}
+  command: ["/bin/bash", "-c"]
+  args:
+    - |
+      set -euo pipefail
+      echo "Ensuring customAdminUser '${ADMIN_USER}' for '${PGDATABASE}'"
+      psql -v ON_ERROR_STOP=1 \
+        -v APP_USER="${APP_USER}" \
+        -v ADMIN_USER="${ADMIN_USER}" \
+        -v ADMIN_PASSWORD="${ADMIN_PASSWORD}" <<'EOSQL'
+{{ include "endorser-service.db.ensureRolesSql" . | nindent 6 }}
+      EOSQL
+      echo "Database roles ready"
+{{- end }}
+{{- end -}}

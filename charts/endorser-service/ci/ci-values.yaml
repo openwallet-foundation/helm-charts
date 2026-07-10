@@ -2,6 +2,10 @@
 autoscaling:
   enabled: false
 
+# Kind may enforce NetworkPolicy; keep CI focused on chart install readiness.
+networkPolicy:
+  enabled: false
+
 proxy:
   autoscaling:
     enabled: false
