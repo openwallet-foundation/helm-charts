@@ -290,7 +290,7 @@ Return the database name.
 */}}
 {{- define "endorser-service.db.database" -}}
 {{- if .Values.postgres.enabled -}}
-{{- .Values.postgres.customUser.database -}}
+{{- .Values.postgres.customUser.database | default .Values.postgres.customUser.name -}}
 {{- else -}}
 {{- .Values.externalDatabase.database | default "endorser" -}}
 {{- end -}}

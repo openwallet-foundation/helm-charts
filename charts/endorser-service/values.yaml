@@ -477,7 +477,7 @@ postgres:
         #!/bin/sh
         set -e
         APP_USER='{{ .Values.customUser.name }}'
-        APP_DB='{{ .Values.customUser.database }}'
+        APP_DB='{{ .Values.customUser.database | default .Values.customUser.name }}'
         ADMIN_USER='{{ .Values.customAdminUser.name }}'
         # Temporary password until the migration Job applies admin-password from the secret.
         BOOTSTRAP_PASS="$(dd if=/dev/urandom bs=24 count=1 2>/dev/null | base64 | tr -d '\n/=+')"
