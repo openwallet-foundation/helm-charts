@@ -733,6 +733,27 @@ readinessProbe:
   httpGet:
     path: /status/ready
     port: admin
+## ACA-Py pods' startup probe. Holds off the liveness and readiness probes until the agent has started.
+## Allows up to periodSeconds x failureThreshold (10 minutes by default) for a slow start, such as a large wallet.
+## Set to null to disable.
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+## @param startupProbe.periodSeconds Period seconds for startupProbe
+## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
+## @param startupProbe.failureThreshold Failure threshold for startupProbe
+## @param startupProbe.successThreshold Success threshold for startupProbe (must be 1)
+## @param startupProbe.httpGet.path Request path for startupProbe
+## @param startupProbe.httpGet.port Port for startupProbe
+##
+startupProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 60
+  successThreshold: 1
+  httpGet:
+    path: /status/live
+    port: admin
 ## @param initContainers Add additional init containers for the hidden node pod(s)
 ## Example:
 ## initContainers:
