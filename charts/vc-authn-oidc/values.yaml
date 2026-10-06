@@ -408,6 +408,7 @@ acapy:
   plugin-config.yml:
     webvh:
       server_url: "https://sandbox.bcvh.vonx.io"
+      auto_setup: false
 
   ## @param acapy.ledgers.yml [object]
   ledgers.yml: |-
