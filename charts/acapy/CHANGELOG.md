@@ -1,3 +1,8 @@
+## [1.1.0](https://github.com/openwallet-foundation/helm-charts/compare/acapy-1.0.4...acapy-1.1.0) (2026-10-06)
+
+### Features
+
+* **acapy:** add configurable startupProbe ([#143](https://github.com/openwallet-foundation/helm-charts/issues/143)) ([355dcfb](https://github.com/openwallet-foundation/helm-charts/commit/355dcfba1cc38e80b751d39cba981fca4571b752))
 ## [1.0.4](https://github.com/openwallet-foundation/helm-charts/compare/acapy-1.0.3...acapy-1.0.4) (2026-07-08)
 ## [1.0.3](https://github.com/openwallet-foundation/helm-charts/compare/acapy-1.0.2...acapy-1.0.3) (2026-04-24)
 ## [1.0.2](https://github.com/openwallet-foundation/helm-charts/compare/acapy-1.0.1...acapy-1.0.2) (2026-04-22)
