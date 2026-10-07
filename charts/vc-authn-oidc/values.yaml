@@ -368,6 +368,7 @@ acapy:
   ## @param acapy.argfile.yml.multitenant-admin Specify whether to enable the multitenant admin api.
   ## @param acapy.argfile.yml.multitenant Enable multitenant mode.
   ## @param acapy.argfile.yml.preserve-exchange-records Keep credential exchange records after exchange has completed. Default: false.
+  ## @param acapy.argfile.yml.no-preserve-failed-exchange-records Remove failed credential and presentation exchange records upon failure. Default: false.
   ## @param acapy.argfile.yml.public-invites Send invitations out using the public DID for the agent, and receive connection requests solicited by invitations which use the public DID. Default: false.
   ## @param acapy.argfile.yml.read-only-ledger Sets ledger to read-only to prevent updates. Default: false.
   ## @param acapy.argfile.yml.wallet-local-did If this parameter is set, provisions the wallet with a local DID from the '--seed' parameter, instead of a public DID to use with a Hyperledger Indy ledger. Default: true.
@@ -393,6 +394,7 @@ acapy:
     multitenant-admin: false
     multitenant: false
     preserve-exchange-records: false
+    no-preserve-failed-exchange-records: true
     public-invites: true
     read-only-ledger: true
     wallet-local-did: true
