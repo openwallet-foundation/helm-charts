@@ -320,7 +320,7 @@ acapy:
     repository: openwallet-foundation/acapy-vc-authn-oidc-agent
     pullPolicy: IfNotPresent
     pullSecrets: []
-    tag: "2.4.1"
+    tag: "2.5.0"
 
   ## ServiceAccount configuration
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
