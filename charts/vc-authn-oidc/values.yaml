@@ -71,6 +71,11 @@ walletDeepLinkPrefix: bcwallet://aries_proof-request
 ## @param controller.customHtmlConfigMapName ConfigMap file used to define the HTML file overrides
 ## @param controller.useConnectionBasedVerification Whether to use connection-based proofs. If false connectionless OOB
 ## invites contain the proof.
+## @param controller.cleanup.recordRetentionHours Age in hours after which `DELETE /cleanup` removes presentation exchanges and stuck OOB invitations/connections
+## @param controller.cleanup.maxPresentationRecords Maximum presentation exchange records deleted per cleanup run (1-10000)
+## @param controller.cleanup.maxConnections Maximum OOB invitations and, separately, connections deleted per cleanup run (1-20000)
+## @param controller.cleanup.concurrency Maximum concurrent ACA-Py delete calls during a cleanup run (1-50)
+## @param controller.cleanup.maxDurationSeconds Time budget for a cleanup run in seconds. Must be lower than `cleanup.cronjob.timeoutSeconds`
 controller:
   cameraRedirectUrl: wallet_howto
   presentationExpireTime: 300
@@ -99,6 +104,12 @@ controller:
   ##  # )
   customHtmlConfigMapName: ""
   useConnectionBasedVerification: true
+  cleanup:
+    recordRetentionHours: 24
+    maxPresentationRecords: 1000
+    maxConnections: 2000
+    concurrency: 5
+    maxDurationSeconds: 240
 
 ## @param useHTTPS Prepend Agent and Admin URLs with `https`
 useHTTPS: true
@@ -538,11 +549,11 @@ cleanup:
   cronjob:
     ## @param cleanup.cronjob.enabled Enable scheduled cleanup via Kubernetes CronJob
     ##
-    enabled: false
-    ## @param cleanup.cronjob.schedule Cron schedule for cleanup job (default: every hour)
+    enabled: true
+    ## @param cleanup.cronjob.schedule Cron schedule for cleanup job (default: every 15 minutes)
     ##
-    schedule: "0 * * * *"
-    ## @param cleanup.cronjob.timeoutSeconds Timeout for cleanup HTTP requests in seconds
+    schedule: "*/15 * * * *"
+    ## @param cleanup.cronjob.timeoutSeconds Timeout for cleanup HTTP requests in seconds. Must exceed `controller.cleanup.maxDurationSeconds`
     ##
     timeoutSeconds: 300
     ## @param cleanup.cronjob.retryDelaySeconds Delay between retry attempts in seconds
