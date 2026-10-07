@@ -1,3 +1,4 @@
+## [1.1.1](https://github.com/openwallet-foundation/helm-charts/compare/acapy-1.1.0...acapy-1.1.1) (2026-10-07)
 ## [1.1.0](https://github.com/openwallet-foundation/helm-charts/compare/acapy-1.0.4...acapy-1.1.0) (2026-10-06)
 
 ### Features
