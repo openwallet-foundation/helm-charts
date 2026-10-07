@@ -1,3 +1,9 @@
+## [2.2.0](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-2.1.2...vc-authn-oidc-2.2.0) (2026-10-07)
+
+### Features
+
+* **vc-authn-oidc:** disable webvh auto-setup ([#144](https://github.com/openwallet-foundation/helm-charts/issues/144)) ([106445c](https://github.com/openwallet-foundation/helm-charts/commit/106445c757341391f1ad7ad0e05dab307a1f73b1))
+* **vc-authn:** add support for improved record pruning, update to 2.5.0 ([#149](https://github.com/openwallet-foundation/helm-charts/issues/149)) ([5b0cf63](https://github.com/openwallet-foundation/helm-charts/commit/5b0cf63f2c25ec6449c8f6a3a4bfb7f67e9ac331))
 ## [2.1.2](https://github.com/openwallet-foundation/helm-charts/compare/vc-authn-oidc-2.1.1...vc-authn-oidc-2.1.2) (2026-07-10)
 
 ### Bug Fixes
