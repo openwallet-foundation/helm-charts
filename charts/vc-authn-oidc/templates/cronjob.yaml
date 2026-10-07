@@ -1,4 +1,7 @@
 {{- if .Values.cleanup.cronjob.enabled }}
+{{- if le (int .Values.cleanup.cronjob.timeoutSeconds) (int .Values.controller.cleanup.maxDurationSeconds) }}
+{{- fail "cleanup.cronjob.timeoutSeconds must be greater than controller.cleanup.maxDurationSeconds" }}
+{{- end }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -12,12 +15,14 @@ spec:
   failedJobsHistoryLimit: {{ .Values.cleanup.cronjob.failedJobsHistoryLimit }}
   jobTemplate:
     spec:
+      # Retries are handled in the script; pod restarts would re-trigger cleanup runs
+      backoffLimit: 0
       template:
         metadata:
           labels:
             {{- include "vc-authn-oidc.cleanup.selectorLabels" . | nindent 12 }}
         spec:
-          restartPolicy: OnFailure
+          restartPolicy: Never
           containers:
           - name: cleanup
             image: curlimages/curl:8.5.0
@@ -27,41 +32,50 @@ spec:
             - |
               echo "Starting cleanup job at $(date)"
 
-              # Make HTTP request to cleanup endpoint with retry logic
+              # Retry only when the request did not reach the controller (e.g. during a rollout);
+              # a timed-out run keeps going server-side, so it is never retried.
               for i in 1 2 3; do
                 echo "Cleanup attempt $i/3"
 
-                response=$(curl -w "%{http_code}" -o /tmp/response.json \
+                http_code=$(curl -s -w "%{http_code}" -o /tmp/response.json \
                   --max-time {{ .Values.cleanup.cronjob.timeoutSeconds }} \
-                  --retry 2 \
-                  --retry-delay 5 \
-                  --retry-max-time 30 \
-                  --fail-with-body \
                   -H "Content-Type: application/json" \
                   -H "X-API-Key: $CLEANUP_API_KEY" \
                   -X DELETE \
                   "http://{{ include "global.fullname" . }}:{{ .Values.service.port }}/cleanup")
+                curl_exit=$?
 
-                http_code="${response:(-3)}"
-                echo "HTTP Status: $http_code"
+                echo "HTTP Status: $http_code (curl exit code $curl_exit)"
+                cat /tmp/response.json 2>/dev/null; echo
 
-                if [ "$http_code" = "200" ]; then
-                  echo "Cleanup completed successfully"
-                  cat /tmp/response.json
-                  echo "Cleanup job finished at $(date)"
-                  exit 0
-                elif [ "$http_code" = "401" ] || [ "$http_code" = "403" ]; then
-                  echo "Authentication failed - check API key configuration"
-                  cat /tmp/response.json
+                case "$http_code" in
+                  200)
+                    echo "Cleanup completed successfully at $(date)"
+                    exit 0
+                    ;;
+                  409)
+                    echo "Cleanup already in progress, nothing to do"
+                    exit 0
+                    ;;
+                  401|403)
+                    echo "Authentication failed - check API key configuration"
+                    exit 1
+                    ;;
+                esac
+
+                if [ "$curl_exit" = "28" ]; then
+                  echo "Request timed out; the controller finishes the run within its time budget"
                   exit 1
-                else
-                  echo "Cleanup failed with HTTP $http_code"
-                  cat /tmp/response.json
+                fi
 
-                  if [ $i -lt 3 ]; then
-                    echo "Retrying in {{ .Values.cleanup.cronjob.retryDelaySeconds }} seconds..."
-                    sleep {{ .Values.cleanup.cronjob.retryDelaySeconds }}
-                  fi
+                if [ "$http_code" != "000" ]; then
+                  echo "Cleanup failed with HTTP $http_code"
+                  exit 1
+                fi
+
+                if [ $i -lt 3 ]; then
+                  echo "Controller unreachable, retrying in {{ .Values.cleanup.cronjob.retryDelaySeconds }} seconds..."
+                  sleep {{ .Values.cleanup.cronjob.retryDelaySeconds }}
                 fi
               done
 
