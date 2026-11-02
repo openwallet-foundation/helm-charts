@@ -13,3 +13,6 @@ acapy:
 mongodb:
   persistence:
     enabled: false
+  # mongo 8.3 exits on the Ubuntu 7.0 runner kernel (SERVER-136848). 8.2 has no such check.
+  image:
+    tag: "8.2"

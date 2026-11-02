@@ -19,6 +19,7 @@ helm install my-release owf/vc-authn-oidc
 - Kubernetes 1.19+
 - Helm 3.2.0+
 - PV provisioner support in the underlying infrastructure
+- When using the bundled MongoDB, MongoDB 8.0.36 and earlier and 8.3.15 and earlier refuse to start on Linux kernel 6.19 and newer, including Ubuntu 7.0 kernels that carry the upstream fix ([SERVER-121912](https://jira.mongodb.org/browse/SERVER-121912), [SERVER-136848](https://jira.mongodb.org/browse/SERVER-136848)). On those nodes, set `mongodb.image.tag` to `8.2` until a fixed 8.3 image is published.
 
 ## Installing the Chart
 
