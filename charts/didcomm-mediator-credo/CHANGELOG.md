@@ -1,3 +1,24 @@
+## [0.7.0](https://github.com/openwallet-foundation/helm-charts/compare/didcomm-mediator-credo-0.6.5...didcomm-mediator-credo-0.7.0) (2026-11-05)
+
+### ⚠ BREAKING CHANGES
+
+* **didcomm-mediator-credo:** environment must use the Credo 0.7 mediator's variable names (see 'Upgrading
+from chart 0.6.x' in the README), deployments with a PostgreSQL wallet must set
+ASKAR__DATABASE__TYPE=postgres and persistence.enabled=false, and Firebase must be enabled with
+pushNotifications.firebase.enabled.
+
+Signed-off-by: Emiliano Suñé <2395873+esune@users.noreply.github.com>
+
+* fix(didcomm-mediator-credo): default the ingress network policy namespace selector to a map
+
+The default was an empty list, so overriding it with labels made Helm warn that a map can't
+replace a list and drop the default. An empty map keeps the same behaviour without the warning.
+
+Signed-off-by: Emiliano Suñé <2395873+esune@users.noreply.github.com>
+
+### Features
+
+* **didcomm-mediator-credo:** chart updates for new major release ([#150](https://github.com/openwallet-foundation/helm-charts/issues/150)) ([c299017](https://github.com/openwallet-foundation/helm-charts/commit/c29901770e59119eb0e5343b0b489e226e41883e))
 ## [0.6.5](https://github.com/openwallet-foundation/helm-charts/compare/didcomm-mediator-credo-0.6.4...didcomm-mediator-credo-0.6.5) (2026-07-08)
 ## [0.6.4](https://github.com/openwallet-foundation/helm-charts/compare/didcomm-mediator-credo-0.6.3...didcomm-mediator-credo-0.6.4) (2026-02-25)
 ## [0.6.3](https://github.com/openwallet-foundation/helm-charts/compare/didcomm-mediator-credo-0.6.2...didcomm-mediator-credo-0.6.3) (2026-02-17)
