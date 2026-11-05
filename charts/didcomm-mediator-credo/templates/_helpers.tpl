@@ -162,6 +162,38 @@ Returns the literal value of a variable in .Values.environment, empty if unset o
 {{- end }}
 
 {{/*
+Resolve the wallet backend without treating externally supplied configuration as SQLite.
+*/}}
+{{- define "mediator.walletDatabaseType" -}}
+{{- $declared := .Values.walletDatabaseType | default "auto" -}}
+{{- if not (has $declared (list "auto" "sqlite" "postgres")) -}}
+{{- fail "walletDatabaseType must be auto, sqlite or postgres" -}}
+{{- end -}}
+{{- $literal := include "mediator.environmentValue" (dict "name" "ASKAR__DATABASE__TYPE" "context" .) -}}
+{{- $external := false -}}
+{{- range .Values.environment -}}
+{{- if or (eq .name "CONFIG") (and (eq .name "ASKAR__DATABASE__TYPE") .valueFrom) -}}
+{{- $external = true -}}
+{{- end -}}
+{{- end -}}
+{{- if and $literal (not (has $literal (list "sqlite" "postgres"))) -}}
+{{- fail "ASKAR__DATABASE__TYPE must be sqlite or postgres" -}}
+{{- end -}}
+{{- if and (ne $declared "auto") $literal (ne $declared $literal) -}}
+{{- fail "walletDatabaseType conflicts with literal ASKAR__DATABASE__TYPE" -}}
+{{- end -}}
+{{- if $literal -}}
+{{- $literal -}}
+{{- else if ne $declared "auto" -}}
+{{- $declared -}}
+{{- else if $external -}}
+unknown
+{{- else -}}
+sqlite
+{{- end -}}
+{{- end }}
+
+{{/*
 Fails rendering for configurations the mediator would reject or silently ignore.
 */}}
 {{- define "mediator.validateEnvironment" -}}
@@ -176,7 +208,17 @@ Fails rendering for configurations the mediator would reject or silently ignore.
 {{- if regexMatch "^[0-9]+$" (include "mediator.environmentValue" (dict "name" "LOG_LEVEL" "context" .)) -}}
 {{- fail "LOG_LEVEL must be one of trace, debug, info, warn, error, fatal or off" -}}
 {{- end -}}
-{{- if and (ne (include "mediator.environmentValue" (dict "name" "ASKAR__DATABASE__TYPE" "context" .)) "postgres") (or .Values.autoscaling.enabled (gt (int .Values.replicaCount) 1)) -}}
+{{- $backend := include "mediator.walletDatabaseType" . -}}
+{{- if and (eq $backend "unknown") (or .Values.autoscaling.enabled (gt (int .Values.replicaCount) 1)) -}}
+{{- fail "externally configured wallets require walletDatabaseType=postgres for multiple replicas; this declaration does not configure the application backend" -}}
+{{- end -}}
+{{- if eq $backend "unknown" -}}
+{{- fail "externally configured wallets require walletDatabaseType=sqlite or postgres to select a safe rollout strategy; this declaration does not configure the application backend" -}}
+{{- end -}}
+{{- if and (eq $backend "postgres") .Values.persistence.enabled -}}
+{{- fail "PostgreSQL wallets require persistence.enabled=false: the chart PVC is for SQLite home-directory data and can stall rolling updates" -}}
+{{- end -}}
+{{- if and (eq $backend "sqlite") (or .Values.autoscaling.enabled (gt (int .Values.replicaCount) 1)) -}}
 {{- fail "a SQLite wallet can't be shared between replicas: set ASKAR__DATABASE__TYPE=postgres in environment, or run a single replica without autoscaling" -}}
 {{- end -}}
 {{- if .Values.pushNotifications.firebase.enabled -}}

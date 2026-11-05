@@ -20,7 +20,8 @@
   echo "Visit http://127.0.0.1:8080 to use your application"
   kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
 {{- end }}
-{{- if and (ne (include "mediator.environmentValue" (dict "name" "ASKAR__DATABASE__TYPE" "context" .)) "postgres") (not .Values.persistence.enabled) }}
+{{- $backend := include "mediator.walletDatabaseType" . }}
+{{- if and (eq $backend "sqlite") (not .Values.persistence.enabled) }}
 
 WARNING: The wallet is a SQLite file on an emptyDir. It is lost whenever the pod is replaced,
 along with the mediator's identity and connections. Enable persistence, or set

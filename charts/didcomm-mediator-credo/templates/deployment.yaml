@@ -15,10 +15,16 @@ spec:
   {{- if .Values.strategy }}
   strategy:
     {{- toYaml .Values.strategy | nindent 4 }}
-  {{- else if .Values.persistence.enabled }}
-  # A ReadWriteOnce volume can't be attached to the new pod while the old one holds it
+  {{- else }}
   strategy:
+    {{- if eq (include "mediator.walletDatabaseType" .) "sqlite" }}
+    # Prevent overlapping processes from accessing the SQLite wallet.
     type: Recreate
+    # Clear the API-server default that Helm may retain when upgrading an existing release.
+    rollingUpdate: null
+    {{- else }}
+    type: RollingUpdate
+    {{- end }}
   {{- end }}
   selector:
     matchLabels:
@@ -42,14 +48,12 @@ spec:
       serviceAccountName: {{ include "mediator.serviceAccountName" . }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- with .Values.podSecurityContext }}
-      securityContext:
-        {{- toYaml . | nindent 8 }}
+      securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" . "context" $) | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           {{- with .Values.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" . "context" $) | nindent 12 }}
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
